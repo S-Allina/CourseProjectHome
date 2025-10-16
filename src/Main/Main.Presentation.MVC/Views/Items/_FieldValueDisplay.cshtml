@@ -1,0 +1,39 @@
+﻿@using Main.Domain.enums.inventory
+@model (FieldType FieldType, Main.Application.Dtos.ItemFieldValueDto FieldValue)
+
+@switch (Model.FieldType)
+{
+    case FieldType.Text:
+        <span>@Model.FieldValue.TextValue</span>
+        break;
+    case FieldType.MultilineText:
+        <div class="multiline-text" title="@Model.FieldValue.MultilineTextValue">
+            @(Model.FieldValue.MultilineTextValue?.Length > 50 ?
+                Model.FieldValue.MultilineTextValue.Substring(0, 50) + "..." :
+                Model.FieldValue.MultilineTextValue)
+</div>
+        break;
+    case FieldType.Number:
+        <span>@Model.FieldValue.NumberValue?.ToString("N2")</span>
+        break;
+    case FieldType.Boolean:
+        <span class="badge @(Model.FieldValue.BooleanValue == true ? "bg-success" : "bg-secondary")">
+            @(Model.FieldValue.BooleanValue == true ? "Yes" : "No")
+        </span>
+        break;
+    case FieldType.File:
+        @if (!string.IsNullOrEmpty(Model.FieldValue.FileUrl))
+        {
+            <a href="@Model.FieldValue.FileUrl" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-download"></i>
+            </a>
+        }
+        else
+        {
+            <span class="text-muted">No file</span>
+        }
+        break;
+    default:
+        <span class="text-muted">Unknown type</span>
+        break;
+}

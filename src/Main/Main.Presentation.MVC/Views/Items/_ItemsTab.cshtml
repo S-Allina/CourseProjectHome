@@ -1,0 +1,106 @@
+﻿@using Main.Domain.enums.inventory
+@model IEnumerable<Main.Application.Dtos.ItemDto>
+@{
+    var inventory = ViewBag.SelectedInventory as Main.Application.Dtos.InventoryDto;
+}
+
+@if (inventory != null)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>@inventory.Name</h2>
+            <p class="text-muted">@inventory.Description</p>
+        </div>
+        <div>
+            <a href="@Url.Action("Index", "Inventories")" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Inventories
+            </a>
+            <a href="@Url.Action("Create", new { inventoryId = inventory.Id })" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i>Add New Item
+            </a>
+        </div>
+    </div>
+
+    <!-- Таблица товаров -->
+    @if (Model?.Any() == true)
+    {
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-table me-2"></i>Items (@Model.Count())</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Custom ID</th>
+                                @foreach (var field in inventory.Fields.Where(f => f.IsVisibleInTable).OrderBy(f => f.OrderIndex))
+                                {
+                                    <th>@field.Name</th>
+                                }
+                                <th>Created By</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td><strong>@item.CustomId</strong></td>
+                                    @foreach (var field in inventory.Fields.Where(f => f.IsVisibleInTable).OrderBy(f => f.OrderIndex))
+                                    {
+                                        var fieldValue = item.FieldValues?.FirstOrDefault(fv => fv.InventoryFieldId == field.Id);
+                                        <td>
+                                            @if (fieldValue != null)
+                                            {
+                                                @await Html.PartialAsync("_FieldValueDisplay", (field.FieldType, fieldValue))
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                    }
+                                    <td>@item.CreatedById</td>
+                                    <td>@item.CreatedAt.ToString("g")</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-info" onclick="showItemDetails(@item.Id)" title="Details">
+                                                <i class="fas fa-info"></i>
+                                            </button>
+                                            <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-outline-warning" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                <h4>No items found</h4>
+                <p class="text-muted">This inventory doesn't have any items yet.</p>
+                <a href="@Url.Action("Create", new { inventoryId = inventory.Id })" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>Add First Item
+                </a>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="alert alert-warning">
+        <h4><i class="fas fa-exclamation-triangle me-2"></i>Inventory not found</h4>
+        <p>The selected inventory doesn't exist or you don't have access to it.</p>
+        <a href="@Url.Action("Index", "Inventories")" class="btn btn-primary">Back to Inventories</a>
+    </div>
+}

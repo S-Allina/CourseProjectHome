@@ -1,0 +1,931 @@
+﻿@using Main.Domain.enums.inventory
+@model Main.Application.Dtos.CreateInventoryDto
+
+@{
+    ViewData["Title"] = "Create Inventory";
+}
+
+<h1>Create New Inventory</h1>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-12">
+        <form asp-action="Create" id="inventoryForm">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Табы для разных разделов -->
+            <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">
+                        <i class="fas fa-info-circle me-1"></i>Basic Info
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="customid-tab" data-bs-toggle="tab" data-bs-target="#customid" type="button" role="tab" aria-controls="customid" aria-selected="false">
+                        <i class="fas fa-id-card me-1"></i>Custom ID Format
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="fields-tab" data-bs-toggle="tab" data-bs-target="#fields" type="button" role="tab" aria-controls="fields" aria-selected="false">
+                        <i class="fas fa-list me-1"></i>Fields
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tags-tab" data-bs-toggle="tab" data-bs-target="#tags" type="button" role="tab" aria-controls="tags" aria-selected="false">
+                        <i class="fas fa-tags me-1"></i>Tags
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="inventoryTabsContent">
+
+                <!-- Basic Information Tab -->
+                <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Basic Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Name" class="form-label">Inventory Name *</label>
+                                        <input asp-for="Name" class="form-control" />
+                                        <span asp-validation-for="Name" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label asp-for="CategoryId" class="form-label">Category ID</label>
+                                        <input asp-for="CategoryId" type="number" class="form-control" />
+                                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Description" class="form-label">Description</label>
+                                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                                        <span asp-validation-for="Description" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label asp-for="ImageUrl" class="form-label">Image URL</label>
+                                        <input asp-for="ImageUrl" class="form-control" placeholder="https://..." />
+                                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="form-group form-check">
+                                        <input class="form-check-input" asp-for="IsPublic" />
+                                        <label class="form-check-label" asp-for="IsPublic">
+                                            Make this inventory public
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom ID Format Tab -->
+                <div class="tab-pane fade" id="customid" role="tabpanel" aria-labelledby="customid-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Custom ID Format Configuration</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">Custom ID Format Builder</label>
+                                        <div class="alert alert-info">
+                                            <small>
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Custom IDs are unique within this inventory. Build your format by adding components below.
+                                            </small>
+                                        </div>
+
+                                        <!-- Format Builder Area -->
+                                        <div class="border rounded p-3 bg-light mb-3" id="formatBuilder">
+                                            <div class="d-flex flex-wrap gap-2 min-height-50" id="formatComponents">
+                                                <!-- Components will be added here -->
+                                                <div class="text-muted text-center w-100 py-3" id="noComponentsMessage">
+                                                    No components added. Start by adding components from the panel on the right.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Preview -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Live Preview</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="customIdPreview" readonly placeholder="Preview will appear here" />
+                                                <button type="button" class="btn btn-outline-secondary" onclick="generatePreview()">
+                                                    <i class="fas fa-sync-alt"></i> Refresh
+                                                </button>
+                                            </div>
+                                            <small class="form-text text-muted">This is how generated IDs will look</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Available Components</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-grid gap-2">
+                                                <button type="button" class="btn btn-outline-primary btn-sm text-start" onclick="addComponent('fixed-text')">
+                                                    <i class="fas fa-font me-1"></i>Fixed Text
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary btn-sm text-start" onclick="addComponent('random-20bit')">
+                                                    <i class="fas fa-dice me-1"></i>20-bit Random
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary btn-sm text-start" onclick="addComponent('random-32bit')">
+                                                    <i class="fas fa-dice me-1"></i>32-bit Random
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary btn-sm text-start" onclick="addComponent('random-6digit')">
+                                                    <i class="fas fa-dice me-1"></i>6-digit Random
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary btn-sm text-start" onclick="addComponent('random-9digit')">
+                                                    <i class="fas fa-dice me-1"></i>9-digit Random
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary btn-sm text-start" onclick="addComponent('guid')">
+                                                    <i class="fas fa-fingerprint me-1"></i>GUID
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary btn-sm text-start" onclick="addComponent('datetime')">
+                                                    <i class="fas fa-calendar me-1"></i>Date/Time
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary btn-sm text-start" onclick="addComponent('sequence')">
+                                                    <i class="fas fa-sort-numeric-up me-1"></i>Sequence
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card mt-3">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Help & Tips</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="small">
+                                                <p><strong>Drag & Drop:</strong> Reorder components by dragging</p>
+                                                <p><strong>Remove:</strong> Drag component outside to remove</p>
+                                                <p><strong>Uniqueness:</strong> IDs are unique per inventory</p>
+                                                <p><strong>Editing:</strong> Custom IDs can be edited later</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fields Tab -->
+                <div class="tab-pane fade" id="fields" role="tabpanel" aria-labelledby="fields-tab">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Inventory Fields</h5>
+                            <button type="button" class="btn btn-sm btn-success" onclick="addField()">
+                                <i class="fas fa-plus"></i> Add Field
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="fieldsContainer">
+                                <div class="text-muted text-center py-3" id="noFieldsMessage">
+                                    No fields added yet. Click "Add Field" to create your first field.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tags Tab -->
+                <div class="tab-pane fade" id="tags" role="tabpanel" aria-labelledby="tags-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Tags</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Add Tags (comma separated)</label>
+                                <input type="text" class="form-control" id="tagInput" placeholder="books, fiction, science" />
+                                <small class="form-text text-muted">Press Enter or comma to add tags</small>
+                            </div>
+                            <div id="tagsContainer" class="mt-2">
+                                <!-- Теги будут добавляться динамически -->
+                            </div>
+                            <input type="hidden" asp-for="Tags" id="hiddenTags" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Create Inventory</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+    <script>
+        // ===== CUSTOM ID FORMAT BUILDER =====
+        let componentCount = 0;
+        let components = [];
+
+        // Initialize Sortable for drag & drop
+        document.addEventListener('DOMContentLoaded', function() {
+            const formatComponents = document.getElementById('formatComponents');
+
+            Sortable.create(formatComponents, {
+                animation: 150,
+                ghostClass: 'bg-warning',
+                onEnd: function(evt) {
+                    // Update components order
+                    updateComponentsOrder();
+                    generatePreview();
+                }
+            });
+
+            // Initialize drag & drop for removal
+            initializeDragToRemove();
+        });
+
+        function initializeDragToRemove() {
+            const formatBuilder = document.getElementById('formatBuilder');
+
+            formatBuilder.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('border-danger');
+            });
+
+            formatBuilder.addEventListener('dragleave', function(e) {
+                this.classList.remove('border-danger');
+            });
+
+            formatBuilder.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('border-danger');
+
+                const componentId = e.dataTransfer.getData('text/plain');
+                removeComponent(componentId);
+            });
+        }
+
+        function addComponent(type) {
+            componentCount++;
+            const componentId = `component-${componentCount}`;
+
+            let componentHtml = '';
+            let defaultValue = '';
+
+            switch (type) {
+                case 'fixed-text':
+                    componentHtml = `
+                        <div class="component-item badge bg-primary p-2" draggable="true" data-type="fixed-text" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>Fixed Text</span>
+                            <input type="text" class="form-control form-control-sm d-inline-block w-auto ms-1"
+                                   placeholder="Enter text" value="ITEM"
+                                   onchange="updateComponent('${componentId}', this.value)" />
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    defaultValue = 'ITEM';
+                    break;
+
+                case 'random-20bit':
+                    componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-20bit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>20-bit Random</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    defaultValue = '{R20}';
+                    break;
+
+                case 'random-32bit':
+                    componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-32bit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>32-bit Random</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    defaultValue = '{R32}';
+                    break;
+
+                case 'random-6digit':
+                    componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-6digit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>6-digit Random</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    defaultValue = '{R6D}';
+                    break;
+
+                case 'random-9digit':
+                    componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-9digit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>9-digit Random</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    defaultValue = '{R9D}';
+                    break;
+
+                case 'guid':
+                    componentHtml = `
+                        <div class="component-item badge bg-info p-2" draggable="true" data-type="guid" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>GUID</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    defaultValue = '{GUID}';
+                    break;
+
+                case 'datetime':
+                    componentHtml = `
+                        <div class="component-item badge bg-warning text-dark p-2" draggable="true" data-type="datetime" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>Date/Time</span>
+                            <select class="form-select form-select-sm d-inline-block w-auto ms-1" onchange="updateComponent('${componentId}', this.value)">
+                                <option value="{YYYYMMDD}">YYYYMMDD</option>
+                                <option value="{YYMMDD}">YYMMDD</option>
+                                <option value="{YYYY-MM-DD}">YYYY-MM-DD</option>
+                                <option value="{DDMMYYYY}">DDMMYYYY</option>
+                                <option value="{UNIX}">Unix Timestamp</option>
+                            </select>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    defaultValue = '{YYYYMMDD}';
+                    break;
+
+                case 'sequence':
+                    componentHtml = `
+                        <div class="component-item badge bg-danger p-2" draggable="true" data-type="sequence" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>Sequence</span>
+                            <input type="number" class="form-control form-control-sm d-inline-block w-auto ms-1"
+                                   value="6" min="1" max="10"
+                                   onchange="updateComponent('${componentId}', '{SEQ:' + this.value + '}')" />
+                            <span class="ms-1">digits</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    defaultValue = '{SEQ:6}';
+                    break;
+            }
+
+            // Add component to UI
+            document.getElementById('noComponentsMessage').style.display = 'none';
+            document.getElementById('formatComponents').insertAdjacentHTML('beforeend', componentHtml);
+
+            // Add to components array
+            components.push({
+                id: componentId,
+                type: type,
+                value: defaultValue
+            });
+
+            // Initialize drag events
+            const componentElement = document.getElementById(componentId);
+            componentElement.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', componentId);
+            });
+
+            generatePreview();
+        }
+
+        function removeComponent(componentId) {
+            // Remove from UI
+            const componentElement = document.getElementById(componentId);
+            if (componentElement) {
+                componentElement.remove();
+            }
+
+            // Remove from components array
+            components = components.filter(c => c.id !== componentId);
+
+            // Show message if no components left
+            if (components.length === 0) {
+                document.getElementById('noComponentsMessage').style.display = 'block';
+            }
+
+            generatePreview();
+        }
+
+        function updateComponent(componentId, value) {
+            const component = components.find(c => c.id === componentId);
+            if (component) {
+                component.value = value;
+                generatePreview();
+            }
+        }
+
+        function updateComponentsOrder() {
+            const componentElements = document.querySelectorAll('.component-item');
+            const newComponents = [];
+
+            componentElements.forEach(element => {
+                const componentId = element.id;
+                const existingComponent = components.find(c => c.id === componentId);
+                if (existingComponent) {
+                    newComponents.push(existingComponent);
+                }
+            });
+
+            components = newComponents;
+        }
+
+        function generatePreview() {
+            let preview = '';
+
+            components.forEach(component => {
+                switch (component.type) {
+                    case 'fixed-text':
+                        preview += component.value || 'TEXT';
+                        break;
+                    case 'random-20bit':
+                        preview += Math.floor(Math.random() * 1048576).toString().padStart(6, '0');
+                        break;
+                    case 'random-32bit':
+                        preview += Math.floor(Math.random() * 4294967296).toString().padStart(10, '0');
+                        break;
+                    case 'random-6digit':
+                        preview += Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+                        break;
+                    case 'random-9digit':
+                        preview += Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
+                        break;
+                    case 'guid':
+                        preview += 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                            const r = Math.random() * 16 | 0;
+                            const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                            return v.toString(16);
+                        });
+                        break;
+                    case 'datetime':
+                        const now = new Date();
+                        switch (component.value) {
+                            case '{YYYYMMDD}':
+                                preview += now.toISOString().slice(0,10).replace(/-/g, '');
+                                break;
+                            case '{YYMMDD}':
+                                preview += now.toISOString().slice(2,10).replace(/-/g, '').slice(0,6);
+                                break;
+                            case '{YYYY-MM-DD}':
+                                preview += now.toISOString().slice(0,10);
+                                break;
+                            case '{DDMMYYYY}':
+                                preview += now.toISOString().slice(8,10) + now.toISOString().slice(5,7) + now.toISOString().slice(0,4);
+                                break;
+                            case '{UNIX}':
+                                preview += Math.floor(now.getTime() / 1000);
+                                break;
+                            default:
+                                preview += now.toISOString().slice(0,10).replace(/-/g, '');
+                        }
+                        break;
+                    case 'sequence':
+                        const digits = parseInt(component.value.replace('{SEQ:', '').replace('}', '')) || 6;
+                        preview += '1'.padStart(digits, '0');
+                        break;
+                }
+            });
+
+            document.getElementById('customIdPreview').value = preview;
+
+            // Update the hidden field for form submission
+            const formatString = components.map(c => c.value).join('');
+            // document.querySelector('input[name="CustomIdFormat"]').value = formatString;
+        }
+
+        // Initialize with a sample component
+        document.addEventListener('DOMContentLoaded', function() {
+            addComponent('fixed-text');
+            addComponent('sequence');
+            generatePreview();
+        });
+
+        // ===== EXISTING FIELDS AND TAGS CODE =====
+        // ... (ваш существующий код для полей и тегов остается без изменений)
+        let fieldCount = 0;
+        let tags = [];
+
+        // Добавление нового поля
+        function addField() {
+            fieldCount++;
+            const fieldHtml = `
+                <div class="field-item card mb-3" id="field-${fieldCount}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h6 class="card-title mb-0">Field #${fieldCount}</h6>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeField(${fieldCount})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Field Name *</label>
+                                    <input name="Fields[${fieldCount}].Name" class="form-control field-name" required />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Field Type *</label>
+                                    <select name="Fields[${fieldCount}].FieldType" class="form-select field-type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="0">Text</option>
+                                        <option value="1">MultilineText</option>
+                                        <option value="2">Number</option>
+                                        <option value="3">Boolean</option>
+                                        <option value="4">File</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Order Index</label>
+                                    <input name="Fields[${fieldCount}].OrderIndex" type="number" class="form-control" value="${fieldCount}" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="Fields[${fieldCount}].Description" class="form-control" rows="2" placeholder="Optional field description"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input name="Fields[${fieldCount}].IsVisibleInTable" class="form-check-input" type="checkbox" checked />
+                                    <label class="form-check-label">Visible in table</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input name="Fields[${fieldCount}].IsRequired" class="form-check-input" type="checkbox" />
+                                    <label class="form-check-label">Required field</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('noFieldsMessage').style.display = 'none';
+            document.getElementById('fieldsContainer').insertAdjacentHTML('beforeend', fieldHtml);
+        }
+
+        // Удаление поля
+        function removeField(id) {
+            const fieldElement = document.getElementById(`field-${id}`);
+            if (fieldElement) {
+                fieldElement.remove();
+            }
+
+            // Показать сообщение, если полей не осталось
+            if (document.querySelectorAll('.field-item').length === 0) {
+                document.getElementById('noFieldsMessage').style.display = 'block';
+            }
+        }
+
+        // Управление тегами
+        document.getElementById('tagInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                addTag(this.value.trim().replace(',', ''));
+                this.value = '';
+            }
+        });
+
+        function addTag(tagText) {
+            if (tagText && !tags.includes(tagText)) {
+                tags.push(tagText);
+                updateTagsDisplay();
+            }
+        }
+
+        function removeTag(tagText) {
+            tags = tags.filter(tag => tag !== tagText);
+            updateTagsDisplay();
+        }
+
+        function updateTagsDisplay() {
+            const container = document.getElementById('tagsContainer');
+            const hiddenInput = document.getElementById('hiddenTags');
+
+            container.innerHTML = '';
+            hiddenInput.value = JSON.stringify(tags);
+
+            tags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'badge bg-primary me-2 mb-2';
+                tagElement.innerHTML = `
+                    ${tag}
+                    <button type="button" class="btn-close btn-close-white ms-1" onclick="removeTag('${tag}')"></button>
+                `;
+                container.appendChild(tagElement);
+            });
+        }
+
+        // Добавляем несколько полей по умолчанию при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            addField(); // Добавляем первое поле автоматически
+        });
+    </script>
+
+    <style>
+        .component-item {
+            cursor: move;
+            user-select: none;
+        }
+
+        .min-height-50 {
+            min-height: 50px;
+        }
+
+        #formatBuilder {
+            transition: border-color 0.3s ease;
+        }
+
+        .component-item input,
+        .component-item select {
+            font-size: 0.8rem;
+        }
+
+        .nav-tabs .nav-link {
+            font-weight: 500;
+        }
+
+        .field-item {
+            border-left: 4px solid #007bff;
+        }
+    </style>
+}
+@* 
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+               let fieldCount = 0;
+        let tags = [];
+
+        // Добавление нового поля
+        function addField() {
+            const fieldIndex = fieldCount; // Используем текущее значение как индекс
+            fieldCount++; // Увеличиваем для следующего поля
+
+            const fieldHtml = `
+                <div class="field-item card mb-3" id="field-${fieldIndex}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h6 class="card-title mb-0">Field #${fieldIndex + 1}</h6>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeField(${fieldIndex})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Field Name *</label>
+                                    <input name="Fields[${fieldIndex}].Name" class="form-control field-name" required />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Field Type *</label>
+                                    <select name="Fields[${fieldIndex}].FieldType" class="form-select field-type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="0">Text</option>
+                                        <option value="1">MultilineText</option>
+                                        <option value="2">Number</option>
+                                        <option value="3">Boolean</option>
+                                        <option value="4">File</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Order Index</label>
+                                    <input name="Fields[${fieldIndex}].OrderIndex" type="number" class="form-control" value="${fieldIndex}" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="Fields[${fieldIndex}].Description" class="form-control" rows="2" placeholder="Optional field description"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input name="Fields[${fieldIndex}].IsVisibleInTable" class="form-check-input" type="checkbox" value="true" checked />
+                                    <input type="hidden" name="Fields[${fieldIndex}].IsVisibleInTable" value="false" />
+                                    <label class="form-check-label">Visible in table</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input name="Fields[${fieldIndex}].IsRequired" class="form-check-input" type="checkbox" value="true" />
+                                    <input type="hidden" name="Fields[${fieldIndex}].IsRequired" value="false" />
+                                    <label class="form-check-label">Required field</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('noFieldsMessage').style.display = 'none';
+            document.getElementById('fieldsContainer').insertAdjacentHTML('beforeend', fieldHtml);
+        }
+
+        // Удаление поля
+        function removeField(index) {
+            const fieldElement = document.getElementById(`field-${index}`);
+            if (fieldElement) {
+                fieldElement.remove();
+            }
+
+            // Переиндексация оставшихся полей
+            reindexFields();
+
+            // Показать сообщение, если полей не осталось
+            if (document.querySelectorAll('.field-item').length === 0) {
+                document.getElementById('noFieldsMessage').style.display = 'block';
+                fieldCount = 0; // Сбрасываем счетчик
+            }
+        }
+
+        // Переиндексация полей после удаления
+        function reindexFields() {
+            const fieldItems = document.querySelectorAll('.field-item');
+            fieldCount = 0;
+
+            fieldItems.forEach((item, newIndex) => {
+                const oldId = item.id;
+                item.id = `field-${newIndex}`;
+
+                // Обновляем индексы в полях ввода
+                const inputs = item.querySelectorAll('[name]');
+                inputs.forEach(input => {
+                    const name = input.getAttribute('name');
+                    const newName = name.replace(/Fields\[\d+\]/, `Fields[${newIndex}]`);
+                    input.setAttribute('name', newName);
+                });
+
+                // Обновляем заголовок
+                const title = item.querySelector('.card-title');
+                if (title) {
+                    title.textContent = `Field #${newIndex + 1}`;
+                }
+
+                // Обновляем кнопку удаления
+                const removeBtn = item.querySelector('button[onclick]');
+                if (removeBtn) {
+                    removeBtn.setAttribute('onclick', `removeField(${newIndex})`);
+                }
+
+                fieldCount++;
+            });
+        }
+
+        // Управление тегами
+        document.getElementById('tagInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                const tagText = this.value.trim().replace(',', '');
+                if (tagText) {
+                    addTag(tagText);
+                    this.value = '';
+                }
+            }
+        });
+
+        function addTag(tagText) {
+            if (tagText && !tags.includes(tagText)) {
+                tags.push(tagText);
+                updateTagsDisplay();
+            }
+        }
+
+        function removeTag(tagText) {
+            tags = tags.filter(tag => tag !== tagText);
+            updateTagsDisplay();
+        }
+
+        function updateTagsDisplay() {
+            const container = document.getElementById('tagsContainer');
+            const hiddenInput = document.getElementById('hiddenTags');
+
+            container.innerHTML = '';
+            hiddenInput.value = JSON.stringify(tags);
+
+            tags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'badge bg-primary me-2 mb-2';
+                tagElement.innerHTML = `
+                    ${tag}
+                    <button type="button" class="btn-close btn-close-white ms-1" onclick="removeTag('${tag}')"></button>
+                `;
+                container.appendChild(tagElement);
+            });
+        }
+
+        // Валидация формы
+        document.getElementById('inventoryForm').addEventListener('submit', function(e) {
+            const fieldItems = document.querySelectorAll('.field-item');
+            let isValid = true;
+
+            // Проверка обязательных полей основных данных
+            const nameField = document.querySelector('input[name="Name"]');
+            if (!nameField.value.trim()) {
+                isValid = false;
+                nameField.classList.add('is-invalid');
+            }
+
+            // Проверка что есть хотя бы одно поле
+            if (fieldItems.length === 0) {
+                isValid = false;
+                alert('Please add at least one field to the inventory.');
+            }
+
+            // Проверка валидности полей
+            fieldItems.forEach(field => {
+                const fieldName = field.querySelector('.field-name');
+                const fieldType = field.querySelector('.field-type');
+
+                if (!fieldName.value.trim()) {
+                    isValid = false;
+                    fieldName.classList.add('is-invalid');
+                }
+                if (!fieldType.value) {
+                    isValid = false;
+                    fieldType.classList.add('is-invalid');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+
+        // Убираем класс invalid при вводе
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('is-invalid')) {
+                e.target.classList.remove('is-invalid');
+            }
+        });
+
+        // Добавляем несколько полей по умолчанию при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            addField(); // Добавляем первое поле автоматически
+        });
+    </script>
+
+    <style>
+        .field-item {
+            border-left: 4px solid #007bff;
+        }
+
+            .field-item .card-title {
+                color: #495057;
+            }
+
+        .btn-close {
+            font-size: 0.7rem;
+            padding: 0.25rem;
+        }
+
+        #noFieldsMessage {
+            border: 2px dashed #dee2e6;
+            border-radius: 0.375rem;
+        }
+    </style>
+} *@

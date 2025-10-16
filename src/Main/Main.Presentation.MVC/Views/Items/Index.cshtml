@@ -1,0 +1,74 @@
+﻿@using Main.Domain.enums.inventory
+@model IEnumerable<Main.Application.Dtos.ItemDto>
+@{
+    ViewData["Title"] = "Items";
+    var inventory = ViewBag.SelectedInventory as Main.Application.Dtos.InventoryDto;
+}
+
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="items-tab" data-bs-toggle="tab" data-bs-target="#items" type="button" role="tab" aria-controls="items" aria-selected="true">
+            <i class="fas fa-boxes me-1"></i>Items
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab" aria-controls="chat" aria-selected="false">
+            <i class="fas fa-comments me-1"></i>Chat
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">
+            <i class="fas fa-cog me-1"></i>Settings
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="myTabContent">
+    <!-- Items Tab -->
+    <div class="tab-pane fade show active" id="items" role="tabpanel" aria-labelledby="items-tab">
+        <partial name="_ItemsTab" model="Model" />
+    </div>
+
+    <!-- Chat Tab -->
+    <div class="tab-pane fade" id="chat" role="tabpanel" aria-labelledby="chat-tab">
+        <partial name="_ChatTab" />
+    </div>
+
+    <!-- Settings Tab -->
+    <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+        <partial name="_SettingsTab" />
+    </div>
+</div>
+
+<!-- Модальное окно для деталей товара -->
+<div class="modal fade" id="itemDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Item Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="itemDetailsContent">
+                <!-- Контент загружается через AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showItemDetails(itemId) {
+            fetch(`@Url.Action("GetItemDetails")/${itemId}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('itemDetailsContent').innerHTML = html;
+                    new bootstrap.Modal(document.getElementById('itemDetailsModal')).show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('itemDetailsContent').innerHTML =
+                        '<div class="text-danger">Error loading item details</div>';
+                });
+        }
+    </script>
+}

@@ -1,0 +1,185 @@
+﻿@using Main.Domain.enums.inventory
+@model Main.Application.Dtos.CreateItemDto
+@{
+    ViewData["Title"] = "Create Item";
+    var inventory = ViewBag.Inventory as Main.Application.Dtos.InventoryDto;
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>Create New Item in @inventory?.Name</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="InventoryId" />
+
+                    <div class="mb-3">
+                        <label asp-for="CustomId" class="form-label">Custom ID</label>
+                        <input asp-for="CustomId" class="form-control" />
+                        <span asp-validation-for="CustomId" class="text-danger"></span>
+                        <small class="form-text text-muted">
+                            Format: @inventory?.CustomIdFormat
+                        </small>
+                    </div>
+
+                    <h5 class="mb-3">Field Values</h5>
+
+                    @for (int i = 0; i < Model.FieldValues.Count; i++)
+                    {
+                        var field = Model.FieldValues[i];
+                        var inventoryField = inventory.Fields.FirstOrDefault(f => f.Id == field.InventoryFieldId);
+
+                        <input type="hidden" asp-for="FieldValues[i].InventoryFieldId" />
+                        <input type="hidden" asp-for="FieldValues[i].FieldName" />
+                        <input type="hidden" asp-for="FieldValues[i].FieldType" />
+                        <input type="hidden" asp-for="FieldValues[i].IsRequired" />
+
+                        <div class="mb-4 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-start mb-0">
+                                <label class="form-label fw-bold mb-0">
+                                    @field.FieldName
+                                    @if (field.IsRequired)
+                                    {
+                                        <span class="text-danger mb-0">*</span>
+                                    }
+                                </label>
+                                <span class="badge bg-secondary mb-0">@field.FieldType</span>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(inventoryField?.Description))
+                            {
+                                <div class="mb-3 mt-0">
+                                    <small class="fw-light">@inventoryField.Description</small>
+                                </div>
+                            }
+
+                            @switch (field.FieldType)
+                            {
+                                case FieldType.Text:
+                                    <input asp-for="FieldValues[i].TextValue" class="form-control"
+                                           required="@field.IsRequired" />
+                                    <span asp-validation-for="FieldValues[i].TextValue" class="text-danger"></span>
+                                    break;
+
+                                case FieldType.MultilineText:
+                                    <textarea asp-for="FieldValues[i].MultilineTextValue"
+                                              class="form-control" rows="3"
+                                              required="@field.IsRequired"></textarea>
+                                    <span asp-validation-for="FieldValues[i].MultilineTextValue" class="text-danger"></span>
+                                    break;
+
+                                case FieldType.Number:
+                                    <input asp-for="FieldValues[i].NumberValue" type="number" step="0.01"
+                                           class="form-control" required="@field.IsRequired" />
+                                    <span asp-validation-for="FieldValues[i].NumberValue" class="text-danger"></span>
+                                    break;
+
+                                case FieldType.Boolean:
+                                    <div class="form-check">
+                                        <input type="checkbox"
+                                               name="FieldValues[@i].BooleanValue"
+                                               value="true"
+                                               class="form-check-input"
+                                               @(field.BooleanValue != null ? "checked" : "") />
+                                        <input type="hidden" name="FieldValues[@i].BooleanValue" value="false" />
+                                        <label class="form-check-label">Yes</label>
+                                    </div>
+                                    <span asp-validation-for="FieldValues[i].BooleanValue" class="text-danger"></span>
+                                    break;
+
+                                case FieldType.File:
+                                    <input asp-for="FieldValues[i].FileValue" type="file"
+                                           class="form-control" required="@field.IsRequired" />
+                                    <span asp-validation-for="FieldValues[i].FileValue" class="text-danger"></span>
+                                    <small class="form-text text-muted">Max file size: 10MB</small>
+                                    break;
+                            }
+
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    @if (field.IsRequired)
+                                    {
+                                        <span class="text-danger">Required field</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Optional field</span>
+                                    }
+                                </small>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-success">Create Item</button>
+                        <a href="@Url.Action("Index", "Items", new { inventoryId = Model.InventoryId })"
+                           class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Inventory Information</h5>
+            </div>
+            <div class="card-body">
+                <h6>@inventory?.Name</h6>
+                <p class="text-muted">@inventory?.Description</p>
+
+                <div class="mt-3">
+                    <h6>Fields Summary:</h6>
+                    <div class="small">
+                        @foreach (var field in inventory.Fields.OrderBy(f => f.OrderIndex))
+                        {
+                            <div class="d-flex justify-content-between border-bottom py-1">
+                                <span>@field.Name</span>
+                                <span>
+                                    <span class="badge bg-light text-dark">@field.FieldType</span>
+                                    @if (field.IsRequired)
+                                    {
+                                        <span class="badge bg-danger">Required</span>
+                                    }
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // Динамическая валидация для обязательных полей
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+                const requiredFields = document.querySelectorAll('input[required], textarea[required], select[required]');
+
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('is-invalid');
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields.');
+                }
+            });
+        });
+    </script>
+}

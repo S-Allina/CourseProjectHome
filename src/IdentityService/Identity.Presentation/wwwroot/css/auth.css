@@ -1,0 +1,86 @@
+﻿.auth-container {
+	display: flex;
+	width: 100vw;
+	height: 100vh;
+}
+
+.auth-left {
+	padding: 2rem;
+	box-sizing: border-box;
+	width: 50%;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.auth-right {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+	box-sizing: border-box;
+	width: 50%;
+	background-image: url('https://i.ibb.co/Ps3DNvLB/background.png');
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.logo {
+	width: 35%;
+	height: 70px;
+	background-image: url('https://i.ibb.co/cSWt83Tw/logo.png');
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.auth-content {
+	padding: 4% 15%;
+	width: auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+}
+
+.auth-subtitle {
+	text-align: left;
+	margin: 0;
+	color: #6c757d;
+	font-weight: 300;
+	font-size: 1rem;
+}
+
+.auth-title {
+	text-align: left;
+	margin: 0 0 1rem 0;
+	color: #000;
+	font-size: 1.5rem;
+}
+
+.auth-form {
+	margin-top: 3rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.auth-links {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	padding: 0 1rem;
+	margin-top: 1rem;
+	box-sizing: border-box;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+	.auth-right {
+		display: none;
+	}
+
+	.auth-left {
+		width: 100%;
+	}
+}
