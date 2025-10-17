@@ -69,7 +69,7 @@ namespace Main.Application.Services
         private void ValidateFieldValues(List<CreateItemFieldValueDto> fieldValues, IEnumerable<InventoryFieldDto> fieldSchema)
         {
             // Проверяем обязательные поля
-            var requiredFields = fieldSchema.Where(f => f.IsRequired).ToList();
+            var requiredFields = fieldSchema.ToList();
             ValidateAndConvertFieldValues(fieldValues, requiredFields);
 
         }

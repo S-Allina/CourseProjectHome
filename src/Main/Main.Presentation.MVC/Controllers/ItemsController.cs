@@ -109,6 +109,7 @@ namespace Main.Presentation.MVC.Controllers
                 {
                     ModelState.AddModelError("", "Error creating item: " + ex.Message);
                 }
+
             return View(createDto);
         }
         //// POST: Items/Edit/5
