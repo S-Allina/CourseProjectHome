@@ -37,7 +37,6 @@ namespace Identity.Presentation.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var response = await _userService.GetByIdAsync(id);
@@ -45,8 +44,8 @@ namespace Identity.Presentation.Controllers
             return Ok(response);
         }
 
-        [HttpGet("users")]
-        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
             var response = await _userService.GetAllAsync(cancellationToken);

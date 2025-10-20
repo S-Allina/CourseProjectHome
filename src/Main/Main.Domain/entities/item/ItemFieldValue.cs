@@ -16,10 +16,10 @@ namespace Main.Domain.entities.item
         public int InventoryFieldId { get; set; }
         public InventoryField InventoryField { get; set; }
 
-        public string TextValue { get; set; }
-        public string MultilineTextValue { get; set; }
+        public string? TextValue { get; set; }
+        public string? MultilineTextValue { get; set; }
         public decimal? NumberValue { get; set; }
-        public string FileUrl { get; set; }
+        public string? FileUrl { get; set; }
         public bool? BooleanValue { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -60,11 +60,17 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
         public async Task<T> CreateAsync(T entity, CancellationToken cancellationToken)
         {
-            await dbSet.AddAsync(entity, cancellationToken);
+            try
+            {
+                await dbSet.AddAsync(entity, cancellationToken);
 
-            await _db.SaveChangesAsync(cancellationToken);
+                await _db.SaveChangesAsync(cancellationToken);
 
-            return entity;
+                return entity;
+            }catch(Exception ex)
+            {
+                throw;
+            }
         }
 
         public async Task<T> UpdateAsync(T entity, CancellationToken cancellationToken)
@@ -80,7 +86,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
         public async Task DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken)
         {
-            var entity = await dbSet.Where(filter).ToListAsync(cancellationToken);
+            var entity = dbSet.Where(filter);
 
             dbSet.RemoveRange(entity);
            

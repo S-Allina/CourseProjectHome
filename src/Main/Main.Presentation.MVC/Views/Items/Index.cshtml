@@ -1,4 +1,4 @@
-﻿@using Main.Domain.enums.inventory
+﻿@* @using Main.Domain.enums.inventory
 @model IEnumerable<Main.Application.Dtos.ItemDto>
 @{
     ViewData["Title"] = "Items";
@@ -53,8 +53,84 @@
             </div>
         </div>
     </div>
+</div> *@
+@using Main.Domain.enums.inventory
+@model IEnumerable<Main.Application.Dtos.ItemDto>
+@{
+    ViewData["Title"] = "Items";
+    var inventory = ViewBag.SelectedInventory as Main.Application.Dtos.InventoryDto;
+}
+
+<!-- Верхняя панель с кнопками -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>@inventory?.Name</h2>
+        @if (!string.IsNullOrEmpty(inventory?.Description))
+        {
+            <div class="text-muted mb-0 inventory-description-full">
+                @Html.Raw(inventory.DescriptionHtml)
+            </div>
+        }
+        else
+        {
+            <p class="text-muted mb-0">No description</p>
+        }
+    </div>
+    <div class="btn-group">
+        <!-- ✅ Кнопка настроек - переход к редактированию инвентаря -->
+        <a href="@Url.Action("Edit", "Inventories", new { id = inventory?.Id })"
+           class="btn btn-outline-primary">
+            <i class="fas fa-cog me-1"></i>Settings
+        </a>
+        <button type="button" class="btn btn-outline-secondary" id="chatToggle">
+            <i class="fas fa-comments me-1"></i>Chat
+        </button>
+    </div>
 </div>
 
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="items-tab" data-bs-toggle="tab" data-bs-target="#items" type="button" role="tab" aria-controls="items" aria-selected="true">
+            <i class="fas fa-boxes me-1"></i>Items
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="myTabContent">
+    <!-- Items Tab -->
+    <div class="tab-pane fade show active" id="items" role="tabpanel" aria-labelledby="items-tab">
+        <partial name="_ItemsTab" model="Model" />
+    </div>
+</div>
+
+<!-- Уберите модальное окно настроек - оно больше не нужно -->
+<!-- ✅ Боковая панель чата -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="chatOffcanvas" aria-labelledby="chatOffcanvasLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="chatOffcanvasLabel">
+            <i class="fas fa-comments me-2"></i>Chat
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <partial name="_ChatTab" />
+    </div>
+</div>
+
+<!-- Модальное окно для деталей товара -->
+<div class="modal fade" id="itemDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Item Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="itemDetailsContent">
+                <!-- Контент загружается через AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
 @section Scripts {
     <script>
         function showItemDetails(itemId) {
@@ -71,4 +147,152 @@
                 });
         }
     </script>
+    <script>
+         function showItemDetails(itemId) {
+            fetch(`@Url.Action("GetItemDetails")/${itemId}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('itemDetailsContent').innerHTML = html;
+                    new bootstrap.Modal(document.getElementById('itemDetailsModal')).show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('itemDetailsContent').innerHTML =
+                        '<div class="text-danger">Error loading item details</div>';
+                });
+        }
+
+        // Управление чатом (боковая панель)
+        document.getElementById('chatToggle').addEventListener('click', function() {
+            const chatOffcanvas = new bootstrap.Offcanvas(document.getElementById('chatOffcanvas'));
+            chatOffcanvas.show();
+        });
+
+        document.getElementById('deleteSelected').addEventListener('click', function () {
+            const selectedCheckboxes = document.querySelectorAll('.rowCheckbox:checked');
+            console.log(selectedCheckboxes);
+            if (selectedCheckboxes.length === 0) {
+                alert('Please select at least one item to delete.');
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete the selected items?')) {
+                const form = document.createElement('form');
+                form.method = 'post';
+                form.action = '@Url.Action("Delete", "Items")';
+
+                selectedCheckboxes.forEach(checkbox => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'selectedIds';
+                    input.value = checkbox.value;
+                    form.appendChild(input);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+        document.getElementById('deleteSelected').addEventListener('click', function () {
+            const selectedCheckboxes = document.querySelectorAll('.rowCheckbox:checked');
+            console.log(selectedCheckboxes);
+            if (selectedCheckboxes.length === 0) {
+                alert('Please select at least one inventory to delete.');
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete the selected inventories?')) {
+                // Собираем ID и отправляем форму
+                const form = document.createElement('form');
+                form.method = 'post';
+                form.action = '@Url.Action("Delete", "items")';
+
+                selectedCheckboxes.forEach(checkbox => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'selectedIds';
+                    input.value = checkbox.value;
+                    form.appendChild(input);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Обработка двойного клика по строке таблицы
+            const tableRows = document.querySelectorAll('.clickable-row');
+
+            tableRows.forEach(row => {
+                row.addEventListener('dblclick', function(e) {
+                    // Предотвращаем срабатывание на чекбоксе
+                    if (e.target.type === 'checkbox') {
+                        return;
+                    }
+                    const itemId = this.getAttribute('data-item-id');
+                    navigateToItem(itemId);
+                });
+
+                // Обработка клика по чекбоксу - предотвращаем всплытие события
+                // const checkbox = row.querySelector('.rowCheckbox');
+                // if (checkbox) {
+                //     checkbox.addEventListener('click', function(e) {
+                //         e.stopPropagation();
+                //     });
+                // }
+            });
+
+            // Функция перехода к странице предмета
+            function navigateToItem(itemId) {
+                window.location.href = '@Url.Action("Edit", "Items")' + '?id=' + itemId;
+            }
+
+            // Предотвращаем выделение текста при двойном клике
+            tableRows.forEach(row => {
+                row.addEventListener('mousedown', function(e) {
+                    if (e.detail > 1 && e.target.type !== 'checkbox') {
+                        e.preventDefault();
+                    }
+                });
+            });
+
+            // Обработка удаления выбранных элементов
+            // document.getElementById('deleteSelected').addEventListener('click', function() {
+            //     const selectedIds = Array.from(document.querySelectorAll('input[name="selectedIds"]:checked'))
+            //         .map(checkbox => checkbox.value);
+
+            //     if (selectedIds.length === 0) {
+            //         alert('Please select at least one item to delete.');
+            //         return;
+            //     }
+
+            //     if (confirm(`Are you sure you want to delete ${selectedIds.length} selected item(s)?`)) {
+            //         // Здесь будет логика удаления
+            //         console.log('Deleting items:', selectedIds);
+            //     }
+            // });
+        });
+    </script>
+
+    <style>
+        .clickable-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+            .clickable-row:hover {
+                background-color: #f8f9fa !important;
+            }
+
+            /* Убираем pointer для чекбокса */
+            .clickable-row .rowCheckbox {
+                cursor: default;
+            }
+
+        tbody tr {
+            user-select: none;
+        }
+    </style>
 }

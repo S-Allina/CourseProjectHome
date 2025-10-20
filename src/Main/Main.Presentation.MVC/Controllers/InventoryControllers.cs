@@ -7,6 +7,7 @@ using System.Security.Claims;
 
 namespace Main.Presentation.MVC.Controllers
 {
+    [ApiController]
     public class InventoryController : ControllerBase
     {
         private readonly IInventoryService _inventoryService;
@@ -39,41 +40,41 @@ namespace Main.Presentation.MVC.Controllers
         ////        return CreatedAtAction(nameof(GetInventory), new { id = inventory.Id }, inventory);
         //}
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateInventory1(CreateInventoryDto createDto, CancellationToken cancellationToken = default)
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    // Убедимся, что поля имеют правильные OrderIndex
-                    for (int i = 0; i < createDto.Fields.Count; i++)
-                    {
-                        createDto.Fields[i].OrderIndex = i + 1;
-                    }
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> CreateInventory1(CreateInventoryDto createDto, CancellationToken cancellationToken = default)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        try
+        //        {
+        //            // Убедимся, что поля имеют правильные OrderIndex
+        //            for (int i = 0; i < createDto.Fields.Count; i++)
+        //            {
+        //                createDto.Fields[i].OrderIndex = i + 1;
+        //            }
 
-                    var ownerId = "current-user-id"; 
-                    var inventory = await _inventoryService.CreateInventoryAsync(createDto, ownerId, cancellationToken);
+        //            var ownerId = "current-user-id"; 
+        //            var inventory = await _inventoryService.CreateInventoryAsync(createDto, ownerId, cancellationToken);
 
-                    _logger.LogInformation("User {UserId} created inventory {InventoryId} with {FieldCount} fields",
-                        ownerId, inventory.Id, createDto.Fields.Count);
+        //            _logger.LogInformation("User {UserId} created inventory {InventoryId} with {FieldCount} fields",
+        //                ownerId, inventory.Id, createDto.Fields.Count);
 
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (Exception ex)
-                {
-                    ModelState.AddModelError("", "Error creating inventory: " + ex.Message);
-                    _logger.LogError(ex, "Error creating inventory");
-                }
-            }
+        //            return RedirectToAction(nameof(Index));
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            ModelState.AddModelError("", "Error creating inventory: " + ex.Message);
+        //            _logger.LogError(ex, "Error creating inventory");
+        //        }
+        //    }
 
-            // Если есть ошибки, возвращаем обратно с данными
-            return Ok(createDto);
-        }
+        //    // Если есть ошибки, возвращаем обратно с данными
+        //    return Ok(createDto);
+        //}
 
-        [HttpGet]
-        [AllowAnonymous]
+        [HttpGet("inventory")]
+        [Authorize]
         public async Task<IEnumerable<InventoryDto>> GetInventory(CancellationToken cancellationToken = default)
         {
             // Реализация получения инвентаря...
@@ -87,7 +88,7 @@ namespace Main.Presentation.MVC.Controllers
             return await _inventoryService.DeleteInventoryAsync(selectedIds, cancellationToken);
         }
 
-        [HttpPut]
+        [HttpPut("update")]
         [AllowAnonymous]
         public async Task<InventoryDto> UpdateInventory(InventoryDto inventoryDto, CancellationToken cancellationToken = default)
         {

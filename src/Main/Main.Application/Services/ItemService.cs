@@ -18,52 +18,63 @@ namespace Main.Application.Services
     {
         private readonly IItemRepository _itemRepository;
         private readonly IInventoryService _inventoryService;
+        private readonly ICustomIdService _customIdService;
         private readonly IMapper _mapper;
 
         public ItemService(
             IItemRepository itemRepository,
             IInventoryService inventoryService,
             IInventoryFieldRepository inventoryFieldRepository,
+            ICustomIdService customIdService,
             IMapper mapper)
         {
             _itemRepository = itemRepository;
             _inventoryService = inventoryService;
+            _customIdService = customIdService;
             _mapper = mapper;
         }
 
         public async Task<ItemDto> CreateAsync(CreateItemDto createDto, string userId, CancellationToken cancellationToken = default)
         {
-            if (!await _inventoryService.HasWriteAccessAsync(createDto.InventoryId, userId, cancellationToken))
-                throw new UnauthorizedAccessException("Нет прав на добавление предметов в этот инвентарь");
-
-            var fieldSchema = await _inventoryService.GetInventoryFields(createDto.InventoryId, cancellationToken);
-
-            ValidateFieldValues(createDto.FieldValues, fieldSchema);
-
-            // 4. Генерируем CustomId если не указан
-            //var customId = string.IsNullOrEmpty(createDto.CustomId)
-            //    ? await _inventoryRepository.GenerateCustomIdAsync(inventory.Id, cancellationToken)
-            //    : createDto.CustomId;
-
-            var customId = "hjbhbh";
-
-            // 5. Создаем Item
-            var item = new Item
+            try
             {
-                InventoryId = createDto.InventoryId,
-                CustomId = customId,
-                CreatedById = userId,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+                if (!await _inventoryService.HasWriteAccessAsync(createDto.InventoryId, userId, cancellationToken))
+                    throw new UnauthorizedAccessException("Нет прав на добавление предметов в этот инвентарь");
 
-            var fieldSchema1 = _mapper.Map<List<InventoryField>>(fieldSchema);
-            // 6. Добавляем значения полей
-            await AddFieldValuesAsync(item, createDto.FieldValues, fieldSchema1, cancellationToken);
+                var fieldSchema = await _inventoryService.GetInventoryFields(createDto.InventoryId, cancellationToken);
 
-            // 7. Сохраняем
-            var createdItem = await _itemRepository.CreateAsync(item, cancellationToken);
-            return _mapper.Map<ItemDto>(createdItem);
+                ValidateFieldValues(createDto.FieldValues, fieldSchema);
+
+                // 5. Создаем Item
+                var item = new Item
+                {
+                    InventoryId = createDto.InventoryId,
+                    CustomId = createDto.CustomId,
+                    CreatedById = userId,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                var fieldSchema1 = _mapper.Map<List<InventoryField>>(fieldSchema);
+                // 6. Добавляем значения полей
+                await AddFieldValuesAsync(item, createDto.FieldValues, fieldSchema1, cancellationToken);
+
+                // 7. Сохраняем
+                var createdItem = await _itemRepository.CreateAsync(item, cancellationToken);
+                return _mapper.Map<ItemDto>(createdItem);
+            }
+            catch(Exception ex)
+            {
+                throw;
+            }
+        }
+
+        public async Task<int> DeleteItemAsync(int[] ids, CancellationToken cancellationToken = default)
+        {
+            var inventory = await _itemRepository.GetFirstAsync(i=>i.Id == ids[0]);
+            await _itemRepository.DeleteAsync(i => ids.Contains(i.Id), cancellationToken);
+
+            return inventory.InventoryId;
         }
 
         private void ValidateFieldValues(List<CreateItemFieldValueDto> fieldValues, IEnumerable<InventoryFieldDto> fieldSchema)
@@ -136,6 +147,31 @@ namespace Main.Application.Services
 
                 item.FieldValues.Add(itemFieldValue);
             }
+        }
+
+        public async Task<ItemDto> UpdateItemAsync(ItemDto itemDto, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var item = _mapper.Map<Item>(itemDto);
+
+                var result = await _itemRepository.UpdateItemAsync(item, cancellationToken);
+
+                var resultDto = _mapper.Map<ItemDto>(result);
+
+                return resultDto;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task<ItemDto> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var item = await _itemRepository.GetFirstAsync(i => i.Id == id, "FieldValues", cancellationToken);
+
+            return _mapper.Map<ItemDto>(item);
         }
 
         public async Task<IEnumerable<ItemDto>> GetByInventoryAsync(int id, CancellationToken cancellationToken = default)

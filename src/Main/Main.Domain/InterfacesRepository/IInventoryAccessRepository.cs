@@ -15,4 +15,5 @@ namespace Main.Domain.InterfacesRepository
         Task<IEnumerable<InventoryAccess>> GetAccessListAsync(int inventoryId, CancellationToken cancellationToken = default);
         Task<IEnumerable<Inventory>> GetInventoriesWithAccessAsync(string userId, CancellationToken cancellationToken = default);
     }
+
 }

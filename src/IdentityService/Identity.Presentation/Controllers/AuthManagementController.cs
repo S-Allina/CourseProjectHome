@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Cors;
 using Identity.Domain.Entity;
 using Identity.Application.Interfaces;
 using Identity.Application.Dto;
+using Users.Application.Dto;
 
 namespace Identity.Presentation.Controllers
 {
@@ -23,6 +24,7 @@ namespace Identity.Presentation.Controllers
         private readonly IUserRegistrationService _userRegistrationService;
         private readonly IAuthService _authService;
         private readonly string _frontUrl;
+        private ResponseDto response;
 
         public AuthController(SignInManager<ApplicationUser> signInManager, IUserRegistrationService userRegistrationService, IAuthService authService, 
             IConfiguration configuration)
@@ -31,31 +33,32 @@ namespace Identity.Presentation.Controllers
             _userRegistrationService = userRegistrationService;
             _authService = authService;
             _frontUrl = configuration["FrontUrl"];
+            response = new ResponseDto();
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] UserRegistrationRequestDto request)
+        public async Task<ResponseDto> Register([FromBody] UserRegistrationRequestDto request)
         {
-            var response = await _userRegistrationService.RegisterAsync(request);
+            response.Result = await _userRegistrationService.RegisterAsync(request);
 
-            return Ok(response);
+            return response;
         }
 
         [HttpPost("manager/register")]
-        public async Task<IActionResult> RegisterManager([FromBody] UserRegistrationRequestDto request)
+        public async Task<ResponseDto> RegisterManager([FromBody] UserRegistrationRequestDto request)
         {
-            var response = await _userRegistrationService.RegisterManagerAsync(request);
+            response.Result = await _userRegistrationService.RegisterManagerAsync(request);
 
-            return Ok(response);
+            return response;
         }
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] UserLoginRequestDto request)
+        public async Task<ResponseDto> Login([FromBody] UserLoginRequestDto request)
         {
-            var response = await _authService.LoginAsync(request);
+            response.Result = await _authService.LoginAsync(request);
 
-            return Ok(response);
+            return response;
         }
 
         [HttpGet("google-login")]
@@ -81,11 +84,11 @@ namespace Identity.Presentation.Controllers
 
         [HttpPost("refresh-token")]
         [Authorize]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
+        public async Task<ResponseDto> RefreshToken([FromBody] RefreshTokenRequestDto request)
         {
-            var response = await _authService.RefreshTokenAsync(request);
+            response.Result = await _authService.RefreshTokenAsync(request);
 
-            return Ok(response);
+            return response;
         }
 
         [HttpPost("revoke-refresh-token")]
@@ -119,11 +122,11 @@ namespace Identity.Presentation.Controllers
         }
 
         [HttpGet("reset-password")]
-        public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
+        public async Task<ResponseDto> ResetPassword(ResetPasswordDto resetPasswordDto)
         {
-            var result = await _authService.ResetPasswordAsync(resetPasswordDto);
+            response.Result = await _authService.ResetPasswordAsync(resetPasswordDto);
 
-            return Ok(result);
+            return response;
         }
     }
 }

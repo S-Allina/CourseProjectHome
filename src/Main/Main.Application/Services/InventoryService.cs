@@ -18,17 +18,20 @@ namespace Main.Application.Services
     {
         private readonly IInventoryRepository _inventoryRepository;
         private readonly IInventoryFieldRepository _inventoryFieldRepository;
+        private readonly ICategoryRepository _categoryRepository;
         private readonly IValidator<CreateInventoryDto> _fluentValidator;
         private readonly IMapper _mapper;
 
         public InventoryService(
             IInventoryRepository inventoryRepository,
+            ICategoryRepository categoryRepository,
             IInventoryFieldRepository inventoryFieldRepository,
             IValidator<CreateInventoryDto> fluentValidator,
         IMapper mapper)
         {
             _inventoryRepository = inventoryRepository;
             _inventoryFieldRepository = inventoryFieldRepository;
+            _categoryRepository = categoryRepository;
             _fluentValidator= fluentValidator;
             _mapper = mapper;
         }
@@ -69,6 +72,10 @@ namespace Main.Application.Services
             return _mapper.Map<InventoryDto>(createdInventory);
         }
 
+        public async Task<IEnumerable<Category>> GetCategories(CancellationToken cancellationToken)
+        {
+            return await _categoryRepository.GetAllAsync(null, null,cancellationToken);
+        }
 
         public async Task<bool> DeleteInventoryAsync(int[] ids, CancellationToken cancellationToken = default)
         {

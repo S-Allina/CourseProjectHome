@@ -1,8 +1,10 @@
 ﻿using Main.Application.Dtos;
 using Main.Application.Interfaces;
 using Main.Application.Services;
+using Main.Domain.entities.inventory;
 using Main.Domain.entities.item;
 using Main.Infrastructure.DataAccess;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -17,11 +19,13 @@ namespace Main.Presentation.MVC.Controllers
     {
         private readonly IItemService _itemService;
         private readonly IInventoryService _inventoryService;
+        private readonly ICustomIdService _customIdService;
 
-        public ItemsController(IItemService itemService, IInventoryService inventoryService)
+        public ItemsController(IItemService itemService, IInventoryService inventoryService, ICustomIdService customIdService)
         {
             _itemService = itemService;
             _inventoryService = inventoryService;
+            _customIdService = customIdService;
         }
 
         // GET: Items
@@ -92,6 +96,7 @@ namespace Main.Presentation.MVC.Controllers
             };
 
             ViewBag.Inventory = inventory;
+            ViewData["CustomId"] = await _customIdService.GenerateCustomIdAsync(inventoryId, cancellationToken);
             return View(createDto);
         }
 
@@ -109,78 +114,72 @@ namespace Main.Presentation.MVC.Controllers
                 {
                     ModelState.AddModelError("", "Error creating item: " + ex.Message);
                 }
+            var inventory = await _inventoryService.GetById(createDto.InventoryId, cancellationToken);
+
+            ViewBag.Inventory = inventory;
+            ViewData["CustomId"] = await _customIdService.GenerateCustomIdAsync(createDto.InventoryId, cancellationToken);
 
             return View(createDto);
         }
-        //// POST: Items/Edit/5
-        //// To protect from overposting attacks, enable the specific properties you want to bind to.
-        //// For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Edit(int id, [Bind("InventoryId,CustomId,CreatedById,Version,CreatedAt,UpdatedAt,Id")] Item item)
-        //{
-        //    if (id != item.Id)
-        //    {
-        //        return NotFound();
-        //    }
 
-        //    if (ModelState.IsValid)
-        //    {
-        //        try
-        //        {
-        //            _context.Update(item);
-        //            await _context.SaveChangesAsync();
-        //        }
-        //        catch (DbUpdateConcurrencyException)
-        //        {
-        //            if (!ItemExists(item.Id))
-        //            {
-        //                return NotFound();
-        //            }
-        //            else
-        //            {
-        //                throw;
-        //            }
-        //        }
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    ViewData["InventoryId"] = new SelectList(_context.Inventories, "Id", "CustomIdFormat", item.InventoryId);
-        //    return View(item);
-        //}
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+        {
+            var item = await _itemService.GetByIdAsync(id, cancellationToken);
+            try
+            {
 
-        //// GET: Items/Delete/5
-        //public async Task<IActionResult> Delete(int? id)
-        //{
-        //    if (id == null)
-        //    {
-        //        return NotFound();
-        //    }
+                if (item == null)
+                {
+                    return NotFound();
+                }
 
-        //    var item = await _context.Items
-        //        .Include(i => i.Inventory)
-        //        .FirstOrDefaultAsync(m => m.Id == id);
-        //    if (item == null)
-        //    {
-        //        return NotFound();
-        //    }
+                var inventory = await _inventoryService.GetById(item.InventoryId, cancellationToken);
 
-        //    return View(item);
+                ViewBag.Inventory = inventory;
+                return View(item);
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("Index", new { inventoryId = item?.InventoryId });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(string id, ItemDto dto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                dto = dto with { CreatedById= "dfhbmcnv " };
+                
+                    var inventory = await _inventoryService.GetById (dto.InventoryId, cancellationToken);
+                   
+                
+
+                await _itemService.UpdateItemAsync(dto, cancellationToken);
+
+                TempData["SuccessMessage"] = "Item updated successfully!";
+                return RedirectToAction("Index", new { inventoryId = dto.InventoryId });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "An error occurred while updating the item.");
+
+                var inventory = await _inventoryService.GetById(dto.InventoryId, cancellationToken);
+                ViewBag.Inventory = inventory;
+                return View(dto);
+            }
+        }
         //}
 
         //// POST: Items/Delete/5
-        //[HttpPost, ActionName("Delete")]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> DeleteConfirmed(int id)
-        //{
-        //    var item = await _context.Items.FindAsync(id);
-        //    if (item != null)
-        //    {
-        //        _context.Items.Remove(item);
-        //    }
-
-        //    await _context.SaveChangesAsync();
-        //    return RedirectToAction(nameof(Index));
-        //}
+        [HttpPost]
+        public async Task<IActionResult> Delete(int[] selectedIds)
+        {
+            var id = await _itemService.DeleteItemAsync(selectedIds);
+            return RedirectToAction("Index", "Items", new { inventoryId = id });
+        }
 
         //private bool ItemExists(int id)
         //{

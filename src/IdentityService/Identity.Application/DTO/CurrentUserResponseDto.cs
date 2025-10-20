@@ -13,11 +13,17 @@ namespace Identity.Application.Dto
         public string Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string Gender { get; set; }
+
         public bool EmailConfirmed { get; set; }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public Statuses Status { get; set; } = Statuses.Unverify;
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public Theme Theme { get; set; } = Theme.Light;
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public Language Language { get; set; } = Language.English;
 
         public DateTime CreateAt { get; set; }
         public DateTime? UpdateAt { get; set; }

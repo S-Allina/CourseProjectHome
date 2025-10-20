@@ -1,0 +1,20 @@
+﻿@model Main.Application.Dtos.InventoryFormDto
+
+<div class="tab-pane fade" id="tags" role="tabpanel" aria-labelledby="tags-tab">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Tags</h5>
+        </div>
+        <div class="card-body">
+            <div class="form-group">
+                <label class="form-label">Add Tags (comma separated)</label>
+                <input type="text" class="form-control" id="tagInput" placeholder="books, fiction, science" />
+                <small class="form-text text-muted">Press Enter or comma to add tags</small>
+            </div>
+            <div id="tagsContainer" class="mt-2">
+                <!-- Теги будут добавляться динамически -->
+            </div>
+            <input type="hidden" asp-for="Tags" id="hiddenTags" />
+        </div>
+    </div>
+</div>

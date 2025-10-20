@@ -1,0 +1,61 @@
+﻿@model Main.Application.Dtos.InventoryFormDto
+
+<div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Basic Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="Name" class="form-label">Inventory Name *</label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="CategoryId" class="form-label">Category</label>
+                        <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select">
+                            <option value="">-- Select Category --</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label">
+                                Description
+                                <small class="text-muted">(Supports Markdown)</small>
+                            </label>
+                            <textarea asp-for="Description" class="form-control" rows="3"
+                                      placeholder="Supports **bold**, *italic*, [links](http://example.com), etc."></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+
+                            <!-- Markdown подсказки -->
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <strong>Markdown tips:</strong>
+                                    **bold**, *italic*, `code`, [links](url), - lists
+                                </small>
+                            </div>
+                        </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="ImageUrl" class="form-label">Image URL</label>
+                        <input asp-for="ImageUrl" class="form-control" placeholder="https://..." />
+                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group form-check">
+                        <input class="form-check-input" asp-for="IsPublic" />
+                        <label class="form-check-label" asp-for="IsPublic">
+                            Make this inventory public
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

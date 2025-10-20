@@ -47,22 +47,74 @@ namespace Main.Infrastructure.DataAccess.Repositories
         {
             try
             {
-                // Сначала загружаем существующую сущность
+                // Загружаем существующую сущность с включением Fields
                 var existingInventory = await _db.Set<Inventory>()
+                    .Include(i => i.Fields)
                     .FirstOrDefaultAsync(i => i.Id == inventory.Id, cancellationToken);
 
                 if (existingInventory == null)
                     throw new Exception("Inventory not found");
 
-                // Копируем значения из входной сущности в загруженную
+                // Обновляем скалярные свойства
                 _db.Entry(existingInventory).CurrentValues.SetValues(inventory);
                 existingInventory.OwnerId = "fgvsfgv";
-                // Сохраняем изменения
+                existingInventory.UpdatedAt = DateTime.UtcNow;
+
+                // Обрабатываем изменения в коллекции Fields
+                await UpdateInventoryFieldsOptimizedAsync(existingInventory, inventory.Fields, cancellationToken);
+
+                // ✅ ВСЕ изменения сохраняются ОДНИМ запросом
                 await _db.SaveChangesAsync(cancellationToken);
                 return existingInventory;
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw;
+            }
+        }
+
+        private async Task UpdateInventoryFieldsOptimizedAsync(Inventory existingInventory, ICollection<InventoryField> newFields, CancellationToken cancellationToken)
+        {
+            var existingFieldsDict = existingInventory.Fields.ToDictionary(f => f.Id);
+            var newFieldsDict = newFields.Where(f => f.Id != 0).ToDictionary(f => f.Id);
+
+            // 1. Удаляем поля - ОДНА операция для всех
+            var fieldsToRemove = existingInventory.Fields
+                .Where(existingField => !newFieldsDict.ContainsKey(existingField.Id))
+                .ToList();
+
+            if (fieldsToRemove.Any())
+            {
+                _db.Set<InventoryField>().RemoveRange(fieldsToRemove); // ✅ Bulk remove
+                foreach (var fieldToRemove in fieldsToRemove)
+                {
+                    existingInventory.Fields.Remove(fieldToRemove);
+                }
+            }
+
+            // 2. Обновляем существующие поля - EF Core отслеживает изменения автоматически
+            foreach (var existingField in existingInventory.Fields.Where(f => newFieldsDict.ContainsKey(f.Id)))
+            {
+                if (newFieldsDict.TryGetValue(existingField.Id, out var newField))
+                {
+                    _db.Entry(existingField).CurrentValues.SetValues(newField);
+                }
+            }
+
+            // 3. Добавляем новые поля - ОДНА операция для всех
+            var fieldsToAdd = newFields.Where(f => f.Id == 0).ToList();
+            if (fieldsToAdd.Any())
+            {
+                foreach (var fieldToAdd in fieldsToAdd)
+                {
+                    fieldToAdd.InventoryId = existingInventory.Id;
+                    fieldToAdd.CreatedAt = DateTime.UtcNow;
+                }
+                await _db.Set<InventoryField>().AddRangeAsync(fieldsToAdd, cancellationToken); // ✅ Bulk add
+                foreach (var fieldToAdd in fieldsToAdd)
+                {
+                    existingInventory.Fields.Add(fieldToAdd);
+                }
             }
         }
     }

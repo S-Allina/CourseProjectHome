@@ -25,10 +25,6 @@ namespace Main.Application.Validators
             RuleFor(x => x.CategoryId)
                 .GreaterThan(0).WithMessage("Категория обязательна");
 
-            RuleFor(x => x.CustomIdFormat)
-                .MaximumLength(100).WithMessage("Формат ID не может превышать 100 символов")
-                .When(x => !string.IsNullOrEmpty(x.CustomIdFormat));
-
             RuleFor(x => x.ImageUrl)
                 .Must(BeAValidUrl).WithMessage("Некорректный URL изображения")
                 .When(x => !string.IsNullOrEmpty(x.ImageUrl));

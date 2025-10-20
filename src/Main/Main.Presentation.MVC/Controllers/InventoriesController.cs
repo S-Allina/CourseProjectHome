@@ -27,6 +27,7 @@ namespace Main.Presentation.MVC.Controllers
         }
 
         //// GET: Inventories
+        [HttpGet("Index")]
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
            var t = await _inventoryService.GetAll(cancellationToken); 
@@ -35,10 +36,24 @@ namespace Main.Presentation.MVC.Controllers
 
        
         // GET: Inventories/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
+        //public async Task<IActionResult> Create()
+        //{
+        //    var categories = await _inventoryService.GetCategories(CancellationToken.None);
+        //    var categoriesList = categories
+        //.OrderBy(c => c.Name)
+        //.Select(c => new SelectListItem
+        //{
+        //    Value = c.Id.ToString(),
+        //    Text = c.Name
+        //}).ToList();
+        //    categoriesList.Add(new SelectListItem
+        //    {
+        //        Value = null,
+        //        Text = "Другое"
+        //    });
+        //    ViewData["Categories"] = categoriesList;
+        //    return View();
+        //}
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -46,7 +61,6 @@ namespace Main.Presentation.MVC.Controllers
             CreateInventoryDto createDto,
             CancellationToken cancellationToken = default)
         {
-            createDto = createDto with { CustomIdFormat = "eghnteh" };
             Console.WriteLine($"Fields count: {createDto.Fields?.Count}");
             if (createDto.Fields != null)
             {
@@ -73,21 +87,86 @@ namespace Main.Presentation.MVC.Controllers
             return RedirectToAction(nameof(Index));
         }
         //// GET: Inventories/Edit/5
-        public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        //public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+        //{
+        //    if (id == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            var inventory = await _inventoryService.GetById(id, cancellationToken);
-            if (inventory == null)
+        //    var inventory = await _inventoryService.GetById(id, cancellationToken);
+        //    if (inventory == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    //ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", inventory.CategoryId);
+        //    return View(inventory);
+        //}
+
+        public async Task<IActionResult> Create()
+        {
+            var model = new InventoryFormDto();
+            var categories = await _inventoryService.GetCategories(CancellationToken.None);
+            var categoriesList = categories
+        .OrderBy(c => c.Name)
+        .Select(c => new SelectListItem
+        {
+            Value = c.Id.ToString(),
+            Text = c.Name
+        }).ToList();
+            categoriesList.Add(new SelectListItem
             {
-                return NotFound();
-            }
-            //ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", inventory.CategoryId);
-            return View(inventory);
+                Value = null,
+                Text = "Другое"
+            });
+            ViewData["Categories"] = categoriesList;
+            return View("Create", model); // Используем одно представление
         }
+
+        // GET: Edit
+        public async Task<IActionResult> Edit(int id)
+        {
+            var inventory = await _inventoryService.GetById(id);
+            if (inventory == null) return NotFound();
+
+            var model = new InventoryFormDto
+            {
+                Id = inventory.Id,
+                Name = inventory.Name,
+                Description = inventory.Description,
+                CategoryId = inventory.CategoryId,
+                ImageUrl = inventory.ImageUrl,
+                IsPublic = inventory.IsPublic,
+                CustomIdFormat = inventory.CustomIdFormat,
+                Tags = inventory.Tags,
+                Fields = inventory.Fields.Select(f => new CreateInventoryFieldDto
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    Description = f.Description,
+                    FieldType = f.FieldType,
+                    OrderIndex = f.OrderIndex,
+                    IsVisibleInTable = f.IsVisibleInTable,
+                    IsRequired = f.IsRequired
+                }).ToList()
+            };
+            var categories = await _inventoryService.GetCategories(CancellationToken.None);
+            var categoriesList = categories
+        .OrderBy(c => c.Name)
+        .Select(c => new SelectListItem
+        {
+            Value = c.Id.ToString(),
+            Text = c.Name
+        }).ToList();
+            categoriesList.Add(new SelectListItem
+            {
+                Value = null,
+                Text = "Другое"
+            });
+            ViewData["Categories"] = categoriesList;
+            return View("Create", model); // Используем то же представление
+        }
+
 
         //public async Task<IActionResult> Items(int id, CancellationToken cancellationToken)
         //{
@@ -98,11 +177,13 @@ namespace Main.Presentation.MVC.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(InventoryDto inventory, CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(InventoryDto inventory, CancellationToken cancellationToken)
         {
                 try
                 {
-                   await _inventoryService.UpdateInventoryAsync(inventory);
+                var ownerId = "kjilsfhrfbeibkv ";
+                inventory= inventory with { OwnerId = ownerId };
+                await _inventoryService.UpdateInventoryAsync(inventory);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -110,6 +191,92 @@ namespace Main.Presentation.MVC.Controllers
                 }
             return RedirectToAction("Index", "Items", new { inventoryId  = inventory.Id});
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AutoSave([FromBody] InventoryFormDto autoSaveDto, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var ownerId = "kjilsfhrfbeibkv"; // Ваша логика получения ID пользователя
+
+                // Проверяем, существует ли инвентарь и принадлежит ли пользователю
+                var existingInventory = await _inventoryService.GetById((int)autoSaveDto.Id, cancellationToken);
+                if (existingInventory == null)
+                {
+                    return Json(new { success = false, message = "Inventory not found" });
+                }
+
+                //if (existingInventory.OwnerId != ownerId)
+                //{
+                //    return Json(new { success = false, message = "Access denied" });
+                //}
+
+                // Проверка оптимистичной блокировки
+                if (existingInventory.Version != autoSaveDto.Version)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        isConcurrencyError = true,
+                        message = "This inventory was modified by another user. Please reload the page."
+                    });
+                }
+
+                // Обновляем инвентарь
+                var updateDto = new InventoryDto
+                {
+                    Id = (int)autoSaveDto.Id,
+                    Name = autoSaveDto.Name,
+                    Description = autoSaveDto.Description,
+                    CategoryId = autoSaveDto.CategoryId,
+                    ImageUrl = autoSaveDto.ImageUrl,
+                    IsPublic = autoSaveDto.IsPublic,
+                    CustomIdFormat = autoSaveDto.CustomIdFormat,
+                    Tags = autoSaveDto.Tags != null ?
+                        (autoSaveDto.Tags) :
+                        new List<string>(),
+                    Fields = autoSaveDto.Fields?.Select(f => new InventoryFieldDto
+                    {
+                        Id = f.Id,
+                        Name = f.Name,
+                        FieldType = f.FieldType,
+                        OrderIndex = f.OrderIndex,
+                        Description = f.Description,
+                        IsVisibleInTable = f.IsVisibleInTable,
+                        IsRequired = f.IsRequired
+                    }).ToList(),
+                    Version = autoSaveDto.Version,
+                    OwnerId = ownerId
+                };
+
+                var updatedInventory = await _inventoryService.UpdateInventoryAsync(updateDto, cancellationToken);
+
+                _logger.LogInformation("Inventory {InventoryId} auto-saved by user {UserId}", autoSaveDto.Id, ownerId);
+
+                return Json(new
+                {
+                    success = true,
+                    Version = updatedInventory.Version,
+                    savedAt = DateTime.UtcNow
+                });
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Json(new
+                {
+                    success = false,
+                    isConcurrencyError = true,
+                    message = "This inventory was modified by another user. Please reload the page."
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Auto-save failed for inventory {InventoryId}", autoSaveDto?.Id);
+                return Json(new { success = false, message = "Auto-save failed. Please try again." });
+            }
+        }
+
         //// GET: Inventories/Details/5
         //public async Task<IActionResult> Details(int? id)
         //{

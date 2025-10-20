@@ -9,6 +9,7 @@ namespace Main.Application.Dtos
 {
     public class CreateInventoryFieldDto
     {
+        public int Id { get; set; }
         public string Name { get; init; }
         public string Description { get; init; }
         public FieldType FieldType { get; init; }

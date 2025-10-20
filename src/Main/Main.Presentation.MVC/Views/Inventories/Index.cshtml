@@ -35,7 +35,25 @@
                         @inventory.Name
                     </a>
                 </td>
-                <td>@inventory.Description</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(inventory.Description))
+                    {
+                        <div class="inventory-description">
+                            <!-- Показываем превью в таблице -->
+                            <span class="description-preview">@Html.Raw(inventory.DescriptionPreview)</span>
+
+                            <!-- Полное описание в тултипе -->
+                            <i class="fas fa-info-circle text-muted ms-1"
+                               data-bs-toggle="tooltip"
+                               data-bs-html="true"
+                               title="@Html.Raw(inventory.DescriptionHtml)"></i>
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="text-muted">No description</span>
+                    }
+                </td>
                 <td>@inventory.CategoryId</td>
                 <td>
                     <span class="badge bg-secondary">@inventory.Fields.Count fields</span>

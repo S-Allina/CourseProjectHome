@@ -130,7 +130,7 @@ namespace Identity.Presentation.Extention
             {
                 options.AddPolicy(CorsConstants.PolicyName, policy =>
                 {
-                policy.WithOrigins("http://localhost:5173")
+                    policy.WithOrigins("http://localhost:5173", "https://localhost:7004", "https://localhost:7052")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();

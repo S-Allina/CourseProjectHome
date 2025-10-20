@@ -36,6 +36,8 @@ namespace Identity.Presentation.Initializer
                     Email = SeedDataConstants.AdminEmail,
                     EmailConfirmed = true,
                     Status = Statuses.Activity,
+                    Theme = Theme.Light,
+                    Language = Language.English,
                     FirstName = SeedDataConstants.AdminFirstName,
                     LastName = SeedDataConstants.AdminLastName,
                 };

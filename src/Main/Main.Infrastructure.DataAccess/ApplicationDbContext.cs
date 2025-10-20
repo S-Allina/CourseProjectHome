@@ -54,6 +54,12 @@ namespace Main.Infrastructure.DataAccess
                 .HasForeignKey(item => item.InventoryId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Inventory>()
+    .HasOne(i => i.Category)
+    .WithMany() // или WithMany(c => c.Inventories)
+    .HasForeignKey(i => i.CategoryId)
+    .IsRequired(false)
+    .OnDelete(DeleteBehavior.SetNull);
             // Keep Cascade for Inventory -> Fields  
             modelBuilder.Entity<Inventory>()
                 .HasMany(i => i.Fields)

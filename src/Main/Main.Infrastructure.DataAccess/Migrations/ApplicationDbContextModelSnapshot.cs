@@ -120,7 +120,10 @@ namespace Main.Infrastructure.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CategoryId")
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CategoryId1")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -164,6 +167,8 @@ namespace Main.Infrastructure.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("CategoryId1");
 
                     b.HasIndex("IsPublic");
 
@@ -309,7 +314,6 @@ namespace Main.Infrastructure.DataAccess.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("FileUrl")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("InventoryFieldId")
@@ -319,14 +323,12 @@ namespace Main.Infrastructure.DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("MultilineTextValue")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("NumberValue")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("TextValue")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -366,10 +368,13 @@ namespace Main.Infrastructure.DataAccess.Migrations
             modelBuilder.Entity("Main.Domain.entities.inventory.Inventory", b =>
                 {
                     b.HasOne("Main.Domain.entities.inventory.Category", "Category")
-                        .WithMany("Inventories")
+                        .WithMany()
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Main.Domain.entities.inventory.Category", null)
+                        .WithMany("Inventories")
+                        .HasForeignKey("CategoryId1");
 
                     b.Navigation("Category");
                 });
