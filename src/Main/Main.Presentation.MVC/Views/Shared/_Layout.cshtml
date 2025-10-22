@@ -35,6 +35,16 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Tags" asp-action="Index">Теги</a>
                         </li>
+                        <li>
+                            <a href="https://auth-frontend.com/login?returnUrl=https://main-app.com">
+                                Войти в систему
+                            </a>
+                        </li>
+                        <li>
+                            <a href="http://localhost:5173/theapp/#/theapp/users">
+                            Управление пользователями
+                        </a>
+                        </li>
                         @if (User.Identity.IsAuthenticated)
                         {
                             <a href="/auth/users" class="auth-link">Пользователи</a>

@@ -3,14 +3,16 @@ using FluentEmail.Core;
 using Identity.Application.Dto;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entity;
+using Identity.Domain.Enums;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Users.Application.Dto;
-using Identity.Domain.Enums;
 
 namespace Identity.Infrastructure.Services
 {
@@ -20,13 +22,34 @@ namespace Identity.Infrastructure.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
         private readonly ILogger<UserService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UserService(ICurrentUserService currentUserService, UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<UserService> logger)
+        public UserService(ICurrentUserService currentUserService, UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<UserService> logger, IHttpContextAccessor httpContextAccessor)
         {
             _currentUserService = currentUserService;
             _userManager = userManager;
             _mapper = mapper;
             _logger = logger;
+            _httpContextAccessor= httpContextAccessor;
+        }
+
+        public async Task<ResponseDto> DeleteUnconfirmedUsersAsync(CancellationToken cancellationToken)
+        {
+            var users = await _userManager.Users.Where(u => !u.EmailConfirmed).Select(u => u.Id).ToListAsync(cancellationToken);
+
+            return await DeleteUsersAsync(users, cancellationToken);
+        }
+
+        public async Task<CurrentUserDto> GetCurrentUserAsync(CancellationToken cancellationToken = default)
+        {
+            var id = GetUserId();
+            return await GetByIdAsync(id, cancellationToken);
+        }
+
+        public string? GetUserId()
+        {
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            return userId;
         }
 
         public async Task<ResponseDto> DeleteSomeUsersAsync(IEnumerable<string> userIds, CancellationToken cancellationToken)
@@ -84,7 +107,7 @@ namespace Identity.Infrastructure.Services
             return await GetAllAsync(cancellationToken);
         }
 
-        public async Task<CurrentUserDto> GetByIdAsync(Guid id)
+        public async Task<CurrentUserDto> GetByIdAsync(string id, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Getting user by id");
 
@@ -119,21 +142,7 @@ namespace Identity.Infrastructure.Services
             return _mapper.Map<CurrentUserDto>(user);
         }
 
-        public async Task<CurrentUserDto> UpdateAsync(Guid id, UserUpdateRequestDto requestDto)
-        {
-            _logger.LogInformation("Updatting user with userId: {userId}", id.ToString());
-
-            var user = await GetUserByIdAsync(id.ToString());
-
-            user.FirstName= requestDto.FirstName;
-            user.LastName= requestDto.LastName;
-            user.PhoneNumber = requestDto.PhoneNumber;
-
-            await _userManager.UpdateAsync(user);
-            
-            return _mapper.Map<CurrentUserDto>(user);
-        }
-        
+       
         private async Task<ApplicationUser> GetUserByIdAsync(string id)
         {
             var user = await _userManager.FindByIdAsync(id);

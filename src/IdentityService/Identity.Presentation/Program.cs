@@ -1,4 +1,4 @@
-using Hangfire;
+﻿using Hangfire;
 using Hangfire.Dashboard;
 using Identity.Application.DTO;
 using Identity.Domain.Entity;
@@ -30,14 +30,12 @@ namespace Identity.Presentation
             builder.Services.AddControllerConfiguration();
             builder.Services.AddSwaggerConfiguration();
             builder.Services.AddIdentityConfiguration();
-            builder.Services.AddConfigureJwt(configuration);
+            //builder.Services.AddConfigureJwt(configuration);
             builder.Services.AddApplicationServices(configuration);
             builder.Services.AddAuthenticationConfiguration(configuration);
             builder.Services.AddEmailConfiguration(configuration);
             builder.Services.AddHangfireConfiguration(configuration);
             builder.Services.AddValidators();
-
-            builder.Host.UseSerilogConfiguration();
 
             var app = builder.Build();
 
@@ -48,11 +46,10 @@ namespace Identity.Presentation
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            app.UseStaticFiles();
 
+            app.UseStaticFiles();
             app.UseRouting();
             app.UseCors("CorsPolicy");
-
             app.UseHttpsRedirection();
 
             app.UseCookiePolicy(new CookiePolicyOptions
@@ -61,6 +58,8 @@ namespace Identity.Presentation
                 Secure = CookieSecurePolicy.Always
             });
 
+            // ✅ ПРАВИЛЬНЫЙ порядок middleware для IdentityServer
+            app.UseIdentityServer(); // ← ДОБАВЬТЕ ЭТУ СТРОЧКУ
             app.UseAuthentication();
             app.UseAuthorization();
 
@@ -71,11 +70,16 @@ namespace Identity.Presentation
                 IgnoreAntiforgeryToken = true
             });
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+                app.UseEndpoints(endpoints =>
+                {
+                    // ✅ Убедитесь, что есть MapControllerRoute
+                    endpoints.MapControllerRoute(
+                        name: "default",
+                        pattern: "{controller=Home}/{action=Index}/{id?}");
+                });
+
             app.MapRazorPages();
+
             await app.CreateDbIfNotExists();
 
             using (var scope = app.Services.CreateScope())
@@ -92,7 +96,7 @@ namespace Identity.Presentation
 
             app.Run();
         }
-    }
+        }
 
     public class HangfireAuthFilter : IDashboardAuthorizationFilter
     {

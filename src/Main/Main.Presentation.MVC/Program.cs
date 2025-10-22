@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using Main.Application.Dtos;
 using Main.Application.Interfaces;
 using Main.Application.Mapper;
@@ -9,9 +9,9 @@ using Main.Infrastructure.DataAccess;
 using Main.Infrastructure.DataAccess.Repositories;
 using Main.Presentation.MVC.Constans;
 using Main.Presentation.MVC.Middleware;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -34,41 +34,59 @@ namespace Main.Presentation.MVC
             {
                 options.AddPolicy("CorsPolicy", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173", "https://localhost:7004", "https://localhost:7052")
+                    policy.WithOrigins("http://localhost:5173",
+            "https://localhost:7004",
+            "https://localhost:7052")
                             .AllowAnyHeader()
                             .AllowAnyMethod()
                             .AllowCredentials();
                 });
             });
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+
+            // ✅ ПРАВИЛЬНАЯ настройка аутентификации
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+            })
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            {
+                options.LoginPath = "/Account/Login"; // Локальный путь для логина
+                options.ExpireTimeSpan = TimeSpan.FromHours(2);
+            })
+            .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+            {
+                // Адрес вашего IdentityServer
+                options.Authority = "https://localhost:7052";
+                options.ClientId = "MainMVCApp";
+                options.ClientSecret = "your-secret"; // Должен совпадать с секретом в Auth
+
+                options.ResponseType = "code";
+                options.SaveTokens = true;
+                options.GetClaimsFromUserInfoEndpoint = true;
+
+                // Настройка scope - ДОБАВЬТЕ "api1"
+                options.Scope.Clear();
+                options.Scope.Add("openid");
+                options.Scope.Add("profile");
+                options.Scope.Add("email");
+                options.Scope.Add("api1"); // ← ДОБАВЬТЕ ЭТОТ SCOPE
+
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    options.TokenValidationParameters = new TokenValidationParameters
+                    NameClaimType = "name",
+                    RoleClaimType = "role"
+                };
+
+                options.Events = new OpenIdConnectEvents
+                {
+                    OnRedirectToIdentityProvider = context =>
                     {
-                        ValidateIssuer = JwtConstants.ValidateIssuer,
-                        ValidateAudience = JwtConstants.ValidateAudience,
-                        ValidateLifetime = JwtConstants.ValidateLifetime,
-                        ValidateIssuerSigningKey = JwtConstants.ValidateIssuerSigningKey,
-                        ValidIssuer = configuration[JwtConstants.IssuerPath],
-                        ValidAudiences = configuration[JwtConstants.AudiencePath].Split(JwtConstants.AudienceSeparator),
-                        IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(configuration[JwtConstants.KeyPath])),
-                        ClockSkew = JwtConstants.ClockSkew
-                    };
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnAuthenticationFailed = context =>
-                        {
-                            if (context.Request.Path.StartsWithSegments("/api"))
-                            {
-                                context.Response.StatusCode = 401;
-                                return Task.CompletedTask;
-                            }
-                            context.Response.Redirect("/auth/login");
-                            return Task.CompletedTask;
-                        }
-                    };
-                });
+                        context.ProtocolMessage.SetParameter("return_url", context.Properties.RedirectUri);
+                        return Task.CompletedTask;
+                    }
+                };
+            });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
@@ -78,14 +96,24 @@ namespace Main.Presentation.MVC
                     Version = SwaggerConstants.Version
                 });
 
-                c.AddSecurityDefinition(SwaggerConstants.Scheme, new OpenApiSecurityScheme
+                // ✅ ОБНОВЛЕННАЯ настройка безопасности для OAuth2/OIDC
+                c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
                 {
-                    Description = SwaggerConstants.Description,
-                    Name = SwaggerConstants.Name,
-                    In = SwaggerConstants.In,
-                    Type = SwaggerConstants.Type,
-                    Scheme = SwaggerConstants.Scheme,
-                    BearerFormat = SwaggerConstants.BearerFormat
+                    Type = SecuritySchemeType.OAuth2,
+                    Flows = new OpenApiOAuthFlows
+                    {
+                        AuthorizationCode = new OpenApiOAuthFlow
+                        {
+                            AuthorizationUrl = new Uri("https://localhost:7052/connect/authorize"),
+                            TokenUrl = new Uri("https://localhost:7052/connect/token"),
+                            Scopes = new Dictionary<string, string>
+                            {
+                                { "openid", "OpenID" },
+                                { "profile", "Profile" },
+                                { "email", "Email" }
+                            }
+                        }
+                    }
                 });
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -95,22 +123,22 @@ namespace Main.Presentation.MVC
                         {
                             Reference = new OpenApiReference
                             {
-                                Type = SwaggerConstants.TypeReference,
-                                Id = SwaggerConstants.Scheme
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "oauth2"
                             }
                         },
-                        Array.Empty<string>()
+                        new[] { "openid", "profile", "email" }
                     }
                 });
-
             });
+
             builder.Services.AddHttpClient("AuthService", client =>
             {
-                client.BaseAddress = new Uri("http://localhost:5173"); // ����� React ����������
+                client.BaseAddress = new Uri("https://localhost:7052"); // ❌ ЗАМЕНИТЕ на адрес IdentityServer API
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             });
-            builder.Services.AddEndpointsApiExplorer();
-           
+            builder.Services.AddHttpContextAccessor();
+            // Регистрация сервисов приложения
             builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
             builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
             builder.Services.AddScoped<IInventoryFieldRepository, InventoryFieldRepository>();
@@ -120,17 +148,13 @@ namespace Main.Presentation.MVC
             builder.Services.AddScoped<ITagService, TagService>();
             builder.Services.AddScoped<ICustomIdService, CustomIdService>();
             builder.Services.AddScoped<IItemRepository, ItemRepository>();
-            // ������������ ������ ������
             builder.Services.AddScoped<ISearchRepository, SearchRepository>();
-
-            // ��������� �������...
             builder.Services.AddScoped<IItemService, ItemService>();
             builder.Services.AddScoped<IValidator<CreateInventoryDto>, CreateInventoryDtoValidator>();
             builder.Services.AddScoped<IValidator<CreateInventoryFieldDto>, CreateInventoryFieldDtoValidator>();
             builder.Services.AddAutoMapper(typeof(InventoryProfile));
 
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
             builder.Services.AddControllersWithViews();
 
@@ -140,24 +164,29 @@ namespace Main.Presentation.MVC
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
             app.UseHttpsRedirection();
+            app.UseStaticFiles(); // ✅ ДОБАВЬТЕ для обслуживания статических файлов
             app.UseRouting();
 
             app.UseCors("CorsPolicy");
 
-            app.UseMiddleware<AuthRedirectMiddleware>();
-            //app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
-            app.UseAuthentication();
+            //app.UseMiddleware<AuthRedirectMiddleware>();
+            // ✅ ПРАВИЛЬНЫЙ порядок middleware
+            app.UseAuthentication(); // ДОЛЖЕН быть перед UseAuthorization
             app.UseAuthorization();
+
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Main API V1");
-                c.RoutePrefix = "swagger"; // ��� ������ ��������� �� /swagger/index.html
+                c.RoutePrefix = "swagger";
+
+                // ✅ Настройка OAuth для Swagger UI
+                c.OAuthClientId("MainMVCApp");
+                c.OAuthUsePkce();
             });
 
             app.MapStaticAssets();

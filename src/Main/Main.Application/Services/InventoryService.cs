@@ -5,9 +5,11 @@ using Main.Application.Interfaces;
 using Main.Domain.entities.inventory;
 using Main.Domain.enums.inventory;
 using Main.Domain.InterfacesRepository;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,19 +23,21 @@ namespace Main.Application.Services
         private readonly ICategoryRepository _categoryRepository;
         private readonly IValidator<CreateInventoryDto> _fluentValidator;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public InventoryService(
             IInventoryRepository inventoryRepository,
             ICategoryRepository categoryRepository,
             IInventoryFieldRepository inventoryFieldRepository,
             IValidator<CreateInventoryDto> fluentValidator,
-        IMapper mapper)
+        IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _inventoryRepository = inventoryRepository;
             _inventoryFieldRepository = inventoryFieldRepository;
             _categoryRepository = categoryRepository;
             _fluentValidator= fluentValidator;
             _mapper = mapper;
+            _httpContextAccessor= httpContextAccessor;
         }
 
         public async Task<IEnumerable<InventoryDto>> GetAll(CancellationToken cancellationToken = default)
@@ -64,7 +68,8 @@ namespace Main.Application.Services
                 throw new ValidationException(fluentValidationResult.Errors);
             }
             var inventory = _mapper.Map<Inventory>(createDto);
-            inventory.OwnerId = ownerId;
+            
+            inventory.OwnerId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             await AddFieldsToInventory(inventory, createDto.Fields);
 
             var createdInventory = await _inventoryRepository.CreateAsync(inventory, cancellationToken);

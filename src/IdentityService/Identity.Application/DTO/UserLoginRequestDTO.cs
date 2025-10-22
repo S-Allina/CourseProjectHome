@@ -11,5 +11,6 @@ namespace Identity.Application.Dto
     {
         public string Email { get; init;}
         public string Password { get; init;}
+        public string ReturnUrl { get; set; }
     }
 }

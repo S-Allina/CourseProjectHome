@@ -29,37 +29,39 @@ namespace Identity.Presentation.Controllers
 
         [HttpGet("me")]
         [Authorize]
-        public async Task<IActionResult> GetCurrentUser()
+        public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)
         {
-            var response = await _userService.GetCurrentUserAsync();
+            var response = await _userService.GetCurrentUserAsync(cancellationToken);
 
             return Ok(response);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
+        [HttpPatch("block")]
+        [Authorize]
+        public async Task<ResponseDto> Block([FromBody] string[] userIds, CancellationToken cancellationToken)
         {
-            var response = await _userService.GetByIdAsync(id);
+            return await _userService.BlockUser(userIds, cancellationToken);
+        }
 
-            return Ok(response);
+        [HttpPatch("unblock")]
+        [Authorize]
+        public async Task<ResponseDto> Unblock([FromBody] string[] userIds, CancellationToken cancellationToken)
+        {
+            return await _userService.UnlockUser(userIds, cancellationToken);
         }
 
         [HttpGet]
-        //[Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        [Authorize]
+        public async Task<ResponseDto> Get(CancellationToken cancellationToken)
         {
-            var response = await _userService.GetAllAsync(cancellationToken);
-
-            return Ok(response);
+            return await _userService.GetAllAsync(cancellationToken);
         }
 
-        [HttpPut("{id}")]
+        [HttpDelete("unconfirmedUsers")]
         [Authorize]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UserUpdateRequestDto requestDto)
+        public async Task<ResponseDto> DeleteUnconfirmedUsers(CancellationToken cancellationToken)
         {
-            var result = await _userService.UpdateAsync(id, requestDto);
-
-            return Ok(result);
+            return await _userService.DeleteUnconfirmedUsersAsync(cancellationToken);
         }
 
         [HttpDelete]

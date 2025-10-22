@@ -1,4 +1,6 @@
-﻿using FluentValidation;
+﻿using Duende.IdentityServer;
+using Duende.IdentityServer.Models;
+using FluentValidation;
 using Hangfire;
 using Hangfire.SqlServer;
 using Identity.Application;
@@ -17,7 +19,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +31,7 @@ using Microsoft.OpenApi.Models;
 using System.Net.Mail;
 using System.Text;
 using System.Text.Json.Serialization;
-
+using Secret = Duende.IdentityServer.Models.Secret;
 
 namespace Identity.Presentation.Extention
 {
@@ -121,6 +125,62 @@ namespace Identity.Presentation.Extention
                 options.TokenLifespan = TimeSpan.FromHours(3);
             });
 
+            // IdentityServer configuration
+            var identityServerBuilder = services.AddIdentityServer(options =>
+            {
+                options.Events.RaiseErrorEvents = true;
+                options.Events.RaiseInformationEvents = true;
+                options.Events.RaiseFailureEvents = true;
+                options.Events.RaiseSuccessEvents = true;
+            })
+            .AddInMemoryClients(new[]
+            {
+       new Client
+{
+    ClientId = "MainMVCApp",
+    ClientName = "Main MVC Application",
+    ClientSecrets = { new Secret("your-secret".Sha256()) },
+    AllowedGrantTypes = GrantTypes.Code,
+    
+    // Убедитесь, что порты совпадают с вашим Main приложением
+    RedirectUris = { "https://localhost:7004/signin-oidc" },
+    PostLogoutRedirectUris = { "https://localhost:7004/signout-callback-oidc" },
+    FrontChannelLogoutUri = "https://localhost:7004/signout-oidc",
+
+    AllowedScopes = { "openid", "profile", "email", "api1" },
+
+    AllowAccessTokensViaBrowser = true,
+    AlwaysIncludeUserClaimsInIdToken = true,
+    RequireConsent = false,
+    RequirePkce = true,
+    AllowPlainTextPkce = false,
+    RequireClientSecret = true,
+    UpdateAccessTokenClaimsOnRefresh = true
+}
+            })
+            .AddInMemoryIdentityResources(new List<IdentityResource>
+            {
+        new IdentityResources.OpenId(),
+        new IdentityResources.Profile(),
+        new IdentityResources.Email()
+            })
+            .AddInMemoryApiScopes(new List<ApiScope>
+            {
+        new ApiScope("api1", "My API")
+            }).AddAspNetIdentity<ApplicationUser>() // ✅ ЭТО КРИТИЧЕСКИ ВАЖНО
+.AddDeveloperSigningCredential(); ; 
+
+            // ✅ ОБЯЗАТЕЛЬНО добавьте Signing Credential
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+            {
+                identityServerBuilder.AddDeveloperSigningCredential();
+            }
+            else
+            {
+                // В продакшене используйте proper certificate
+                // identityServerBuilder.AddSigningCredential(certificate);
+            }
+
             return services;
         }
 
@@ -162,34 +222,18 @@ namespace Identity.Presentation.Extention
 
         public static IServiceCollection AddAuthenticationConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddAuthentication(options =>
-            {
-                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
-                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            })
-            .AddCookie(options =>
-            {
-                options.Cookie.SameSite = SameSiteMode.None;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-            })
-            .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
-            {
-                options.ClientId = configuration["Auth:Google:ClientID"];
-                options.ClientSecret = configuration["Auth:Google:ClientSecret"];
-                options.CallbackPath = "/signin-google";
-                options.SaveTokens = true;
-                options.Events = new OAuthEvents
+            // ✅ УДАЛИТЕ дублирующую настройку аутентификации
+            // IdentityServer уже обрабатывает аутентификацию
+
+            // Настройка только внешних провайдеров
+            services.AddAuthentication()
+                .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
                 {
-                    OnRemoteFailure = context =>
-                    {
-                        // Здесь можно logged детали ошибки
-                        context.Response.Redirect("/error");
-                        context.HandleResponse();
-                        return Task.CompletedTask;
-                    }
-                };
-            });
+                    options.ClientId = configuration["Auth:Google:ClientID"];
+                    options.ClientSecret = configuration["Auth:Google:ClientSecret"];
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                    options.SaveTokens = true;
+                });
 
             return services;
         }

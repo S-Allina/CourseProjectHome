@@ -21,21 +21,39 @@ namespace Identity.Presentation.Controllers
     public class AuthController : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+
         private readonly IUserRegistrationService _userRegistrationService;
         private readonly IAuthService _authService;
         private readonly string _frontUrl;
         private ResponseDto response;
 
-        public AuthController(SignInManager<ApplicationUser> signInManager, IUserRegistrationService userRegistrationService, IAuthService authService, 
+        public AuthController(SignInManager<ApplicationUser> signInManager, IUserRegistrationService userRegistrationService, IAuthService authService,  UserManager<ApplicationUser> userManager,
             IConfiguration configuration)
         {
             _signInManager = signInManager;
             _userRegistrationService = userRegistrationService;
             _authService = authService;
             _frontUrl = configuration["FrontUrl"];
+            _userManager = userManager;
             response = new ResponseDto();
         }
+        [HttpGet("check-auth")]
+        public async Task<IActionResult> CheckAuthentication()
+        {
+            ;
+            if (User.Identity.IsAuthenticated)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                return Ok(new
+                {
+                    isAuthenticated = true,
+                    
+                });
+            }
 
+            return Ok(new { isAuthenticated = false });
+        }
         [HttpPost("register")]
         public async Task<ResponseDto> Register([FromBody] UserRegistrationRequestDto request)
         {
@@ -56,8 +74,18 @@ namespace Identity.Presentation.Controllers
         [AllowAnonymous]
         public async Task<ResponseDto> Login([FromBody] UserLoginRequestDto request)
         {
-            response.Result = await _authService.LoginAsync(request);
+            var user = await _userManager.FindByEmailAsync(request.Email);
 
+            var isValidPassword = await _userManager.CheckPasswordAsync(user, request.Password);
+
+            if (isValidPassword)
+            {
+                // ✅ SignInManager автоматически создаст правильные claims включая sub
+                // Дополнительный sign-in чтобы убедиться что cookie создана
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                response.Result = user;
+                response.ReturnUrl = request.ReturnUrl;
+            }
             return response;
         }
 
@@ -110,7 +138,7 @@ namespace Identity.Presentation.Controllers
         {
             await _userRegistrationService.ConfirmEmailAsync(token, email);
 
-            return Redirect(_frontUrl);
+            return Redirect("http://localhost:5173/theapp/#/theapp/login");
         }
 
         [HttpPost("forgot-password")]

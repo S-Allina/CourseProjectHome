@@ -28,6 +28,7 @@ namespace Main.Presentation.MVC.Controllers
 
         //// GET: Inventories
         [HttpGet("Index")]
+        [Authorize]
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
            var t = await _inventoryService.GetAll(cancellationToken); 
