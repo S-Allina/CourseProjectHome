@@ -128,7 +128,7 @@ namespace Main.Presentation.MVC.Controllers
         {
             var inventory = await _inventoryService.GetById(id);
             if (inventory == null) return NotFound();
-
+            
             var model = new InventoryFormDto
             {
                 Id = inventory.Id,
@@ -139,6 +139,7 @@ namespace Main.Presentation.MVC.Controllers
                 IsPublic = inventory.IsPublic,
                 CustomIdFormat = inventory.CustomIdFormat,
                 Tags = inventory.Tags,
+                Version = Convert.ToBase64String(inventory.Version),
                 Fields = inventory.Fields.Select(f => new CreateInventoryFieldDto
                 {
                     Id = f.Id,
@@ -198,7 +199,7 @@ namespace Main.Presentation.MVC.Controllers
         {
             try
             {
-                var ownerId = "kjilsfhrfbeibkv"; // Ваша логика получения ID пользователя
+                var ownerId = "kjilsfhrfbeibkv"; 
 
                 // Проверяем, существует ли инвентарь и принадлежит ли пользователю
                 var existingInventory = await _inventoryService.GetById((int)autoSaveDto.Id, cancellationToken);
@@ -206,14 +207,8 @@ namespace Main.Presentation.MVC.Controllers
                 {
                     return Json(new { success = false, message = "Inventory not found" });
                 }
-
-                //if (existingInventory.OwnerId != ownerId)
-                //{
-                //    return Json(new { success = false, message = "Access denied" });
-                //}
-
-                // Проверка оптимистичной блокировки
-                if (existingInventory.Version != autoSaveDto.Version)
+                var existingVersionString = Convert.ToBase64String(existingInventory.Version);
+                if (existingVersionString != autoSaveDto.Version)
                 {
                     return Json(new
                     {
@@ -246,7 +241,7 @@ namespace Main.Presentation.MVC.Controllers
                         IsVisibleInTable = f.IsVisibleInTable,
                         IsRequired = f.IsRequired
                     }).ToList(),
-                    Version = autoSaveDto.Version,
+                    Version = Convert.FromBase64String(autoSaveDto.Version),
                     OwnerId = ownerId
                 };
 
@@ -276,7 +271,18 @@ namespace Main.Presentation.MVC.Controllers
                 return Json(new { success = false, message = "Auto-save failed. Please try again." });
             }
         }
+        private static bool ByteArrayEquals(byte[] a1, byte[] a2)
+        {
+            if (a1 == null && a2 == null) return true;
+            if (a1 == null || a2 == null) return false;
+            if (a1.Length != a2.Length) return false;
 
+            for (int i = 0; i < a1.Length; i++)
+            {
+                if (a1[i] != a2[i]) return false;
+            }
+            return true;
+        }
         //// GET: Inventories/Details/5
         //public async Task<IActionResult> Details(int? id)
         //{

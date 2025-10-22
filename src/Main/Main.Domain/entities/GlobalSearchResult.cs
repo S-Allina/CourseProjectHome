@@ -13,6 +13,7 @@ namespace Main.Domain.entities
         public List<InventorySearchResult> Inventories { get; set; } = new();
         public List<ItemFieldSearchResult> ItemFields { get; set; } = new();
         public List<UserSearchResult> Users { get; set; } = new();
+        public bool IsTagSearch { get; set; }
         public int TotalResults => Inventories.Count + ItemFields.Count + Users.Count;
     }
 

@@ -149,9 +149,7 @@ namespace Main.Presentation.MVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(string id, ItemDto dto, CancellationToken cancellationToken)
         {
-            try
-            {
-                dto = dto with { CreatedById= "dfhbmcnv " };
+                dto = dto with { CreatedById= "dfhbmcnv" };
                 
                     var inventory = await _inventoryService.GetById (dto.InventoryId, cancellationToken);
                    
@@ -161,15 +159,7 @@ namespace Main.Presentation.MVC.Controllers
 
                 TempData["SuccessMessage"] = "Item updated successfully!";
                 return RedirectToAction("Index", new { inventoryId = dto.InventoryId });
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", "An error occurred while updating the item.");
-
-                var inventory = await _inventoryService.GetById(dto.InventoryId, cancellationToken);
-                ViewBag.Inventory = inventory;
-                return View(dto);
-            }
+            
         }
         //}
 

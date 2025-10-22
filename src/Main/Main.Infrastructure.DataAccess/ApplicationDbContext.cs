@@ -31,23 +31,21 @@ namespace Main.Infrastructure.DataAccess
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
-
-            // Keep Restrict for InventoryField -> ItemFieldValues (as you already have)
+            // CHANGE THIS: Restrict -> Cascade для InventoryField -> ItemFieldValues
             modelBuilder.Entity<ItemFieldValue>()
                 .HasOne(iv => iv.InventoryField)
                 .WithMany()
                 .HasForeignKey(iv => iv.InventoryFieldId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade); // Изменено с Restrict на Cascade
 
-            // ADD THIS: Change Item -> ItemFieldValues from Cascade to Restrict
+            // ОСТАВИТЬ: Item -> ItemFieldValues как Restrict
             modelBuilder.Entity<ItemFieldValue>()
                 .HasOne(iv => iv.Item)
                 .WithMany(i => i.FieldValues)
                 .HasForeignKey(iv => iv.ItemId)
-                .OnDelete(DeleteBehavior.Restrict); // Changed from Cascade
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Keep Cascade for Inventory -> Items
+            // Остальной код без изменений...
             modelBuilder.Entity<Inventory>()
                 .HasMany(i => i.Items)
                 .WithOne(item => item.Inventory)
@@ -55,12 +53,12 @@ namespace Main.Infrastructure.DataAccess
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Inventory>()
-    .HasOne(i => i.Category)
-    .WithMany() // или WithMany(c => c.Inventories)
-    .HasForeignKey(i => i.CategoryId)
-    .IsRequired(false)
-    .OnDelete(DeleteBehavior.SetNull);
-            // Keep Cascade for Inventory -> Fields  
+                .HasOne(i => i.Category)
+                .WithMany()
+                .HasForeignKey(i => i.CategoryId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
             modelBuilder.Entity<Inventory>()
                 .HasMany(i => i.Fields)
                 .WithOne(f => f.Inventory)
@@ -87,6 +85,11 @@ namespace Main.Infrastructure.DataAccess
                 .WithOne(item => item.Inventory)
                 .HasForeignKey(item => item.InventoryId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Item>()
+    .HasIndex(i => new { i.InventoryId, i.CustomId })
+    .IsUnique()
+    .HasFilter("[CustomId] IS NOT NULL");
 
             modelBuilder.Entity<Inventory>()
                 .HasIndex(i => i.OwnerId);

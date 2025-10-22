@@ -1,0 +1,139 @@
+﻿@using Main.Application.Dtos
+@model List<TagWithCountDto>
+
+@{
+    ViewData["Title"] = "Облако тегов";
+}
+
+<div class="container mt-4">
+    <!-- Хлебные крошки -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Главная</a></li>
+            <li class="breadcrumb-item active">Облако тегов</li>
+        </ol>
+    </nav>
+
+    <!-- Заголовок -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6">
+                <i class="fas fa-tags text-primary me-2"></i>
+                Облако тегов
+            </h1>
+            <p class="text-muted">Нажмите на тег для поиска связанных инвентарей</p>
+        </div>
+    </div>
+
+    <!-- Облако тегов -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="tag-cloud">
+                            @foreach (var tag in Model)
+                            {
+                                var fontSize = GetFontSize(tag.InventoryCount, Model.Max(t => t.InventoryCount));
+                                <a href="@Url.Action("SearchByTag", "Tags", new { tagName = tag.Name })"
+                                   class="tag-cloud-item"
+                                   style="font-size: @(fontSize)px;"
+                                   title="@tag.InventoryCount инвентарей">
+                                    @tag.Name
+                                    <span class="badge bg-secondary ms-1">@tag.InventoryCount</span>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Теги не найдены</h4>
+                            <p class="text-muted">Теги появятся после их добавления к инвентарям</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    @if (Model.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Статистика тегов</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <h3 class="text-primary">@Model.Count</h3>
+                                <p class="text-muted">Всего тегов</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h3 class="text-success">@Model.Sum(t => t.InventoryCount)</h3>
+                                <p class="text-muted">Всего использований</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h3 class="text-info">@Model.Max(t => t.InventoryCount)</h3>
+                                <p class="text-muted">Максимальное использование</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .tag-cloud {
+        text-align: center;
+        line-height: 2.5;
+    }
+
+    .tag-cloud-item {
+        display: inline-block;
+        margin: 5px 8px;
+        padding: 6px 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+        .tag-cloud-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-decoration: none;
+            color: white;
+        }
+
+        .tag-cloud-item .badge {
+            background: rgba(255,255,255,0.2) !important;
+            font-size: 0.7em;
+        }
+</style>
+
+@functions {
+    private int GetFontSize(int count, int maxCount)
+    {
+        // Минимальный и максимальный размер шрифта
+        const int minSize = 14;
+        const int maxSize = 32;
+
+        if (maxCount == 0) return minSize;
+
+        // Логарифмическая шкала для более равномерного распределения
+        var ratio = (double)count / maxCount;
+        var fontSize = minSize + (maxSize - minSize) * ratio;
+
+        return (int)fontSize;
+    }
+}

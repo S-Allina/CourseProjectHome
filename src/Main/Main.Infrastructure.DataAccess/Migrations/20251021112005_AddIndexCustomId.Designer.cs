@@ -4,6 +4,7 @@ using Main.Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Main.Infrastructure.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251021112005_AddIndexCustomId")]
+    partial class AddIndexCustomId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -276,7 +279,7 @@ namespace Main.Infrastructure.DataAccess.Migrations
 
                     b.Property<string>("CustomId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("InventoryId")
                         .HasColumnType("int");
@@ -295,10 +298,6 @@ namespace Main.Infrastructure.DataAccess.Migrations
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("InventoryId");
-
-                    b.HasIndex("InventoryId", "CustomId")
-                        .IsUnique()
-                        .HasFilter("[CustomId] IS NOT NULL");
 
                     b.ToTable("Items");
                 });
@@ -440,7 +439,7 @@ namespace Main.Infrastructure.DataAccess.Migrations
                     b.HasOne("Main.Domain.entities.inventory.InventoryField", "InventoryField")
                         .WithMany()
                         .HasForeignKey("InventoryFieldId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Main.Domain.entities.item.Item", "Item")

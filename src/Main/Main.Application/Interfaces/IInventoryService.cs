@@ -20,6 +20,8 @@ namespace Main.Application.Interfaces
         Task<InventoryDto> UpdateInventoryAsync(InventoryDto inventoryDto, CancellationToken cancellationToken = default);
         Task<bool> HasWriteAccessAsync(int inventoryId, string userId, CancellationToken cancellationToken = default);
         Task<IEnumerable<InventoryFieldDto>> GetInventoryFields(int id, CancellationToken cancellationToken = default);
-        Task<IEnumerable<Category>> GetCategories(CancellationToken cancellationToken);
+        Task<IEnumerable<Category>> GetCategories(CancellationToken cancellationToken = default);
+        Task<List<InventorySearchResult>> GetInventoriesByTagAsync(string tagName);
+
     }
 }

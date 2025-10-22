@@ -18,7 +18,7 @@
 
                     <div class="mb-3">
                         <label asp-for="CustomId" class="form-label">Custom ID</label>
-                        <input asp-for="CustomId" class="form-control" readonly />
+                        <input asp-for="CustomId" class="form-control" />
                         <span asp-validation-for="CustomId" class="text-danger"></span>
                         <small class="form-text text-muted">
                             Format: @inventory?.CustomIdFormat

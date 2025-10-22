@@ -115,7 +115,9 @@ namespace Main.Presentation.MVC
             builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
             builder.Services.AddScoped<IInventoryFieldRepository, InventoryFieldRepository>();
             builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+            builder.Services.AddScoped<ITagRepository, TagRepository>();
             builder.Services.AddScoped<IInventoryService, InventoryService>();
+            builder.Services.AddScoped<ITagService, TagService>();
             builder.Services.AddScoped<ICustomIdService, CustomIdService>();
             builder.Services.AddScoped<IItemRepository, ItemRepository>();
             // Регистрируем сервис поиска
@@ -148,6 +150,7 @@ namespace Main.Presentation.MVC
             app.UseCors("CorsPolicy");
 
             app.UseMiddleware<AuthRedirectMiddleware>();
+            //app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseSwagger();

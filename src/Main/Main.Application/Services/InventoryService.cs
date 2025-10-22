@@ -114,6 +114,11 @@ namespace Main.Application.Services
                    inventory.AccessList.Any(a => a.UserId == userId && a.AccessLevel >= 2);
         }
 
+        public async Task<List<InventorySearchResult>> GetInventoriesByTagAsync(string tagName)
+        {
+            return null;
+        }
+
         private async Task AddFieldsToInventory(Inventory inventory, List<CreateInventoryFieldDto> fieldDtos)
         {
             if (!fieldDtos.Any()) return;

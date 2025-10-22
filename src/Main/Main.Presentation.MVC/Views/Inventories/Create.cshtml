@@ -21,8 +21,16 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <!-- ✅ Скрытые поля для автосохранения -->
-            <input type="hidden" id="version" name="Version" value="@Model.Version" />
-            <input type="hidden" id="lastSavedVersion" value="@Model.Version" />
+            @if (Model.Version != null)
+            {
+                <input type="hidden" id="Version" name="Version" value="@Model.Version" />
+                <input type="hidden" id="lastSavedVersion" value="@Model.Version" />
+            }
+            else
+            {
+                <input type="hidden" id="Version" name="Version" value="" />
+                <input type="hidden" id="lastSavedVersion" value="" />
+            }
             <input type="hidden" id="isDirty" value="false" />
 
             <!-- ✅ Скрытое поле для ID в режиме редактирования -->
@@ -186,21 +194,17 @@
                     Tags: this.getTagsArray(),
                     Fields: this.collectFieldsData()
                 };
-
+                     console.log('Prepared form data:', {
+            ...data,
+            Version: data.Version ? 'byte[] present' : 'null'
+        });
                 return data;
             },
-
+                   
             getTagsArray: function() {
                 const hiddenTags = document.getElementById('hiddenTags');
-                if (hiddenTags && hiddenTags.value) {
-                    try {
-                        return JSON.parse(hiddenTags.value);
-                    } catch (e) {
-                        console.error('Error parsing tags:', e);
-                        return [];
-                    }
-                }
-                return [];
+                    const tagInputs = document.querySelectorAll('input[name="Tags"]');
+        return Array.from(tagInputs).map(input => input.value);
             },
 
             collectFieldsData: function() {
@@ -244,12 +248,12 @@
                     isDirtyElement.value = 'false';
                 }
 
-                const lastSavedVersion = document.getElementById('lastSavedVersion');
-                const Version = document.getElementById('Version');
-                if (lastSavedVersion && Version) {
-                    lastSavedVersion.value = result.Version;
-                    Version.value = result.Version;
-                }
+                    const lastSavedVersion = document.getElementById('lastSavedVersion');
+        const versionElement = document.getElementById('Version');
+        if (lastSavedVersion && versionElement && result.version) {
+            lastSavedVersion.value = result.version;
+            versionElement.value = result.version;
+        }
 
                 this.updateSaveIndicator('All changes saved', false, 'success');
 
@@ -325,7 +329,11 @@
                 });
             }
         };
-
+        console.log('=== VERSION DEBUG INFO ===');
+        const versionElement = document.getElementById('Version');
+        console.log('Version element:', versionElement);
+        console.log('Version value:', versionElement?.value);
+        console.log('Version in model:', '@Model.Version');
         // ===== CUSTOM ID FORMAT BUILDER =====
         let componentCount = 0;
         let components = [];
@@ -864,16 +872,7 @@
         }
 
         // Управление тегами
-        const tagInput = document.getElementById('tagInput');
-        if (tagInput) {
-            tagInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ',') {
-                    e.preventDefault();
-                    addTag(this.value.trim().replace(',', ''));
-                    this.value = '';
-                }
-            });
-        }
+                let tags = [];
 
         function addTag(tagText) {
             if (tagText && !tags.includes(tagText)) {
@@ -899,16 +898,15 @@
 
         function updateTagsDisplay() {
             const container = document.getElementById('tagsContainer');
-            const hiddenInput = document.getElementById('hiddenTags');
+            const hiddenContainer = document.getElementById('hiddenTagsContainer');
 
-            if (container) {
-                container.innerHTML = '';
-            }
-            if (hiddenInput) {
-                hiddenInput.value = JSON.stringify(tags);
-            }
+            // Очищаем контейнеры
+            if (container) container.innerHTML = '';
+            if (hiddenContainer) hiddenContainer.innerHTML = '';
 
-            tags.forEach(tag => {
+            // Создаем видимые теги и hidden inputs
+            tags.forEach((tag, index) => {
+                // Видимый тег
                 const tagElement = document.createElement('span');
                 tagElement.className = 'badge bg-primary me-2 mb-2';
                 tagElement.innerHTML = `
@@ -918,9 +916,17 @@
                 if (container) {
                     container.appendChild(tagElement);
                 }
+
+                // Hidden input для формы
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'Tags'; // ✅ Важно: имя без индекса для биндинга массива
+                hiddenInput.value = tag;
+                if (hiddenContainer) {
+                    hiddenContainer.appendChild(hiddenInput);
+                }
             });
         }
-
             </script>
 
     <style>

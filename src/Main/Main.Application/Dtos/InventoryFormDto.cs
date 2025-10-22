@@ -6,21 +6,19 @@ using System.Threading.Tasks;
 
 namespace Main.Application.Dtos
 {
-    // Универсальный DTO для создания и редактирования
-    public record InventoryFormDto
+    public class InventoryFormDto
     {
-        public int? Id { get; init; } // Nullable для создания
-        public string Name { get; init; }
-        public string Description { get; init; }
-        public int? CategoryId { get; init; }
-        public string ImageUrl { get; init; }
-        public bool IsPublic { get; init; }
-        public string CustomIdFormat { get; init; }
-        public byte[] Version { get; set; }
-        public List<string> Tags { get; init; } = new();
-        public List<CreateInventoryFieldDto> Fields { get; init; } = new();
+        public int? Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public int? CategoryId { get; set; }
+        public string ImageUrl { get; set; }
+        public bool IsPublic { get; set; }
+        public string CustomIdFormat { get; set; }
+        public string Version { get; set; }
+        public List<string> Tags { get; set; } = new();
+        public List<CreateInventoryFieldDto> Fields { get; set; } = new();
 
-        // Дополнительные свойства для режима редактирования
         public bool IsEditMode => Id.HasValue;
         public string FormAction => IsEditMode ? "Edit" : "Create";
         public string PageTitle => IsEditMode ? "Edit Inventory" : "Create New Inventory";

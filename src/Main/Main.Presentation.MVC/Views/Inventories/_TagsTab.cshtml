@@ -14,7 +14,11 @@
             <div id="tagsContainer" class="mt-2">
                 <!-- Теги будут добавляться динамически -->
             </div>
-            <input type="hidden" asp-for="Tags" id="hiddenTags" />
+
+            <!-- ✅ Контейнер ТОЛЬКО для hidden inputs тегов -->
+            <div id="hiddenTagsContainer" class="d-none">
+                <!-- Hidden inputs будут добавляться сюда -->
+            </div>
         </div>
     </div>
 </div>
