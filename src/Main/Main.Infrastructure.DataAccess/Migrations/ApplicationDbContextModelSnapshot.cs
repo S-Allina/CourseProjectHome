@@ -64,10 +64,9 @@ namespace Main.Infrastructure.DataAccess.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("LikedAt")
-                        .HasColumnType("datetime2");
-
                     b.HasKey("ItemId", "UserId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("ItemLikes");
                 });
@@ -90,6 +89,47 @@ namespace Main.Infrastructure.DataAccess.Migrations
                         .IsUnique();
 
                     b.ToTable("Tags");
+                });
+
+            modelBuilder.Entity("Main.Domain.entities.common.User", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Users_Email");
+
+                    b.HasIndex("LastName")
+                        .HasDatabaseName("IX_Users_LastName");
+
+                    b.HasIndex("FirstName", "LastName")
+                        .HasDatabaseName("IX_Users_FirstName_LastName");
+
+                    b.HasIndex("FirstName", "LastName", "Email")
+                        .HasDatabaseName("IX_Users_Search");
+
+                    SqlServerIndexBuilderExtensions.IsClustered(b.HasIndex("FirstName", "LastName", "Email"), false);
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Main.Domain.entities.inventory.Category", b =>
@@ -193,12 +233,16 @@ namespace Main.Infrastructure.DataAccess.Migrations
 
                     b.Property<string>("GrantedById")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("Id")
                         .HasColumnType("int");
 
                     b.HasKey("InventoryId", "UserId");
+
+                    b.HasIndex("GrantedById");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("InventoryAccess");
                 });
@@ -349,11 +393,19 @@ namespace Main.Infrastructure.DataAccess.Migrations
 
             modelBuilder.Entity("Main.Domain.entities.Comments.Comment", b =>
                 {
+                    b.HasOne("Main.Domain.entities.common.User", "Author")
+                        .WithMany("Comments")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Main.Domain.entities.inventory.Inventory", "Inventory")
                         .WithMany("Comments")
                         .HasForeignKey("InventoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Author");
 
                     b.Navigation("Inventory");
                 });
@@ -366,7 +418,15 @@ namespace Main.Infrastructure.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Main.Domain.entities.common.User", "User")
+                        .WithMany("Likes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Item");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Main.Domain.entities.inventory.Inventory", b =>
@@ -385,13 +445,29 @@ namespace Main.Infrastructure.DataAccess.Migrations
 
             modelBuilder.Entity("Main.Domain.entities.inventory.InventoryAccess", b =>
                 {
+                    b.HasOne("Main.Domain.entities.common.User", "GrantedBy")
+                        .WithMany()
+                        .HasForeignKey("GrantedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Main.Domain.entities.inventory.Inventory", "Inventory")
                         .WithMany("AccessList")
                         .HasForeignKey("InventoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Main.Domain.entities.common.User", "User")
+                        .WithMany("InventoryAccesses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GrantedBy");
+
                     b.Navigation("Inventory");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Main.Domain.entities.inventory.InventoryField", b =>
@@ -426,11 +502,19 @@ namespace Main.Infrastructure.DataAccess.Migrations
 
             modelBuilder.Entity("Main.Domain.entities.item.Item", b =>
                 {
+                    b.HasOne("Main.Domain.entities.common.User", "CreatedBy")
+                        .WithMany("CreatedItems")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Main.Domain.entities.inventory.Inventory", "Inventory")
                         .WithMany("Items")
                         .HasForeignKey("InventoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("CreatedBy");
 
                     b.Navigation("Inventory");
                 });
@@ -457,6 +541,17 @@ namespace Main.Infrastructure.DataAccess.Migrations
             modelBuilder.Entity("Main.Domain.entities.common.Tag", b =>
                 {
                     b.Navigation("InventoryTags");
+                });
+
+            modelBuilder.Entity("Main.Domain.entities.common.User", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("CreatedItems");
+
+                    b.Navigation("InventoryAccesses");
+
+                    b.Navigation("Likes");
                 });
 
             modelBuilder.Entity("Main.Domain.entities.inventory.Category", b =>

@@ -8,13 +8,11 @@ using Main.Domain.InterfacesRepository;
 using Main.Infrastructure.DataAccess;
 using Main.Infrastructure.DataAccess.Repositories;
 using Main.Presentation.MVC.Constans;
-using Main.Presentation.MVC.Middleware;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 
 namespace Main.Presentation.MVC
 {

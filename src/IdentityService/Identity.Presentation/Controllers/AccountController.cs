@@ -1,9 +1,7 @@
 ﻿// Controllers/AccountController.cs в Auth проекте
 using Identity.Domain.Entity;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
 using System.Web;
 
 namespace Identity.Presentation.Controllers

@@ -27,15 +27,11 @@ namespace Main.Presentation.Controllers
             CreateInventoryDto createDto,
             CancellationToken cancellationToken = default)
         {
-                var ownerId = "kjilsfhrfbeibkv ";
-                if (string.IsNullOrEmpty(ownerId))
-                    return Unauthorized("User not authenticated");
+            var inventory = await _inventoryService.CreateInventoryAsync(createDto, cancellationToken);
 
-                var inventory = await _inventoryService.CreateInventoryAsync(createDto, ownerId, cancellationToken);
+            _logger.LogInformation("User created inventory {InventoryId}", inventory.Id);
 
-                _logger.LogInformation("User {UserId} created inventory {InventoryId}", ownerId, inventory.Id);
-
-                return CreatedAtAction(nameof(GetInventory), new { id = inventory.Id }, inventory);
+            return CreatedAtAction(nameof(GetInventory), new { id = inventory.Id }, inventory);
         }
 
         [HttpGet]

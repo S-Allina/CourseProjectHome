@@ -1,10 +1,7 @@
 ﻿using Main.Application.Dtos;
 using Main.Application.Interfaces;
-using Main.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace Main.Presentation.Controllers
 {
@@ -29,15 +26,11 @@ namespace Main.Presentation.Controllers
             [FromBody] CreateItemDto createDto,
             CancellationToken cancellationToken = default)
         {
-                var ownerId = "kjilsfhrfbeibkv ";
-                if (string.IsNullOrEmpty(ownerId))
-                    return Unauthorized("User not authenticated");
+            var inventory = await _itemService.CreateAsync(createDto, cancellationToken);
 
-            var inventory = await _itemService.CreateAsync(createDto, ownerId, cancellationToken);
+            _logger.LogInformation("User created inventory {InventoryId}", inventory.Id);
 
-            _logger.LogInformation("User {UserId} created inventory {InventoryId}", ownerId, inventory.Id);
-
-                return CreatedAtAction("", new { id = inventory.Id }, inventory);
+            return CreatedAtAction("", new { id = inventory.Id }, inventory);
         }
 
         //[HttpGet]
@@ -50,7 +43,7 @@ namespace Main.Presentation.Controllers
         [HttpPost]
         public async Task<IActionResult> Delete(List<int> selectedIds) // Используйте тип вашего ID (int, Guid)
         {
-            
+
             return RedirectToAction(nameof(Index));
         }
 

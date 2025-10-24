@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Main.Application.Dtos
+﻿namespace Main.Application.Dtos
 {
     public class InventoryFormDto
     {
@@ -17,6 +11,7 @@ namespace Main.Application.Dtos
         public string CustomIdFormat { get; set; }
         public string Version { get; set; }
         public List<string> Tags { get; set; } = new();
+        public List<InventoryAccessDto> AccessList { get; set; } = new();
         public List<CreateInventoryFieldDto> Fields { get; set; } = new();
 
         public bool IsEditMode => Id.HasValue;

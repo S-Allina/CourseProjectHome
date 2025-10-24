@@ -1,11 +1,6 @@
 ﻿using AutoMapper;
 using Main.Application.Dtos;
 using Main.Domain.entities.inventory;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Application.Mapper
 {
@@ -21,7 +16,8 @@ namespace Main.Application.Mapper
                 .ForMember(dest => dest.CurrentSequence, opt => opt.MapFrom(_ => 1))
                 .ForMember(dest => dest.Fields, opt => opt.Ignore()) // Обрабатываем отдельно в сервисе
                 .ForMember(dest => dest.Tags, opt => opt.Ignore())   // Обрабатываем отдельно в сервисе
-                .ForMember(dest => dest.OwnerId, opt => opt.Ignore());
+                .ForMember(dest => dest.OwnerId, opt => opt.Ignore())
+                .ForMember(dest => dest.AccessList, opt => opt.Ignore());
 
             CreateMap<CreateInventoryFieldDto, InventoryField>()
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name.Trim()))
@@ -33,7 +29,6 @@ namespace Main.Application.Mapper
                 .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags.Select(t => t.Tag.Name).ToList()))
                 .ForMember(dest => dest.Fields, opt => opt.MapFrom(src => src.Fields));
 
-            // ✅ ИСПРАВЛЕННЫЙ МАППИНГ: InventoryDto → Inventory с поддержкой Fields
             CreateMap<InventoryDto, Inventory>()
                 .ForMember(dest => dest.Fields, opt => opt.MapFrom((src, dest, destMember, context) =>
                 {
@@ -76,6 +71,7 @@ namespace Main.Application.Mapper
                 .ForMember(dest => dest.Inventory, opt => opt.Ignore());
 
             CreateMap<InventoryField, InventoryFieldDto>().ReverseMap();
+            CreateMap<InventoryAccess, InventoryAccessDto>().ReverseMap();
         }
     }
 }

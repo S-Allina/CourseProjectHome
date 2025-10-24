@@ -1,17 +1,6 @@
 ﻿using Main.Application.Dtos;
 using Main.Application.Interfaces;
-using Main.Application.Services;
-using Main.Domain.entities.inventory;
-using Main.Domain.entities.item;
-using Main.Infrastructure.DataAccess;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Main.Presentation.MVC.Controllers
 {
@@ -105,15 +94,15 @@ namespace Main.Presentation.MVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateItemDto createDto, CancellationToken cancellationToken)
         {
-                try
-                {
-                    var item = await _itemService.CreateAsync(createDto, "hhhhh", cancellationToken);
-                    return RedirectToAction("Index", "Items", new { inventoryId = createDto.InventoryId });
-                }
-                catch (Exception ex)
-                {
-                    ModelState.AddModelError("", "Error creating item: " + ex.Message);
-                }
+            try
+            {
+                var item = await _itemService.CreateAsync(createDto, cancellationToken);
+                return RedirectToAction("Index", "Items", new { inventoryId = createDto.InventoryId });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Error creating item: " + ex.Message);
+            }
             var inventory = await _inventoryService.GetById(createDto.InventoryId, cancellationToken);
 
             ViewBag.Inventory = inventory;
@@ -139,7 +128,7 @@ namespace Main.Presentation.MVC.Controllers
                 ViewBag.Inventory = inventory;
                 return View(item);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return RedirectToAction("Index", new { inventoryId = item?.InventoryId });
             }
@@ -149,17 +138,17 @@ namespace Main.Presentation.MVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(string id, ItemDto dto, CancellationToken cancellationToken)
         {
-                dto = dto with { CreatedById= "dfhbmcnv" };
-                
-                    var inventory = await _inventoryService.GetById (dto.InventoryId, cancellationToken);
-                   
-                
+            dto = dto with { CreatedById = "dfhbmcnv" };
 
-                await _itemService.UpdateItemAsync(dto, cancellationToken);
+            var inventory = await _inventoryService.GetById(dto.InventoryId, cancellationToken);
 
-                TempData["SuccessMessage"] = "Item updated successfully!";
-                return RedirectToAction("Index", new { inventoryId = dto.InventoryId });
-            
+
+
+            await _itemService.UpdateItemAsync(dto, cancellationToken);
+
+            TempData["SuccessMessage"] = "Item updated successfully!";
+            return RedirectToAction("Index", new { inventoryId = dto.InventoryId });
+
         }
         //}
 

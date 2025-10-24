@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Identity.Presentation.Constants
+﻿namespace Identity.Presentation.Constants
 {
     public static class HangfireConstants
     {

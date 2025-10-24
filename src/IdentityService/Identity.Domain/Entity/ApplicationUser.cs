@@ -1,11 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Identity.Domain.Enums;
+using Microsoft.AspNetCore.Identity;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using Identity.Domain.Enums;
 
 namespace Identity.Domain.Entity
 {
@@ -21,12 +16,12 @@ namespace Identity.Domain.Entity
         public Theme Theme { get; set; } = Theme.Light;
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public Language Language { get; set; } = Language.English; 
+        public Language Language { get; set; } = Language.English;
 
-        public string ? RefreshToken { get; set; }
+        public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
 
         public DateTime CreateAt { get; set; }
-        public DateTime? UpdateAt { get; set;}
+        public DateTime? UpdateAt { get; set; }
     }
 }

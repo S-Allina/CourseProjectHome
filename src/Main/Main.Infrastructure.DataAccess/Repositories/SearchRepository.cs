@@ -1,11 +1,6 @@
 ﻿using Main.Domain.entities;
 using Main.Domain.InterfacesRepository;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Infrastructure.DataAccess.Repositories
 {
@@ -22,10 +17,8 @@ namespace Main.Infrastructure.DataAccess.Repositories
         {
             try
             {
-                // Проверяем доступность Full-Text Search
                 var result = await _context.Database
-                    .SqlQueryRaw<int>("SELECT SERVERPROPERTY('IsFullTextInstalled')")
-                    .FirstOrDefaultAsync(cancellationToken);
+                    .SqlQuery<int>($"SELECT SERVERPROPERTY('IsFullTextInstalled')").FirstOrDefaultAsync(cancellationToken);
 
                 return result == 1;
             }
@@ -35,6 +28,85 @@ namespace Main.Infrastructure.DataAccess.Repositories
             }
         }
 
+        public async Task<List<UserSearchResult>> SearchUsersAsync(string searchTerm, int limit = 10, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
+                    return new List<UserSearchResult>();
+
+                var isFullTextAvailable = true;
+
+                if (isFullTextAvailable)
+                {
+                    // Используем Full-Text Search если доступен
+                    return await _context.Users
+                        .Where(u => EF.Functions.FreeText(u.Email, searchTerm) ||
+                                   EF.Functions.FreeText(u.FirstName, searchTerm) ||
+                                   EF.Functions.FreeText(u.LastName, searchTerm))
+                        .OrderBy(u => u.FirstName)
+                        .ThenBy(u => u.LastName)
+                        .Take(limit)
+                        .Select(u => new UserSearchResult
+                        {
+                            Id = u.Id,
+                            Email = u.Email,
+                            FirstName = u.FirstName,
+                            LastName = u.LastName,
+                            DisplayName = $"{u.FirstName} {u.LastName}"
+                        })
+                        .ToListAsync(cancellationToken);
+                }
+                else
+                {
+                    // Fallback: используем обычный LIKE с индексами
+                    var normalizedSearch = $"{searchTerm}%";
+                    return await _context.Users
+                        .Where(u => u.Email.StartsWith(normalizedSearch) ||
+                                   u.FirstName.StartsWith(normalizedSearch) ||
+                                   u.LastName.StartsWith(normalizedSearch))
+                        .OrderBy(u => u.FirstName)
+                        .ThenBy(u => u.LastName)
+                        .Take(limit)
+                        .Select(u => new UserSearchResult
+                        {
+                            Id = u.Id,
+                            Email = u.Email,
+                            FirstName = u.FirstName,
+                            LastName = u.LastName,
+                            DisplayName = $"{u.FirstName} {u.LastName}"
+                        })
+                        .ToListAsync(cancellationToken);
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Получение деталей пользователей по ID
+        /// </summary>
+        public async Task<List<UserSearchResult>> GetUsersDetailsAsync(List<string> userIds, CancellationToken cancellationToken = default)
+        {
+            if (userIds == null || !userIds.Any())
+                return new List<UserSearchResult>();
+
+            return await _context.Users
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => new UserSearchResult
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    DisplayName = $"{u.FirstName} {u.LastName}"
+                })
+                .ToListAsync(cancellationToken);
+        }
+
+        // Обновляем GlobalSearchAsync чтобы включить поиск пользователей
         public async Task<GlobalSearchResult> GlobalSearchAsync(string searchTerm, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
@@ -42,7 +114,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
             var result = new GlobalSearchResult { SearchTerm = searchTerm };
 
-            // 🔍 1. Поиск по инвентарям с использованием Full-Text
+            // 🔍 1. Поиск по инвентарям
             result.Inventories = await _context.Inventories
                 .Include(i => i.Category)
                 .Include(i => i.Items)
@@ -61,7 +133,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 .Take(100)
                 .ToListAsync(cancellationToken);
 
-            // 🔍 2. Поиск по значениям полей предметов с использованием Full-Text
+            // 🔍 2. Поиск по значениям полей предметов
             result.ItemFields = await _context.ItemFieldValues
                 .Include(iv => iv.Item)
                     .ThenInclude(item => item.Inventory)
@@ -83,12 +155,13 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 .Take(100)
                 .ToListAsync(cancellationToken);
 
-            // 🔍 3. Поиск по пользователям (опционально)
-           
+            // 🔍 3. Поиск по пользователям (НОВОЕ!)
+            result.Users = await SearchUsersAsync(searchTerm, 20, cancellationToken);
 
             return result;
         }
 
+        // Обновляем QuickSearchAsync чтобы включить пользователей
         public async Task<QuickSearchResult> QuickSearchAsync(string searchTerm, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
@@ -101,7 +174,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 .Where(i => EF.Functions.FreeText(i.Name, searchTerm))
                 .Select(i => new QuickSearchItem
                 {
-                    Id = i.Id,
+                    Id = i.Id.ToString(),
                     Name = i.Name,
                     Type = "Inventory",
                     AdditionalInfo = i.Description.Length > 50
@@ -121,7 +194,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                             EF.Functions.FreeText(iv.MultilineTextValue, searchTerm))
                 .Select(iv => new QuickSearchItem
                 {
-                    Id = iv.ItemId,
+                    Id = iv.ItemId.ToString(),
                     Name = $"{iv.InventoryField.Name}: {iv.TextValue ?? iv.MultilineTextValue}",
                     Type = "Item",
                     AdditionalInfo = iv.Item.Inventory.Name,
@@ -130,8 +203,20 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 .Take(5)
                 .ToListAsync(cancellationToken);
 
+            // ⚡ Быстрый поиск пользователей (НОВОЕ!)
+            var userResults = await SearchUsersAsync(searchTerm, 5, cancellationToken);
+            var userSearchItems = userResults.Select(u => new QuickSearchItem
+            {
+                Id = u.Id,
+                Name = u.DisplayName,
+                Type = "User",
+                AdditionalInfo = u.Email,
+                Url = "#" // или URL профиля пользователя
+            }).ToList();
+
             result.Results.AddRange(inventoryResults);
             result.Results.AddRange(itemFieldResults);
+            result.Results.AddRange(userSearchItems);
 
             return result;
         }

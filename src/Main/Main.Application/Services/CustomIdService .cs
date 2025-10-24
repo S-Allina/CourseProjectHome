@@ -1,12 +1,6 @@
-﻿using Main.Application.Dtos;
-using Main.Application.Interfaces;
+﻿using Main.Application.Interfaces;
 using Main.Domain.InterfacesRepository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Main.Application.Services
 {

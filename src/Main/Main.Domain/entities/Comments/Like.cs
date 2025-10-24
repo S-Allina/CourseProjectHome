@@ -1,9 +1,5 @@
-﻿using Main.Domain.entities.item;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Main.Domain.entities.common;
+using Main.Domain.entities.item;
 
 namespace Main.Domain.entities.Comments
 {
@@ -12,7 +8,7 @@ namespace Main.Domain.entities.Comments
         public int ItemId { get; set; }
         public Item Item { get; set; }
 
-        public string UserId { get; set; }
-        public DateTime LikedAt { get; set; } = DateTime.UtcNow;
+        public string UserId { get; set; } = string.Empty;
+        public User User { get; set; } = null!;
     }
 }

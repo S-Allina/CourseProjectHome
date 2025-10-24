@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Text.Json;
-using Microsoft.AspNetCore.Diagnostics;
 
 namespace Identity.Presentation.Middleware
 {
@@ -35,7 +34,7 @@ namespace Identity.Presentation.Middleware
 
             switch (exception)
             {
-               
+
 
                 case ArgumentException argumentException:
                     status = HttpStatusCode.BadRequest;

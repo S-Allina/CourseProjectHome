@@ -1,16 +1,12 @@
 ﻿using AutoMapper;
-using FluentValidation;
 using Main.Application.Dtos;
 using Main.Application.Interfaces;
 using Main.Domain.entities.inventory;
 using Main.Domain.entities.item;
 using Main.Domain.enums.inventory;
 using Main.Domain.InterfacesRepository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace Main.Application.Services
 {
@@ -19,6 +15,7 @@ namespace Main.Application.Services
         private readonly IItemRepository _itemRepository;
         private readonly IInventoryService _inventoryService;
         private readonly ICustomIdService _customIdService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IMapper _mapper;
 
         public ItemService(
@@ -26,19 +23,22 @@ namespace Main.Application.Services
             IInventoryService inventoryService,
             IInventoryFieldRepository inventoryFieldRepository,
             ICustomIdService customIdService,
+            IHttpContextAccessor httpContextAccessor,
             IMapper mapper)
         {
             _itemRepository = itemRepository;
             _inventoryService = inventoryService;
             _customIdService = customIdService;
+            _httpContextAccessor = httpContextAccessor;
             _mapper = mapper;
         }
 
-        public async Task<ItemDto> CreateAsync(CreateItemDto createDto, string userId, CancellationToken cancellationToken = default)
+        public async Task<ItemDto> CreateAsync(CreateItemDto createDto, CancellationToken cancellationToken = default)
         {
             try
             {
-                if (!await _inventoryService.HasWriteAccessAsync(createDto.InventoryId, userId, cancellationToken))
+                var userId = GetCurrentUserId();
+                if (!await _inventoryService.HasWriteAccessAsync(createDto.InventoryId, cancellationToken))
                     throw new UnauthorizedAccessException("Нет прав на добавление предметов в этот инвентарь");
 
                 var fieldSchema = await _inventoryService.GetInventoryFields(createDto.InventoryId, cancellationToken);
@@ -63,7 +63,7 @@ namespace Main.Application.Services
                 var createdItem = await _itemRepository.CreateAsync(item, cancellationToken);
                 return _mapper.Map<ItemDto>(createdItem);
             }
-            catch(Exception ex)
+            catch (Exception)
             {
                 throw;
             }
@@ -71,7 +71,7 @@ namespace Main.Application.Services
 
         public async Task<int> DeleteItemAsync(int[] ids, CancellationToken cancellationToken = default)
         {
-            var inventory = await _itemRepository.GetFirstAsync(i=>i.Id == ids[0]);
+            var inventory = await _itemRepository.GetFirstAsync(i => i.Id == ids[0]);
             await _itemRepository.DeleteAsync(i => ids.Contains(i.Id), cancellationToken);
 
             return inventory.InventoryId;
@@ -111,7 +111,7 @@ namespace Main.Application.Services
             }
 
             // Проверяем все обязательные поля
-           
+
         }
         private async Task AddFieldValuesAsync(Item item, List<CreateItemFieldValueDto> fieldValues, List<InventoryField> fieldSchema, CancellationToken cancellationToken)
         {
@@ -129,16 +129,16 @@ namespace Main.Application.Services
                 switch (field.FieldType)
                 {
                     case FieldType.Text:
-                        itemFieldValue.TextValue = (string)fieldValue.TextValue;
+                        itemFieldValue.TextValue = fieldValue.TextValue;
                         break;
                     case FieldType.MultilineText:
-                        itemFieldValue.MultilineTextValue = (string)fieldValue.MultilineTextValue;
+                        itemFieldValue.MultilineTextValue = fieldValue.MultilineTextValue;
                         break;
                     case FieldType.Number:
                         itemFieldValue.NumberValue = Convert.ToDecimal(fieldValue.NumberValue);
                         break;
                     case FieldType.File:
-                        itemFieldValue.FileUrl = (string)fieldValue.FileValue;
+                        itemFieldValue.FileUrl = fieldValue.FileValue;
                         break;
                     case FieldType.Boolean:
                         itemFieldValue.BooleanValue = (bool)fieldValue.BooleanValue;
@@ -176,7 +176,7 @@ namespace Main.Application.Services
 
         public async Task<IEnumerable<ItemDto>> GetByInventoryAsync(int id, CancellationToken cancellationToken = default)
         {
-            var item = await _itemRepository.GetAllAsync(i=>i.InventoryId==id, "FieldValues", cancellationToken);
+            var item = await _itemRepository.GetAllAsync(i => i.InventoryId == id, "FieldValues", cancellationToken);
             return _mapper.Map<IEnumerable<ItemDto>>(item);
         }
 
@@ -185,12 +185,17 @@ namespace Main.Application.Services
             var item = await _itemRepository.GetAllAsync(null, "FieldValues", cancellationToken);
             return _mapper.Map<IEnumerable<ItemDto>>(item);
         }
-        
+
         public async Task<bool> Delete(List<int> ids, CancellationToken cancellationToken)
         {
-            await _itemRepository.DeleteAsync(i=>ids.Contains(i.Id), cancellationToken);
+            await _itemRepository.DeleteAsync(i => ids.Contains(i.Id), cancellationToken);
 
             return true;
+        }
+
+        private string GetCurrentUserId()
+        {
+            return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
         }
     }
 }

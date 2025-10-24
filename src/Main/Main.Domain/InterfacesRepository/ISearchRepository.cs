@@ -1,9 +1,4 @@
 ﻿using Main.Domain.entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Domain.InterfacesRepository
 {
@@ -12,5 +7,7 @@ namespace Main.Domain.InterfacesRepository
         Task<GlobalSearchResult> GlobalSearchAsync(string searchTerm, CancellationToken cancellationToken = default);
         Task<QuickSearchResult> QuickSearchAsync(string searchTerm, CancellationToken cancellationToken = default);
         Task<bool> IsFullTextAvailableAsync(CancellationToken cancellationToken = default);
+        Task<List<UserSearchResult>> SearchUsersAsync(string searchTerm, int limit = 10, CancellationToken cancellationToken = default);
+        Task<List<UserSearchResult>> GetUsersDetailsAsync(List<string> userIds, CancellationToken cancellationToken = default);
     }
 }

@@ -3,7 +3,6 @@ using Hangfire.Dashboard;
 using Identity.Application.DTO;
 using Identity.Domain.Entity;
 using Identity.Infrastructure.DataAccess.Data;
-using Identity.Presentation.Extensions;
 using Identity.Presentation.Extention;
 using Identity.Presentation.Initializer;
 using Identity.Presentation.Middleware;
@@ -70,13 +69,13 @@ namespace Identity.Presentation
                 IgnoreAntiforgeryToken = true
             });
 
-                app.UseEndpoints(endpoints =>
-                {
-                    // ✅ Убедитесь, что есть MapControllerRoute
-                    endpoints.MapControllerRoute(
-                        name: "default",
-                        pattern: "{controller=Home}/{action=Index}/{id?}");
-                });
+            app.UseEndpoints(endpoints =>
+            {
+                // ✅ Убедитесь, что есть MapControllerRoute
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
+            });
 
             app.MapRazorPages();
 
@@ -96,7 +95,7 @@ namespace Identity.Presentation
 
             app.Run();
         }
-        }
+    }
 
     public class HangfireAuthFilter : IDashboardAuthorizationFilter
     {

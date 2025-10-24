@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using FluentEmail.Core;
 using Identity.Application.Dto;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entity;
@@ -8,10 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Linq;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using Users.Application.Dto;
 
 namespace Identity.Infrastructure.Services
@@ -30,7 +26,7 @@ namespace Identity.Infrastructure.Services
             _userManager = userManager;
             _mapper = mapper;
             _logger = logger;
-            _httpContextAccessor= httpContextAccessor;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ResponseDto> DeleteUnconfirmedUsersAsync(CancellationToken cancellationToken)
@@ -142,7 +138,7 @@ namespace Identity.Infrastructure.Services
             return _mapper.Map<CurrentUserDto>(user);
         }
 
-       
+
         private async Task<ApplicationUser> GetUserByIdAsync(string id)
         {
             var user = await _userManager.FindByIdAsync(id);

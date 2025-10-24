@@ -1,12 +1,7 @@
 ﻿using Main.Domain.entities.Comments;
 using Main.Domain.entities.common;
 using Main.Domain.entities.item;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Domain.entities.inventory
 {
@@ -16,10 +11,10 @@ namespace Main.Domain.entities.inventory
         public string Name { get; set; }
         public string Description { get; set; }
 
-        public int? CategoryId { get; set; } 
+        public int? CategoryId { get; set; }
         public Category? Category { get; set; }
 
-        public string OwnerId { get; set; } 
+        public string OwnerId { get; set; }
         public string ImageUrl { get; set; }
         public bool IsPublic { get; set; }
         public DateTime CreatedAt { get; set; }

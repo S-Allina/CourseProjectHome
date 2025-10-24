@@ -1,18 +1,14 @@
 ﻿using Main.Domain.entities.inventory;
 using Main.Domain.InterfacesRepository;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Infrastructure.DataAccess.Repositories
 {
     public class InventoryRepository : BaseRepository<Inventory>, IInventoryRepository
     {
         private readonly ApplicationDbContext _db;
-        public InventoryRepository(ApplicationDbContext db) : base(db) {
+        public InventoryRepository(ApplicationDbContext db) : base(db)
+        {
             _db = db;
 
         }
@@ -67,7 +63,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 await _db.SaveChangesAsync(cancellationToken);
                 return existingInventory;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }

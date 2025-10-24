@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
 using System.Text.Json;
 
 namespace Main.Presentation.MVC.Middleware
@@ -30,7 +29,6 @@ namespace Main.Presentation.MVC.Middleware
 
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            HttpStatusCode status;
             string message;
             List<string?> errors = null;
 
@@ -82,7 +80,6 @@ namespace Main.Presentation.MVC.Middleware
                     _logger.LogWarning(exception, "DbUpdateConcurrencyException, {Message}", message);
                     break;
                 default:
-                    status = HttpStatusCode.InternalServerError;
                     message = "Произошла непредвиденная ошибка." + exception.Message;
 
                     _logger.LogCritical(exception, "Unhandled exception: {Message}", exception.Message);

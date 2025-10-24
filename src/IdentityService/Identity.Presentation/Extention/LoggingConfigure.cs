@@ -1,8 +1,7 @@
-﻿using Serilog.Sinks.Elasticsearch;
-using Serilog;
-using System.Reflection;
+﻿using Serilog;
 using Serilog.Exceptions;
-using System.Text.Json.Serialization;
+using Serilog.Sinks.Elasticsearch;
+using System.Reflection;
 
 namespace Identity.Presentation.Extensions
 {

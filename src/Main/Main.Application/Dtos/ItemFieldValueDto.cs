@@ -1,11 +1,4 @@
-﻿using Main.Domain.entities.common;
-using Main.Domain.entities.inventory;
-using Main.Domain.enums.inventory;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Main.Domain.enums.inventory;
 
 namespace Main.Application.Dtos
 {

@@ -1,6 +1,5 @@
 ﻿using Main.Application.Dtos;
 using Main.Application.Interfaces;
-using Main.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Main.Presentation.MVC.Controllers

@@ -1,18 +1,11 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
+﻿using Identity.Application.Dto;
+using Identity.Application.Interfaces;
+using Identity.Domain.Entity;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using Microsoft.AspNetCore.Cors;
-using Identity.Domain.Entity;
-using Identity.Application.Interfaces;
-using Identity.Application.Dto;
 using Users.Application.Dto;
 
 namespace Identity.Presentation.Controllers
@@ -28,7 +21,7 @@ namespace Identity.Presentation.Controllers
         private readonly string _frontUrl;
         private ResponseDto response;
 
-        public AuthController(SignInManager<ApplicationUser> signInManager, IUserRegistrationService userRegistrationService, IAuthService authService,  UserManager<ApplicationUser> userManager,
+        public AuthController(SignInManager<ApplicationUser> signInManager, IUserRegistrationService userRegistrationService, IAuthService authService, UserManager<ApplicationUser> userManager,
             IConfiguration configuration)
         {
             _signInManager = signInManager;
@@ -48,7 +41,7 @@ namespace Identity.Presentation.Controllers
                 return Ok(new
                 {
                     isAuthenticated = true,
-                    
+
                 });
             }
 

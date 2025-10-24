@@ -2,11 +2,6 @@
 using Main.Application.Interfaces;
 using Main.Domain.entities.common;
 using Main.Domain.InterfacesRepository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Application.Services
 {
@@ -23,24 +18,24 @@ namespace Main.Application.Services
         {
             var tags = await _tagRepository.GetAllAsync();
 
-                return tags.Select(t => new TagWithCountDto
-                {
-                    TagId = t.Id,
-                    Name = t.Name,
-                    InventoryCount = t.InventoryTags.Count(),
-                    TotalUsageCount = t.InventoryTags.Count()
-                })
-                .Where(t => t.InventoryCount > 0)
-                .OrderByDescending(t => t.InventoryCount)
-                .ToList();
+            return tags.Select(t => new TagWithCountDto
+            {
+                TagId = t.Id,
+                Name = t.Name,
+                InventoryCount = t.InventoryTags.Count(),
+                TotalUsageCount = t.InventoryTags.Count()
+            })
+            .Where(t => t.InventoryCount > 0)
+            .OrderByDescending(t => t.InventoryCount)
+            .ToList();
         }
 
         public async Task<List<Tag>> GetPopularTagsAsync(int count = 50)
         {
             var tags = await _tagRepository.GetAllAsync();
-                return tags.OrderByDescending(t => t.InventoryTags.Count())
-                .Take(count)
-                .ToList();
+            return tags.OrderByDescending(t => t.InventoryTags.Count())
+            .Take(count)
+            .ToList();
         }
     }
 }

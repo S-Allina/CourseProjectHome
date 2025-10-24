@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Main.Domain.entities.item;
+using Main.Infrastructure.DataAccess;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Main.Domain.entities.item;
-using Main.Infrastructure.DataAccess;
 
 namespace Main.Presentation.MVC.Views
 {

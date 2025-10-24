@@ -3,13 +3,6 @@ using Main.Domain.entities.common;
 using Main.Domain.entities.inventory;
 using Main.Domain.entities.item;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace Main.Infrastructure.DataAccess
 {
@@ -18,6 +11,7 @@ namespace Main.Infrastructure.DataAccess
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         // DbSets
+        public DbSet<User> Users { get; set; } // ← Новая таблица
         public DbSet<Inventory> Inventories { get; set; }
         public DbSet<InventoryField> InventoryFields { get; set; }
         public DbSet<InventoryAccess> InventoryAccess { get; set; }
@@ -31,21 +25,96 @@ namespace Main.Infrastructure.DataAccess
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // CHANGE THIS: Restrict -> Cascade для InventoryField -> ItemFieldValues
+            // ===== КОНФИГУРАЦИЯ USER =====
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(u => u.Id);
+
+                // Основные индексы для поиска
+                entity.HasIndex(u => u.Email)
+                      .IsUnique()
+                      .HasDatabaseName("IX_Users_Email");
+
+                entity.HasIndex(u => new { u.FirstName, u.LastName })
+                      .HasDatabaseName("IX_Users_FirstName_LastName");
+
+                entity.HasIndex(u => u.LastName)
+                      .HasDatabaseName("IX_Users_LastName");
+
+                // Индекс для полнотекстового поиска (если БД поддерживает)
+                entity.HasIndex(u => new { u.FirstName, u.LastName, u.Email })
+                      .HasDatabaseName("IX_Users_Search")
+                      .IsClustered(false);
+
+                // Ограничения длины
+                entity.Property(u => u.Id)
+                      .HasMaxLength(450); // Стандартная длина для ID пользователей
+
+                entity.Property(u => u.FirstName)
+                      .HasMaxLength(100)
+                      .IsRequired();
+
+                entity.Property(u => u.LastName)
+                      .HasMaxLength(100)
+                      .IsRequired();
+
+                entity.Property(u => u.Email)
+                      .HasMaxLength(256)
+                      .IsRequired();
+            });
+
+            // ===== ОБНОВЛЕННЫЕ СВЯЗИ ДЛЯ СУЩЕСТВУЮЩИХ СУЩНОСТЕЙ =====
+
+            // InventoryAccess -> User связи
+            modelBuilder.Entity<InventoryAccess>()
+                .HasOne(ia => ia.User)
+                .WithMany(u => u.InventoryAccesses)
+                .HasForeignKey(ia => ia.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<InventoryAccess>()
+                .HasOne(ia => ia.GrantedBy)
+                .WithMany()
+                .HasForeignKey(ia => ia.GrantedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Item -> User связь
+            modelBuilder.Entity<Item>()
+                .HasOne(i => i.CreatedBy)
+                .WithMany(u => u.CreatedItems)
+                .HasForeignKey(i => i.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Comment -> User связь
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Author)
+                .WithMany(u => u.Comments)
+                .HasForeignKey(c => c.AuthorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Like -> User связь
+            modelBuilder.Entity<Like>()
+                .HasOne(l => l.User)
+                .WithMany(u => u.Likes)
+                .HasForeignKey(l => l.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ===== СУЩЕСТВУЮЩАЯ КОНФИГУРАЦИЯ (с небольшими обновлениями) =====
+
+            // ItemFieldValue конфигурация
             modelBuilder.Entity<ItemFieldValue>()
                 .HasOne(iv => iv.InventoryField)
                 .WithMany()
                 .HasForeignKey(iv => iv.InventoryFieldId)
-                .OnDelete(DeleteBehavior.Cascade); // Изменено с Restrict на Cascade
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // ОСТАВИТЬ: Item -> ItemFieldValues как Restrict
             modelBuilder.Entity<ItemFieldValue>()
                 .HasOne(iv => iv.Item)
                 .WithMany(i => i.FieldValues)
                 .HasForeignKey(iv => iv.ItemId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Остальной код без изменений...
+            // Inventory конфигурация
             modelBuilder.Entity<Inventory>()
                 .HasMany(i => i.Items)
                 .WithOne(item => item.Inventory)
@@ -65,6 +134,7 @@ namespace Main.Infrastructure.DataAccess
                 .HasForeignKey(f => f.InventoryId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Ключи для связных таблиц
             modelBuilder.Entity<Like>()
                 .HasKey(x => new { x.ItemId, x.UserId });
 
@@ -74,22 +144,11 @@ namespace Main.Infrastructure.DataAccess
             modelBuilder.Entity<InventoryAccess>()
                 .HasKey(x => new { x.InventoryId, x.UserId });
 
-            modelBuilder.Entity<Inventory>()
-                .HasMany(i => i.Fields)
-                .WithOne(f => f.Inventory)
-                .HasForeignKey(f => f.InventoryId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Inventory>()
-                .HasMany(i => i.Items)
-                .WithOne(item => item.Inventory)
-                .HasForeignKey(item => item.InventoryId)
-                .OnDelete(DeleteBehavior.Cascade);
-
+            // Индексы для производительности
             modelBuilder.Entity<Item>()
-    .HasIndex(i => new { i.InventoryId, i.CustomId })
-    .IsUnique()
-    .HasFilter("[CustomId] IS NOT NULL");
+                .HasIndex(i => new { i.InventoryId, i.CustomId })
+                .IsUnique()
+                .HasFilter("[CustomId] IS NOT NULL");
 
             modelBuilder.Entity<Inventory>()
                 .HasIndex(i => i.OwnerId);
@@ -101,13 +160,13 @@ namespace Main.Infrastructure.DataAccess
                 .HasIndex(i => i.InventoryId);
 
             modelBuilder.Entity<Item>()
-                .HasIndex(i => i.CreatedById);
+                .HasIndex(i => i.CreatedById); // Теперь это ссылка на Users
 
             modelBuilder.Entity<Comment>()
                 .HasIndex(c => c.InventoryId);
 
             modelBuilder.Entity<Comment>()
-                .HasIndex(c => c.AuthorId);
+                .HasIndex(c => c.AuthorId); // Теперь это ссылка на Users
 
             modelBuilder.Entity<Tag>()
                 .HasIndex(t => t.Name)
@@ -117,6 +176,7 @@ namespace Main.Infrastructure.DataAccess
                 .HasIndex(c => c.Name)
                 .IsUnique();
 
+            // RowVersion для оптимистичной блокировки
             modelBuilder.Entity<Inventory>()
                 .Property(i => i.Version)
                 .IsRowVersion();

@@ -1,9 +1,4 @@
 ﻿using Main.Application.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Application.Dtos
 {
@@ -23,5 +18,7 @@ namespace Main.Application.Dtos
         public DateTime CreatedAt { get; init; }
         public List<string> Tags { get; init; } = new();
         public List<InventoryFieldDto> Fields { get; init; } = new();
+        public List<InventoryAccessDto> AccessList { get; set; } = new();
+
     }
 }

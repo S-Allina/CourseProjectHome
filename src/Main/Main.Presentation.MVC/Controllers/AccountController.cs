@@ -1,9 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Owin.Security;
-using Microsoft.Owin.Security.OpenIdConnect;
-
-namespace Main.Presentation.MVC.Controllers
+﻿namespace Main.Presentation.MVC.Controllers
 {
     using Microsoft.AspNetCore.Authentication;
     using Microsoft.AspNetCore.Authentication.Cookies;

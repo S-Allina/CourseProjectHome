@@ -1,13 +1,8 @@
 ﻿
 using Main.Domain.entities.common;
 using Main.Domain.InterfacesRepository;
-using Main.Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Security.Principal;
 
 namespace Main.Infrastructure.DataAccess.Repositories
 {
@@ -67,7 +62,8 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 await _db.SaveChangesAsync(cancellationToken);
 
                 return entity;
-            }catch(Exception ex)
+            }
+            catch (Exception)
             {
                 throw;
             }
@@ -89,7 +85,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
             var entity = dbSet.Where(filter);
 
             dbSet.RemoveRange(entity);
-           
+
             await _db.SaveChangesAsync(cancellationToken);
         }
 

@@ -1,10 +1,4 @@
-﻿using Main.Domain.entities.Comments;
-using Main.Domain.entities.inventory;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Main.Domain.entities.inventory;
 
 namespace Main.Domain.InterfacesRepository
 {

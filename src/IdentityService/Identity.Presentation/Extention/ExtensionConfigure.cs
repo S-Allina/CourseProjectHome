@@ -3,32 +3,22 @@ using Duende.IdentityServer.Models;
 using FluentValidation;
 using Hangfire;
 using Hangfire.SqlServer;
-using Identity.Application;
 using Identity.Application.Dto;
 using Identity.Application.DTO;
 using Identity.Application.Interfaces;
 using Identity.Application.Validators;
 using Identity.Domain.Entity;
-using Identity.Domain.Enums;
 using Identity.Infrastructure;
 using Identity.Infrastructure.DataAccess.Data;
 using Identity.Infrastructure.Services;
 using Identity.Presentation.Constants;
 using Identity.Presentation.Initializer;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.OAuth;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.CodeAnalysis.Elfie.Extensions;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Identity.Client.Extensions.Msal;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Net.Mail;
 using System.Text;
 using System.Text.Json.Serialization;
 using Secret = Duende.IdentityServer.Models.Secret;
@@ -168,7 +158,7 @@ namespace Identity.Presentation.Extention
             {
         new ApiScope("api1", "My API")
             }).AddAspNetIdentity<ApplicationUser>() // ✅ ЭТО КРИТИЧЕСКИ ВАЖНО
-.AddDeveloperSigningCredential(); ; 
+.AddDeveloperSigningCredential(); ;
 
             // ✅ ОБЯЗАТЕЛЬНО добавьте Signing Credential
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")

@@ -3,16 +3,9 @@ using FluentValidation;
 using Main.Application.Dtos;
 using Main.Application.Interfaces;
 using Main.Domain.entities.inventory;
-using Main.Domain.enums.inventory;
 using Main.Domain.InterfacesRepository;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Main.Application.Services
 {
@@ -35,32 +28,32 @@ namespace Main.Application.Services
             _inventoryRepository = inventoryRepository;
             _inventoryFieldRepository = inventoryFieldRepository;
             _categoryRepository = categoryRepository;
-            _fluentValidator= fluentValidator;
+            _fluentValidator = fluentValidator;
             _mapper = mapper;
-            _httpContextAccessor= httpContextAccessor;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<IEnumerable<InventoryDto>> GetAll(CancellationToken cancellationToken = default)
-        { 
-               var inventories =  await _inventoryRepository.GetAllAsync(null, "Fields", cancellationToken);
+        {
+            var inventories = await _inventoryRepository.GetAllAsync(null, "Fields", cancellationToken);
             return _mapper.Map<IEnumerable<InventoryDto>>(inventories);
         }
 
         public async Task<InventoryDto> GetById(int id, CancellationToken cancellationToken = default)
         {
-            var inventories = await _inventoryRepository.GetFirstAsync(i=>i.Id==id, "Fields", cancellationToken);
+            var inventories = await _inventoryRepository.GetFirstAsync(i => i.Id == id, "Fields", cancellationToken);
 
             return _mapper.Map<InventoryDto>(inventories);
         }
 
         public async Task<IEnumerable<InventoryFieldDto>> GetInventoryFields(int id, CancellationToken cancellationToken = default)
         {
-            var fields = await _inventoryFieldRepository.GetAllAsync(f=>f.InventoryId==id, null, cancellationToken);
+            var fields = await _inventoryFieldRepository.GetAllAsync(f => f.InventoryId == id, null, cancellationToken);
 
             return _mapper.Map<IEnumerable<InventoryFieldDto>>(fields);
         }
 
-        public async Task<InventoryDto> CreateInventoryAsync(CreateInventoryDto createDto, string ownerId, CancellationToken cancellationToken = default)
+        public async Task<InventoryDto> CreateInventoryAsync(CreateInventoryDto createDto, CancellationToken cancellationToken = default)
         {
             var fluentValidationResult = await _fluentValidator.ValidateAsync(createDto, cancellationToken);
             if (!fluentValidationResult.IsValid)
@@ -68,10 +61,10 @@ namespace Main.Application.Services
                 throw new ValidationException(fluentValidationResult.Errors);
             }
             var inventory = _mapper.Map<Inventory>(createDto);
-            
-            inventory.OwnerId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            await AddFieldsToInventory(inventory, createDto.Fields);
 
+            inventory.OwnerId = GetCurrentUserId();
+            await AddFieldsToInventory(inventory, createDto.Fields);
+            await AddInventoryAccessToInventory(inventory, createDto.AccessList);
             var createdInventory = await _inventoryRepository.CreateAsync(inventory, cancellationToken);
 
             return _mapper.Map<InventoryDto>(createdInventory);
@@ -79,7 +72,7 @@ namespace Main.Application.Services
 
         public async Task<IEnumerable<Category>> GetCategories(CancellationToken cancellationToken)
         {
-            return await _categoryRepository.GetAllAsync(null, null,cancellationToken);
+            return await _categoryRepository.GetAllAsync(null, null, cancellationToken);
         }
 
         public async Task<bool> DeleteInventoryAsync(int[] ids, CancellationToken cancellationToken = default)
@@ -101,22 +94,24 @@ namespace Main.Application.Services
 
                 return resultDto;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
         }
 
-        public async Task<bool> HasWriteAccessAsync(int inventoryId, string userId, CancellationToken cancellationToken = default)
+        public async Task<bool> HasWriteAccessAsync(int inventoryId, CancellationToken cancellationToken = default)
         {
             var inventory = await _inventoryRepository.GetFirstAsync(i => i.Id == inventoryId, "AccessList", cancellationToken);
 
             if (inventory == null)
                 throw new ArgumentException("Инвентарь не найден");
 
+            var userId = GetCurrentUserId();
+
             return inventory.OwnerId == userId ||
                    inventory.IsPublic ||
-                   inventory.AccessList.Any(a => a.UserId == userId && a.AccessLevel >= 2);
+                   inventory.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= 2);
         }
 
         public async Task<List<InventorySearchResult>> GetInventoriesByTagAsync(string tagName)
@@ -142,5 +137,28 @@ namespace Main.Application.Services
                 });
             }
         }
+
+        private async Task AddInventoryAccessToInventory(Inventory inventory, List<CreateInventoryAccessDto> accessDtos)
+        {
+            if (!accessDtos.Any()) return;
+
+            var userId = GetCurrentUserId();
+            foreach (var dto in accessDtos)
+            {
+                inventory.AccessList.Add(new InventoryAccess
+                {
+                    AccessLevel = dto.AccessLevel,
+                    InventoryId = inventory.Id,
+                    UserId = dto.UserId,
+                    GrantedById = userId,
+                    GrantedAt = DateTime.UtcNow
+                });
+            }
+        }
+
+        private string GetCurrentUserId()
+        {
+            return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
     }
-    }
+}

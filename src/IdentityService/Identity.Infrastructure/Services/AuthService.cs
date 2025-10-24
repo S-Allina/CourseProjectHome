@@ -104,7 +104,7 @@ namespace Identity.Infrastructure.Services
             {
                 user = new ApplicationUser
                 {
-                    UserName = user.LastName +" "+ user.FirstName,
+                    UserName = user.LastName + " " + user.FirstName,
                     Email = userEmail,
                     EmailConfirmed = true
                 };
@@ -189,7 +189,7 @@ namespace Identity.Infrastructure.Services
             if (!isValidRequest.IsValid)
             {
                 string errorMessages = string.Empty;
-;               isValidRequest.Errors.Select(e=>errorMessages+ separator + e.ErrorMessage);
+                ; isValidRequest.Errors.Select(e => errorMessages + separator + e.ErrorMessage);
                 throw new IdentityException(errorMessages);
             }
 
@@ -199,7 +199,7 @@ namespace Identity.Infrastructure.Services
 
             return true;
         }
-        
+
         private async Task ResetUserPasswordAsync(ApplicationUser user, string token, string newPassword)
         {
             var dectoken = WebUtility.UrlDecode(token);

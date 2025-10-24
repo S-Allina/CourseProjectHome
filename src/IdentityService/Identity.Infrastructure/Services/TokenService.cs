@@ -30,7 +30,7 @@ namespace Identity.Infrastructure.Services
             _securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration[configurationName]));
             _validIssuer = jwtSettings.ValidIssuer;
             _validAudience = jwtSettings.ValidAudience;
-            _expires =Convert.ToDouble(jwtSettings.Expires);
+            _expires = Convert.ToDouble(jwtSettings.Expires);
             _userManager = userManager;
             _logger = logger;
         }
@@ -40,7 +40,7 @@ namespace Identity.Infrastructure.Services
             var randomNumber = new byte[64];
             using var rng = RandomNumberGenerator.Create();
             rng.GetBytes(randomNumber);
-            
+
             return Convert.ToBase64String(randomNumber);
         }
 
@@ -95,4 +95,4 @@ namespace Identity.Infrastructure.Services
             return token;
         }
     }
-} 
+}

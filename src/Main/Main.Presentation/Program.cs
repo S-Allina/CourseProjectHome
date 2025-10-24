@@ -66,7 +66,7 @@ namespace Main.Presentation
             builder.Services.AddScoped<IItemRepository, ItemRepository>();
             builder.Services.AddScoped<IItemService, ItemService>();
             builder.Services.AddScoped<IValidator<CreateInventoryDto>, CreateInventoryDtoValidator>();
-            builder.Services.AddScoped<IValidator<CreateInventoryFieldDto>,  CreateInventoryFieldDtoValidator>();
+            builder.Services.AddScoped<IValidator<CreateInventoryFieldDto>, CreateInventoryFieldDtoValidator>();
             builder.Services.AddAutoMapper(typeof(InventoryProfile));
 
             builder.Services.AddControllers();

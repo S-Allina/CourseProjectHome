@@ -1,16 +1,10 @@
 ﻿using AutoMapper;
-using FluentEmail.Core;
 using Identity.Application.Dto;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entity;
 using Identity.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Identity.Infrastructure.Services
 {
@@ -126,7 +120,7 @@ namespace Identity.Infrastructure.Services
             var baseUserName = $"{firstName}{lastName}".ToLower();
 
             var count = _userManager.Users.Count(u => u.UserName == baseUserName);
-            
+
             baseUserName = $"{baseUserName}{count}";
 
             return baseUserName;

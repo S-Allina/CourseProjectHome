@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "Новый профиль",
+    "Projects": [
+      {
+        "Path": "src\\IdentityService\\Identity.Presentation\\Identity.Presentation.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Main\\Main.Presentation.MVC\\Main.Presentation.MVC.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

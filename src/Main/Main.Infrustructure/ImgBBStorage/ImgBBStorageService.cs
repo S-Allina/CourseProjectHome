@@ -59,7 +59,7 @@ namespace Main.Infrastructure.ImgBBStorage
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }

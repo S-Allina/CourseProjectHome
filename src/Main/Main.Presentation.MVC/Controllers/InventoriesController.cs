@@ -1,16 +1,9 @@
 ﻿using Main.Application.Dtos;
 using Main.Application.Interfaces;
-using Main.Domain.entities.inventory;
-using Main.Infrastructure.DataAccess;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Main.Presentation.MVC.Controllers
 {
@@ -18,7 +11,6 @@ namespace Main.Presentation.MVC.Controllers
     {
         private readonly IInventoryService _inventoryService;
         private readonly ILogger<InventoriesController> _logger;
-
         public InventoriesController(IInventoryService inventoryService,
             ILogger<InventoriesController> logger)
         {
@@ -31,11 +23,49 @@ namespace Main.Presentation.MVC.Controllers
         [Authorize]
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
-           var t = await _inventoryService.GetAll(cancellationToken); 
+            var t = await _inventoryService.GetAll(cancellationToken);
             return View(t);
         }
 
-       
+        //[HttpGet]
+        //public async Task<IActionResult> SearchUsers(string query)
+        //{
+        //    if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+        //    {
+        //        return Json(new List<object>());
+        //    }
+
+        //    var users = await _userService.SearchUsersAsync(query);
+        //    var result = users.Select(u => new
+        //    {
+        //        id = u.Id,
+        //        email = u.Email,
+        //        firstName = u.FirstName,
+        //        lastName = u.LastName
+        //    });
+
+        //    return Json(result);
+        //}
+
+        //[HttpPost]
+        //public async Task<IActionResult> GetUsersDetails([FromBody] GetUsersDetailsRequest request)
+        //{
+        //    var users = await _userService.GetUsersByIdsAsync(request.UserIds);
+        //    var result = users.Select(u => new
+        //    {
+        //        id = u.Id,
+        //        email = u.Email,
+        //        firstName = u.FirstName,
+        //        lastName = u.LastName
+        //    });
+
+        //    return Json(result);
+        //}
+
+        public class GetUsersDetailsRequest
+        {
+            public List<string> UserIds { get; set; } = new();
+        }
         // GET: Inventories/Create
         //public async Task<IActionResult> Create()
         //{
@@ -70,13 +100,9 @@ namespace Main.Presentation.MVC.Controllers
                     Console.WriteLine($"Field: {field.Name}, Type: {field.FieldType}");
                 }
             }
-            var ownerId = "kjilsfhrfbeibkv ";
-            if (string.IsNullOrEmpty(ownerId))
-                return Unauthorized("User not authenticated");
+            var inventory = await _inventoryService.CreateInventoryAsync(createDto, cancellationToken);
 
-            var inventory = await _inventoryService.CreateInventoryAsync(createDto, ownerId, cancellationToken);
-
-            _logger.LogInformation("User {UserId} created inventory {InventoryId}", ownerId, inventory.Id);
+            _logger.LogInformation("User created inventory {InventoryId}", inventory.Id);
 
             //return CreatedAtAction(nameof(GetInventory), new { id = inventory.Id }, inventory);
             return RedirectToAction(nameof(Index));
@@ -129,7 +155,7 @@ namespace Main.Presentation.MVC.Controllers
         {
             var inventory = await _inventoryService.GetById(id);
             if (inventory == null) return NotFound();
-            
+
             var model = new InventoryFormDto
             {
                 Id = inventory.Id,
@@ -181,17 +207,17 @@ namespace Main.Presentation.MVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(InventoryDto inventory, CancellationToken cancellationToken)
         {
-                try
-                {
+            try
+            {
                 var ownerId = "kjilsfhrfbeibkv ";
-                inventory= inventory with { OwnerId = ownerId };
+                inventory = inventory with { OwnerId = ownerId };
                 await _inventoryService.UpdateInventoryAsync(inventory);
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    
-                }
-            return RedirectToAction("Index", "Items", new { inventoryId  = inventory.Id});
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+
+            }
+            return RedirectToAction("Index", "Items", new { inventoryId = inventory.Id });
         }
 
         [HttpPost]
@@ -200,7 +226,7 @@ namespace Main.Presentation.MVC.Controllers
         {
             try
             {
-                var ownerId = "kjilsfhrfbeibkv"; 
+                var ownerId = "kjilsfhrfbeibkv";
 
                 // Проверяем, существует ли инвентарь и принадлежит ли пользователю
                 var existingInventory = await _inventoryService.GetById((int)autoSaveDto.Id, cancellationToken);

@@ -1,22 +1,18 @@
 ﻿using Main.Domain.entities.Comments;
 using Main.Domain.entities.common;
 using Main.Domain.entities.inventory;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Domain.entities.item
 {
-    public class Item : BaseEntity  
+    public class Item : BaseEntity
     {
         public int InventoryId { get; set; }
         public Inventory Inventory { get; set; }
 
         public string CustomId { get; set; }
-        public string CreatedById { get; set; }
+        public string CreatedById { get; set; } = string.Empty;
+        public User CreatedBy { get; set; } = null!;
         [Timestamp]
         public byte[] Version { get; set; }
 

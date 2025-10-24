@@ -1,9 +1,4 @@
 ﻿using Main.Domain.enums.inventory;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Domain.entities
 {
@@ -39,13 +34,6 @@ namespace Main.Domain.entities
         public string Preview => FieldValue.Length > 100 ? FieldValue.Substring(0, 100) + "..." : FieldValue;
     }
 
-    public class UserSearchResult
-    {
-        public string Id { get; set; }
-        public string UserName { get; set; }
-        public string Email { get; set; }
-    }
-
     public class QuickSearchResult
     {
         public List<QuickSearchItem> Results { get; set; } = new();
@@ -54,7 +42,7 @@ namespace Main.Domain.entities
 
     public class QuickSearchItem
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string Name { get; set; }
         public string Type { get; set; } // "Inventory", "Item", "User"
         public string AdditionalInfo { get; set; }

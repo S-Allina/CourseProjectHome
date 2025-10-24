@@ -1,11 +1,6 @@
 ﻿using Identity.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Identity.Infrastructure.Services
 {
@@ -15,7 +10,7 @@ namespace Identity.Infrastructure.Services
 
         public CurrentUserService(IHttpContextAccessor httpContextAccessor)
         {
-            _httpContextAccessor= httpContextAccessor;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public string? GetUserId()

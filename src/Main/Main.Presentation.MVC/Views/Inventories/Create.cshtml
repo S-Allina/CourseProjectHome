@@ -1,4 +1,5 @@
-﻿@using Main.Domain.enums.inventory
+﻿@using Main.Application.Dtos
+@using Main.Domain.enums.inventory
 @model Main.Application.Dtos.InventoryFormDto
 
 @{
@@ -39,6 +40,7 @@
                 <partial name="_CustomIdTab" model="Model" />
                 <partial name="_FieldsTab" model="Model" />
                 <partial name="_TagsTab" model="Model" />
+                <partial name="_AccessTab" model="Model" />
             </div>
 
             <div class="mt-4">
@@ -326,12 +328,420 @@
             }
         };
 
-        // ===== CUSTOM ID FORMAT BUILDER =====
         let componentCount = 0;
         let components = [];
 
         // Initialize Sortable for drag & drop
+                // ===== ACCESS MANAGEMENT =====
+        let accessManager = {
+            users: [],
+            currentAccessList: @Html.Raw(Json.Serialize(Model.AccessList ?? new List<InventoryAccessDto>())),
+
+            init: function() {
+                this.setupUserSearch();
+                this.setupSorting();
+                this.loadUserDetails();
+                this.setupRemoveAccess();
+            },
+
+            setupUserSearch: function() {
+                const searchInput = document.getElementById('userSearchInput');
+                const searchResults = document.getElementById('userSearchResults');
+                const searchBtn = document.getElementById('searchUserBtn');
+
+                if (!searchInput) return;
+
+                // Поиск при вводе
+                searchInput.addEventListener('input', this.debounce((e) => {
+                    const query = e.target.value.trim();
+                    if (query.length >= 2) {
+                        this.searchUsers(query);
+                    } else {
+                        this.hideSearchResults();
+                    }
+                }, 300));
+
+                // Поиск по кнопке
+                searchBtn.addEventListener('click', () => {
+                    const query = searchInput.value.trim();
+                    if (query.length >= 2) {
+                        this.searchUsers(query);
+                    }
+                });
+
+                // Закрытие результатов при клике вне
+                document.addEventListener('click', (e) => {
+                    if (!searchResults.contains(e.target) && e.target !== searchInput) {
+                        this.hideSearchResults();
+                    }
+                });
+            },
+
+               async searchUsers(query) {
+            try {
+                const response = await fetch(`/Search/search-users?query=${encodeURIComponent(query)}&limit=10`);
+                if (response.ok) {
+                    const users = await response.json();
+                    this.displaySearchResults(users);
+                } else {
+                    console.error('Search failed with status:', response.status);
+                    this.hideSearchResults();
+                }
+            } catch (error) {
+                console.error('Search failed:', error);
+                this.hideSearchResults();
+            }
+        },
+
+        async loadUserDetails() {
+            const userIds = this.currentAccessList.map(access => access.userId);
+
+            if (userIds.length === 0) return;
+
+            try {
+                const response = await fetch('/Search/users-details', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': this.getAntiForgeryToken()
+                    },
+                    body: JSON.stringify({ userIds: userIds })
+                });
+
+                if (response.ok) {
+                    const usersDetails = await response.json();
+                    this.updateUserDetailsInTable(usersDetails);
+                }
+            } catch (error) {
+                console.error('Failed to load user details:', error);
+            }
+        },
+
+                   displaySearchResults(users) {
+            const resultsContainer = document.getElementById('userSearchResults');
+            if (!resultsContainer) return;
+
+            if (users.length === 0) {
+                resultsContainer.innerHTML = '<div class="dropdown-item text-muted">No users found</div>';
+                resultsContainer.style.display = 'block';
+                return;
+            }
+
+            let html = '';
+            users.forEach(user => {
+                // Проверяем, не добавлен ли уже пользователь
+                const isAlreadyAdded = this.currentAccessList.some(access => access.userId === user.id);
+
+                html += `
+                    <div class="dropdown-item d-flex justify-content-between align-items-center ${isAlreadyAdded ? 'text-muted' : ''}"
+                         data-user-id="${user.id}"
+                         data-user-email="${user.email}"
+                         data-user-name="${user.firstName} ${user.lastName}">
+                        <div>
+                            <div class="fw-semibold">${user.firstName} ${user.lastName}</div>
+                            <small class="text-muted">${user.email}</small>
+                        </div>
+                        ${isAlreadyAdded ?
+                            '<span class="badge bg-secondary">Already added</span>' :
+                            '<button type="button" class="btn btn-sm btn-outline-primary add-user-btn">Add</button>'
+                        }
+                    </div>
+                `;
+            });
+
+            resultsContainer.innerHTML = html;
+            resultsContainer.style.display = 'block';
+
+            // Обработка добавления пользователей - ИСПРАВЛЕННАЯ ВЕРСИЯ
+            resultsContainer.querySelectorAll('.add-user-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault(); // Предотвращаем действие по умолчанию
+                    e.stopPropagation(); // Останавливаем всплытие события
+                    const item = btn.closest('.dropdown-item');
+                    this.addUserToAccessList(
+                        item.dataset.userId,
+                        item.dataset.userName,
+                        item.dataset.userEmail
+                    );
+                    this.hideSearchResults();
+                    document.getElementById('userSearchInput').value = '';
+                });
+            });
+        },
+
+            hideSearchResults() {
+                const resultsContainer = document.getElementById('userSearchResults');
+                if (resultsContainer) {
+                    resultsContainer.style.display = 'none';
+                }
+            },
+
+            addUserToAccessList(userId, userName, userEmail) {
+                // Проверяем, не добавлен ли уже пользователь
+                if (this.currentAccessList.some(access => access.userId === userId)) {
+                    this.showToast('User already has access', 'warning');
+                    return;
+                }
+
+                const accessLevel = parseInt(document.getElementById('accessLevelSelect').value);
+                const grantedAt = new Date().toISOString();
+
+                // Добавляем в текущий список
+                this.currentAccessList.push({
+                    userId: userId,
+                    accessLevel: accessLevel,
+                    grantedAt: grantedAt
+                });
+
+                // Обновляем UI
+                this.updateAccessListUI();
+
+                // Обновляем скрытые поля формы
+                this.updateHiddenAccessFields();
+
+                this.showToast('User added successfully', 'success');
+
+                // Триггер автосохранения
+                if (autoSaveManager.isEditMode) {
+                    autoSaveManager.handleChange();
+                }
+            },
+
+            removeUserFromAccessList(userId) {
+                this.currentAccessList = this.currentAccessList.filter(access => access.userId !== userId);
+                this.updateAccessListUI();
+                this.updateHiddenAccessFields();
+
+                // Триггер автосохранения
+                if (autoSaveManager.isEditMode) {
+                    autoSaveManager.handleChange();
+                }
+            },
+
+            updateAccessListUI() {
+                const tbody = document.getElementById('accessListBody');
+                if (!tbody) return;
+
+                // Сортируем список согласно выбранным настройкам
+                const sortedList = this.getSortedAccessList();
+
+                if (sortedList.length === 0) {
+                    tbody.innerHTML = `
+                        <tr id="noAccessMessage">
+                            <td colspan="4" class="text-center text-muted py-4">
+                                No users have access to this inventory yet.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                sortedList.forEach(access => {
+                    html += `
+                        <tr data-user-id="${access.userId}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <span class="text-white">${access.userName?.charAt(0)?.toUpperCase() || 'U'}</span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold user-name">${access.userName || 'Loading...'}</div>
+                                        <small class="text-muted user-email">${access.userEmail || 'Loading...'}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge ${this.getAccessLevelBadgeClass(access.accessLevel)}">
+                                    ${this.getAccessLevelText(access.accessLevel)}
+                                </span>
+                            </td>
+                            <td class="granted-date">${new Date(access.grantedAt).toLocaleString()}</td>
+                            <td>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger remove-access"
+                                        data-user-id="${access.userId}"
+                                        title="Remove Access">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+                this.setupRemoveAccess();
+                this.loadUserDetails(); // Загружаем детали пользователей
+            },
+
+            updateHiddenAccessFields() {
+                const container = document.getElementById('accessListData');
+                if (!container) return;
+
+                let html = '';
+                this.currentAccessList.forEach((access, index) => {
+                    html += `
+                        <input type="hidden" name="AccessList[${index}].UserId" value="${access.userId}" />
+                        <input type="hidden" name="AccessList[${index}].AccessLevel" value="${access.accessLevel}" />
+                        <input type="hidden" name="AccessList[${index}].GrantedAt" value="${access.grantedAt}" />
+                    `;
+                });
+
+                container.innerHTML = html;
+            },
+
+            async loadUserDetails() {
+                const userIds = this.currentAccessList.map(access => access.userId);
+
+                if (userIds.length === 0) return;
+
+                try {
+                    const response = await fetch('/Search/users-details', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': autoSaveManager.getAntiForgeryToken()
+                        },
+                        body: JSON.stringify({ userIds: userIds })
+                    });
+
+                    if (response.ok) {
+                        const usersDetails = await response.json();
+                        this.updateUserDetailsInTable(usersDetails);
+                    }
+                } catch (error) {
+                    console.error('Failed to load user details:', error);
+                }
+            },
+
+            updateUserDetailsInTable(usersDetails) {
+                usersDetails.forEach(user => {
+                    const row = document.querySelector(`tr[data-user-id="${user.id}"]`);
+                    if (row) {
+                        const nameElement = row.querySelector('.user-name');
+                        const emailElement = row.querySelector('.user-email');
+
+                        if (nameElement) nameElement.textContent = `${user.firstName} ${user.lastName}`;
+                        if (emailElement) emailElement.textContent = user.email;
+                    }
+                });
+            },
+
+            setupRemoveAccess() {
+                document.querySelectorAll('.remove-access').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const userId = e.target.closest('button').dataset.userId;
+                        if (confirm('Are you sure you want to remove access for this user?')) {
+                            this.removeUserFromAccessList(userId);
+                        }
+                    });
+                });
+            },
+
+            setupSorting() {
+                const sortBy = document.getElementById('sortAccessList');
+                const sortOrder = document.getElementById('sortAccessOrder');
+
+                if (sortBy && sortOrder) {
+                    const updateSort = () => {
+                        this.updateAccessListUI();
+                    };
+
+                    sortBy.addEventListener('change', updateSort);
+                    sortOrder.addEventListener('change', updateSort);
+                }
+            },
+
+            getSortedAccessList() {
+                const sortBy = document.getElementById('sortAccessList')?.value || 'name';
+                const sortOrder = document.getElementById('sortAccessOrder')?.value || 'asc';
+
+                return [...this.currentAccessList].sort((a, b) => {
+                    let aValue, bValue;
+
+                    switch (sortBy) {
+                        case 'name':
+                            aValue = a.userName?.toLowerCase() || '';
+                            bValue = b.userName?.toLowerCase() || '';
+                            break;
+                        case 'email':
+                            aValue = a.userEmail?.toLowerCase() || '';
+                            bValue = b.userEmail?.toLowerCase() || '';
+                            break;
+                        case 'accessLevel':
+                            aValue = a.accessLevel;
+                            bValue = b.accessLevel;
+                            break;
+                        case 'grantedAt':
+                            aValue = new Date(a.grantedAt);
+                            bValue = new Date(b.grantedAt);
+                            break;
+                        default:
+                            aValue = a.userName?.toLowerCase() || '';
+                            bValue = b.userName?.toLowerCase() || '';
+                    }
+
+                    if (sortOrder === 'desc') {
+                        [aValue, bValue] = [bValue, aValue];
+                    }
+
+                    if (aValue < bValue) return -1;
+                    if (aValue > bValue) return 1;
+                    return 0;
+                });
+            },
+
+            getAccessLevelBadgeClass(accessLevel) {
+                switch (accessLevel) {
+                    case 1: return 'bg-secondary';
+                    case 2: return 'bg-primary';
+                    case 3: return 'bg-success';
+                    default: return 'bg-secondary';
+                }
+            },
+
+            getAccessLevelText(accessLevel) {
+                switch (accessLevel) {
+                    case 1: return 'Read Only';
+                    case 2: return 'Read & Write';
+                    case 3: return 'Admin';
+                    default: return 'Unknown';
+                }
+            },
+
+            showToast(message, type = 'info') {
+                // Простая реализация toast уведомления
+                const toast = document.createElement('div');
+                toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                toast.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+                toast.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            },
+
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+        };
+
+        // Инициализация менеджера доступа при загрузке
         document.addEventListener('DOMContentLoaded', function() {
+            accessManager.init();
             const formatComponents = document.getElementById('formatComponents');
 
             if (formatComponents) {

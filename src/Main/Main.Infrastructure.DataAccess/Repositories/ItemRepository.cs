@@ -1,12 +1,6 @@
-﻿using Main.Domain.entities.inventory;
-using Main.Domain.entities.item;
+﻿using Main.Domain.entities.item;
 using Main.Domain.InterfacesRepository;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Infrastructure.DataAccess.Repositories
 {
@@ -31,7 +25,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 await _db.SaveChangesAsync(cancellationToken);
                 return existingItem;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }
