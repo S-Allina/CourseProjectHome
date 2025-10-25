@@ -14,13 +14,15 @@ namespace Identity.Infrastructure.Services
         private readonly IMapper _mapper;
         private readonly ILogger<UserService> _logger;
         private readonly IEmailService _emailService;
+        private readonly IMainApiClient _mainApiClient;
 
-        public UserRegistrationService(UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<UserService> logger, IEmailService emailService)
+        public UserRegistrationService(UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<UserService> logger, IEmailService emailService, IMainApiClient mainApiClient)
         {
             _userManager = userManager;
             _mapper = mapper;
             _logger = logger;
             _emailService = emailService;
+            _mainApiClient = mainApiClient;
         }
 
         public async Task<UserRegistrationResponseDto> RegisterAsync(UserRegistrationRequestDto requestDto)
@@ -112,6 +114,28 @@ namespace Identity.Infrastructure.Services
                 throw new Exception($"Failed to create user: {errors}");
             }
 
+            // 🔄 Синхронизация с Main API (fire-and-forget)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var success = await _mainApiClient.CreateUserAsync(
+                        newUser.Id,
+                        newUser.FirstName,
+                        newUser.LastName,
+                        newUser.Email
+                    );
+
+                    if (!success)
+                    {
+                        _logger.LogWarning("Failed to sync user with Main API: {UserId}", newUser.Id);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error in background user sync: {UserId}", newUser.Id);
+                }
+            });
             return newUser;
         }
 

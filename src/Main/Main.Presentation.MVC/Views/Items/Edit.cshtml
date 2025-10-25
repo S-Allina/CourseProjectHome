@@ -1,8 +1,10 @@
-﻿@using Main.Domain.enums.inventory
-@model Main.Application.Dtos.ItemDto
+﻿@using Main.Application.Dtos.Inventories.Index
+@using Main.Application.Dtos.Items.Index
+@using Main.Domain.enums.inventory
+@model ItemDto
 @{
     ViewData["Title"] = "Edit Item";
-    var inventory = ViewBag.Inventory as Main.Application.Dtos.InventoryDto;
+    var inventory = ViewBag.Inventory as InventoryDto;
 }
 
 <div class="row">

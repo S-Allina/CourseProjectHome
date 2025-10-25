@@ -1,10 +1,12 @@
 ﻿@using Main.Domain.entities
 @model GlobalSearchResult
-
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 @{
     ViewData["Title"] = string.IsNullOrEmpty(Model.SearchTerm)
-        ? "Поиск"
-        : $"Результаты поиска: \"{Model.SearchTerm}\"";
+        ? @Localizer["Search"]
+        : $"{@Localizer["Results search"]}: \"{Model.SearchTerm}\"";
 }
 @if (Model.IsTagSearch)
 {
@@ -12,42 +14,39 @@
         <i class="fas fa-tag me-2"></i>
         <strong>Поиск по тегу:</strong> "@Model.SearchTerm"
         <a href="@Url.Action("Index", "Tags")" class="btn btn-outline-info btn-sm ms-3">
-            <i class="fas fa-arrow-left me-1"></i>Вернуться к облаку тегов
+            <i class="fas fa-arrow-left me-1"></i>@Localizer["Back to cloud tags"]
         </a>
     </div>
 }
 <div class="container mt-4">
-    <!-- Хлебные крошки -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Главная</a></li>
-            <li class="breadcrumb-item active">Поиск</li>
+            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">@Localizer["Home"]</a></li>
+            <li class="breadcrumb-item active">@Localizer["Search"]</li>
         </ol>
     </nav>
 
-    <!-- Заголовок и статистика -->
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="display-6">
                 <i class="fas fa-search text-primary me-2"></i>
                 @if (string.IsNullOrEmpty(Model.SearchTerm))
                 {
-                    <text>Поиск по системе</text>
+                    <text>@Localizer["Search by data"]</text>
                 }
                 else
                 {
-                    <text>Результаты поиска: <span class="text-primary">"@Model.SearchTerm"</span></text>
+                    <text>@Localizer["Results search"]: <span class="text-primary">"@Model.SearchTerm"</span></text>
                 }
             </h1>
 
             @if (!string.IsNullOrEmpty(Model.SearchTerm))
             {
-                <p class="text-muted">Найдено результатов: @Model.TotalResults</p>
+                <p class="text-muted">@Localizer["Results found"]: @Model.TotalResults</p>
             }
         </div>
     </div>
 
-    <!-- Форма поиска -->
     <div class="row mb-4">
         <div class="col-12">
             <form method="get" action="@Url.Action("Index", "Search")" class="card">
@@ -57,10 +56,10 @@
                                class="form-control"
                                name="q"
                                value="@Model.SearchTerm"
-                               placeholder="Введите поисковый запрос..."
-                               aria-label="Поиск">
+                               placeholder="@Localizer["Enter your search term"]..."
+                               aria-label="@Localizer["Search"]">
                         <button class="btn btn-primary" type="submit">
-                            <i class="fas fa-search me-2"></i>Искать
+                            <i class="fas fa-search me-2"></i>@Localizer["Search"]
                         </button>
                     </div>
                 </div>
@@ -70,17 +69,15 @@
 
     @if (!string.IsNullOrEmpty(Model.SearchTerm))
     {
-        <!-- Результаты поиска -->
         <div class="row">
             <div class="col-12">
-                <!-- Инвентари -->
                 @if (Model.Inventories.Any())
                 {
                     <div class="card mb-4">
                         <div class="card-header bg-primary text-white">
                             <h5 class="mb-0">
                                 <i class="fas fa-archive me-2"></i>
-                                Инвентари (@Model.Inventories.Count)
+                                @Localizer["Inventories"] (@Model.Inventories.Count)
                             </h5>
                         </div>
                         <div class="card-body p-0">
@@ -96,9 +93,9 @@
                                         <p class="mb-1">@inventory.Description</p>
                                         <div class="d-flex justify-content-between align-items-center">
                                             <small class="text-muted">
-                                                Категория: @inventory.CategoryName
+                                                @Localizer["Category"]: @inventory.CategoryName
                                             </small>
-                                            <span class="badge bg-secondary">@inventory.ItemsCount предметов</span>
+                                            <span class="badge bg-secondary">@inventory.ItemsCount @Localizer["Items"]</span>
                                         </div>
                                     </a>
                                 }
@@ -106,15 +103,13 @@
                         </div>
                     </div>
                 }
-
-                <!-- Значения полей предметов -->
                 @if (Model.ItemFields.Any())
                 {
                     <div class="card mb-4">
                         <div class="card-header bg-success text-white">
                             <h5 class="mb-0">
                                 <i class="fas fa-box me-2"></i>
-                                Значения полей предметов (@Model.ItemFields.Count)
+                                @Localizer["Item field values"] (@Model.ItemFields.Count)
                             </h5>
                         </div>
                         <div class="card-body p-0">
@@ -127,23 +122,21 @@
                                             <h6 class="mb-1">@itemField.FieldName: @itemField.Preview</h6>
                                             <small class="text-muted">@itemField.FieldType</small>
                                         </div>
-                                        <p class="mb-1 text-muted">Инвентарь: @itemField.InventoryName</p>
-                                        <small>ID предмета: @itemField.ItemCustomId</small>
+                                        <p class="mb-1 text-muted">@Localizer["Inventory"]: @itemField.InventoryName</p>
+                                        <small>ID: @itemField.ItemCustomId</small>
                                     </a>
                                 }
                             </div>
                         </div>
                     </div>
                 }
-
-                <!-- Пользователи -->
                 @if (Model.Users.Any())
                 {
                     <div class="card mb-4">
                         <div class="card-header bg-info text-white">
                             <h5 class="mb-0">
                                 <i class="fas fa-users me-2"></i>
-                                Пользователи (@Model.Users.Count)
+                                @Localizer["Users"] (@Model.Users.Count)
                             </h5>
                         </div>
                         <div class="card-body p-0">
@@ -161,15 +154,13 @@
                         </div>
                     </div>
                 }
-
-                <!-- Нет результатов -->
                 @if (!Model.Inventories.Any() && !Model.ItemFields.Any() && !Model.Users.Any())
                 {
                     <div class="card">
                         <div class="card-body text-center py-5">
                             <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                            <h4 class="text-muted">Ничего не найдено</h4>
-                            <p class="text-muted">Попробуйте изменить поисковый запрос или использовать другие ключевые слова</p>
+                            <h4 class="text-muted">@Localizer["Nothing found"]</h4>
+                            <p class="text-muted">@Localizer["Try changing your search query"]</p>
                         </div>
                     </div>
                 }
@@ -178,12 +169,11 @@
     }
     else
     {
-        <!-- Пустая страница поиска -->
         <div class="card">
             <div class="card-body text-center py-5">
                 <i class="fas fa-search fa-3x text-primary mb-3"></i>
-                <h4 class="text-primary">Поиск по системе</h4>
-                <p class="text-muted">Введите поисковый запрос в поле выше для поиска по инвентарям, предметам и пользователям</p>
+                <h4 class="text-primary">@Localizer["Search by data"]</h4>
+                <p class="text-muted">@Localizer["Enter your search term"]...</p>
             </div>
         </div>
     }

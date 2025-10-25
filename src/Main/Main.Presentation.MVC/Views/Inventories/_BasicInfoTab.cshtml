@@ -1,5 +1,8 @@
-﻿@model Main.Application.Dtos.InventoryFormDto
-
+﻿@using Main.Application.Dtos.Inventories.Index
+@model InventoryFormDto
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
     <div class="card">
         <div class="card-header">
@@ -9,15 +12,15 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group mb-3">
-                        <label asp-for="Name" class="form-label">Inventory Name *</label>
+                        <label asp-for="Name" class="form-label">@Localizer["Inventory Name"] *</label>
                         <input asp-for="Name" class="form-control" />
                         <span asp-validation-for="Name" class="text-danger"></span>
                     </div>
 
                     <div class="form-group mb-3">
-                        <label asp-for="CategoryId" class="form-label">Category</label>
+                        <label asp-for="CategoryId" class="form-label">@Localizer["Category"]</label>
                         <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select">
-                            <option value="">-- Select Category --</option>
+                            <option value="">-- @Localizer["Select"] @Localizer["Category"] --</option>
                         </select>
                         <span asp-validation-for="CategoryId" class="text-danger"></span>
                     </div>
@@ -26,24 +29,23 @@
                 <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label asp-for="Description" class="form-label">
-                                Description
-                                <small class="text-muted">(Supports Markdown)</small>
+                            @Localizer["Description"]
+                            <small class="text-muted">(@Localizer["Supports"] Markdown)</small>
                             </label>
                             <textarea asp-for="Description" class="form-control" rows="3"
-                                      placeholder="Supports **bold**, *italic*, [links](http://example.com), etc."></textarea>
+                                  placeholder="@Localizer["Supports"] **@Localizer["bold"]**, *@Localizer["italic"]*, [links](http://example.com), etc."></textarea>
                             <span asp-validation-for="Description" class="text-danger"></span>
 
-                            <!-- Markdown подсказки -->
                             <div class="mt-2">
                                 <small class="text-muted">
-                                    <strong>Markdown tips:</strong>
-                                    **bold**, *italic*, `code`, [links](url), - lists
+                                    <strong>Markdown:</strong>
+                                **@Localizer["bold"]**, *@Localizer["italic"]*
                                 </small>
                             </div>
                         </div>
 
                     <div class="form-group mb-3">
-                        <label asp-for="ImageUrl" class="form-label">Image URL</label>
+                        <label asp-for="ImageUrl" class="form-label">@Localizer["Image URL"]</label>
                         <input asp-for="ImageUrl" class="form-control" placeholder="https://..." />
                         <span asp-validation-for="ImageUrl" class="text-danger"></span>
                     </div>
@@ -51,7 +53,7 @@
                     <div class="form-group form-check">
                         <input class="form-check-input" asp-for="IsPublic" />
                         <label class="form-check-label" asp-for="IsPublic">
-                            Make this inventory public
+                            @Localizer["Make inventory public"]
                         </label>
                     </div>
                 </div>

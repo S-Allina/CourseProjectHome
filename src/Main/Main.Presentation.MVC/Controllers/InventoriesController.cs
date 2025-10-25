@@ -1,4 +1,5 @@
-﻿using Main.Application.Dtos;
+﻿using Main.Application.Dtos.Inventories.Create;
+using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,66 +28,13 @@ namespace Main.Presentation.MVC.Controllers
             return View(t);
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> SearchUsers(string query)
-        //{
-        //    if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
-        //    {
-        //        return Json(new List<object>());
-        //    }
-
-        //    var users = await _userService.SearchUsersAsync(query);
-        //    var result = users.Select(u => new
-        //    {
-        //        id = u.Id,
-        //        email = u.Email,
-        //        firstName = u.FirstName,
-        //        lastName = u.LastName
-        //    });
-
-        //    return Json(result);
-        //}
-
-        //[HttpPost]
-        //public async Task<IActionResult> GetUsersDetails([FromBody] GetUsersDetailsRequest request)
-        //{
-        //    var users = await _userService.GetUsersByIdsAsync(request.UserIds);
-        //    var result = users.Select(u => new
-        //    {
-        //        id = u.Id,
-        //        email = u.Email,
-        //        firstName = u.FirstName,
-        //        lastName = u.LastName
-        //    });
-
-        //    return Json(result);
-        //}
-
         public class GetUsersDetailsRequest
         {
             public List<string> UserIds { get; set; } = new();
         }
-        // GET: Inventories/Create
-        //public async Task<IActionResult> Create()
-        //{
-        //    var categories = await _inventoryService.GetCategories(CancellationToken.None);
-        //    var categoriesList = categories
-        //.OrderBy(c => c.Name)
-        //.Select(c => new SelectListItem
-        //{
-        //    Value = c.Id.ToString(),
-        //    Text = c.Name
-        //}).ToList();
-        //    categoriesList.Add(new SelectListItem
-        //    {
-        //        Value = null,
-        //        Text = "Другое"
-        //    });
-        //    ViewData["Categories"] = categoriesList;
-        //    return View();
-        //}
 
-        [HttpPost]
+
+            [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([FromForm]
             CreateInventoryDto createDto,
@@ -113,22 +61,6 @@ namespace Main.Presentation.MVC.Controllers
             await _inventoryService.DeleteInventoryAsync(selectedIds);
             return RedirectToAction(nameof(Index));
         }
-        //// GET: Inventories/Edit/5
-        //public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
-        //{
-        //    if (id == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var inventory = await _inventoryService.GetById(id, cancellationToken);
-        //    if (inventory == null)
-        //    {
-        //        return NotFound();
-        //    }
-        //    //ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", inventory.CategoryId);
-        //    return View(inventory);
-        //}
 
         public async Task<IActionResult> Create()
         {
@@ -297,18 +229,6 @@ namespace Main.Presentation.MVC.Controllers
                 _logger.LogError(ex, "Auto-save failed for inventory {InventoryId}", autoSaveDto?.Id);
                 return Json(new { success = false, message = "Auto-save failed. Please try again." });
             }
-        }
-        private static bool ByteArrayEquals(byte[] a1, byte[] a2)
-        {
-            if (a1 == null && a2 == null) return true;
-            if (a1 == null || a2 == null) return false;
-            if (a1.Length != a2.Length) return false;
-
-            for (int i = 0; i < a1.Length; i++)
-            {
-                if (a1[i] != a2[i]) return false;
-            }
-            return true;
         }
         //// GET: Inventories/Details/5
         //public async Task<IActionResult> Details(int? id)

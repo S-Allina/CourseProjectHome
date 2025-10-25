@@ -1,14 +1,14 @@
 ﻿using Main.Domain.enums.inventory;
 
-namespace Main.Application.Dtos
+namespace Main.Application.Dtos.Inventories.Create
 {
-    public record InventoryFieldDto
+    public class CreateInventoryFieldDto
     {
-        public int Id { get; init; }
+        public int Id { get; set; }
         public string Name { get; init; }
         public string Description { get; init; }
         public FieldType FieldType { get; init; }
-        public int OrderIndex { get; init; }
+        public int OrderIndex { get; set; }
         public bool IsVisibleInTable { get; init; }
         public bool IsRequired { get; init; }
     }

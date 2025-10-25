@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Main.Application.Dtos;
+using Main.Application.Dtos.Items.Index;
 using Main.Domain.entities.item;
 
 namespace Main.Application.Mapper

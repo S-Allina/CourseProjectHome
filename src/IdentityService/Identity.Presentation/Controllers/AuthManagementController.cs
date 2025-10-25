@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Users.Application.Dto;
 
 namespace Identity.Presentation.Controllers
@@ -38,10 +39,12 @@ namespace Identity.Presentation.Controllers
             if (User.Identity.IsAuthenticated)
             {
                 var user = await _userManager.GetUserAsync(User);
+                var identity = (ClaimsIdentity)User.Identity;
+                var themeClaim = identity.FindFirst("Theme");
                 return Ok(new
                 {
                     isAuthenticated = true,
-
+                    theme=themeClaim
                 });
             }
 
@@ -82,26 +85,33 @@ namespace Identity.Presentation.Controllers
             return response;
         }
 
-        [HttpGet("google-login")]
-        public IActionResult GoogleLogin()
-        {
-            string redirectUrl = "https://localhost:7052/api/auth/signin-google";
+        //[HttpGet("google-login")]
+        //public IActionResult GoogleLogin()
+        //{
+        //    //    string redirectUrl = "https://localhost:7052/api/auth/signin-google";
 
-            var properties = new AuthenticationProperties
-            {
-                RedirectUri = redirectUrl
-            };
+        //    //    var props = new AuthenticationProperties
+        //    //    {
+        //    //        RedirectUri = Url.Action("GoogleCallback"),
+        //    //        Items =
+        //    //{
+        //    //    { "returnUrl", redirectUrl },
+        //    //    { "scheme", GoogleDefaults.AuthenticationScheme }
+        //    //}
+        //    //    };
 
-            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
-        }
+        //    //    return Challenge(props, GoogleDefaults.AuthenticationScheme);
 
-        [HttpGet("signin-google")]
-        public async Task<IActionResult> GoogleCallback(string returnUrl = "", string remoteError = "")
-        {
-            var user = await _authService.GoogleCallBackAsync(returnUrl, remoteError);
+        //    return Redirect($"/connect/authorize?client_id=MainMVCApp&redirect_uri=https://localhost:7004/signin-oidc&response_type=code&scope=openid profile email api1&provider=Google");
+        //}
 
-            return Ok(user);
-        }
+        //[HttpGet("signin-google")]
+        //public async Task<IActionResult> GoogleCallback(string returnUrl = "", string remoteError = "")
+        //{
+        //    var user = await _authService.GoogleCallBackAsync(returnUrl, remoteError);
+
+        //    return Ok(user);
+        //}
 
         [HttpPost("refresh-token")]
         [Authorize]

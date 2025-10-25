@@ -1,0 +1,438 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Home" xml:space="preserve">
+    <value>Главная</value>
+  </data>
+  <data name="Inventories" xml:space="preserve">
+    <value>Инвентарь</value>
+  </data>
+  <data name="Lihgt" xml:space="preserve">
+    <value>Светлая</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Поиск</value>
+  </data>
+  <data name="Tags" xml:space="preserve">
+    <value>Теги</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>Тема</value>
+  </data>
+  <data name="Users" xml:space="preserve">
+    <value>Пользователи</value>
+  </data>
+  <data name="Dark" xml:space="preserve">
+    <value>Темная</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Название</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Описание</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>Категория</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>Предметы</value>
+  </data>
+  <data name="Fields" xml:space="preserve">
+    <value>Поля</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Создано</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Статус</value>
+  </data>
+  <data name="Private" xml:space="preserve">
+    <value>Частный</value>
+  </data>
+  <data name="No tags" xml:space="preserve">
+    <value>Нет тегов</value>
+  </data>
+  <data name="Public" xml:space="preserve">
+    <value>Публичный</value>
+  </data>
+  <data name="Create Your First Inventory" xml:space="preserve">
+    <value>Создайте свой первый инвентарь</value>
+  </data>
+  <data name="No inventories found" xml:space="preserve">
+    <value>Инвентари не найдены</value>
+  </data>
+  <data name="No category" xml:space="preserve">
+    <value>Нет категории</value>
+  </data>
+  <data name="My Inventories" xml:space="preserve">
+    <value>Мои инвентари</value>
+  </data>
+  <data name="Manage your personal inventories and shared access" xml:space="preserve">
+    <value>Управляйте своими личными инвентарями и общим доступом</value>
+  </data>
+  <data name="Create New" xml:space="preserve">
+    <value>Создайте новый</value>
+  </data>
+  <data name="Inventory" xml:space="preserve">
+    <value>Инвентарь</value>
+  </data>
+  <data name="Shared With Me" xml:space="preserve">
+    <value>Поделились со мной</value>
+  </data>
+  <data name="Results search" xml:space="preserve">
+    <value>Результаты поиска</value>
+  </data>
+  <data name="Back to cloud tags" xml:space="preserve">
+    <value>Вернуться к облаку тегов</value>
+  </data>
+  <data name="Search by data" xml:space="preserve">
+    <value>Поиск по данным</value>
+  </data>
+  <data name="Results found" xml:space="preserve">
+    <value>Найдено результатов</value>
+  </data>
+  <data name="Enter your search term" xml:space="preserve">
+    <value>Введите поисковый запрос</value>
+  </data>
+  <data name="Item field values" xml:space="preserve">
+    <value>Значения полей предметов</value>
+  </data>
+  <data name="Nothing found" xml:space="preserve">
+    <value>Ничего не найдено</value>
+  </data>
+  <data name="Try changing your search query" xml:space="preserve">
+    <value>Попробуйте изменить поисковый запрос</value>
+  </data>
+  <data name="Owner" xml:space="preserve">
+    <value>Владелец</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Загрузка</value>
+  </data>
+  <data name="Auto-saving" xml:space="preserve">
+    <value>Авто-сохранение</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Назад</value>
+  </data>
+  <data name="failed" xml:space="preserve">
+    <value>завершено с ошибкой</value>
+  </data>
+  <data name="Please save manually" xml:space="preserve">
+    <value>Пожалуйста сохраните вручную</value>
+  </data>
+  <data name="All changes saved" xml:space="preserve">
+    <value>Все изменения сохранены</value>
+  </data>
+  <data name="This inventory was modified by another user." xml:space="preserve">
+    <value>Этот инвентарь был изменён другим пользователем.</value>
+  </data>
+  <data name="Do you want to reload the page to see the latest changes?" xml:space="preserve">
+    <value>Хотите перезагрузить страницу, чтобы увидеть последние изменения?</value>
+  </data>
+  <data name="Your unsaved changes will be lost." xml:space="preserve">
+    <value>Ваши несохраненные изменения будут утеряны.</value>
+  </data>
+  <data name="You have unsaved changes. Are you sure you want to leave?" xml:space="preserve">
+    <value>У вас есть несохранённые изменения. Вы уверены, что хотите выйти?</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Добавить</value>
+  </data>
+  <data name="User already has access" xml:space="preserve">
+    <value>Пользователь уже имеет доступ</value>
+  </data>
+  <data name="User added successfully" xml:space="preserve">
+    <value>Пользователь успешно добавлен</value>
+  </data>
+  <data name="No users have access to this inventory yet" xml:space="preserve">
+    <value>Пока ни у одного пользователя нет доступа к этому инвентарю</value>
+  </data>
+  <data name="Are you sure you want to remove access for this user?" xml:space="preserve">
+    <value>Вы уверены, что хотите закрыть доступ этому пользователю?</value>
+  </data>
+  <data name="Text" xml:space="preserve">
+    <value>Текст</value>
+  </data>
+  <data name="ITEM" xml:space="preserve">
+    <value>ПРЕДМЕТ</value>
+  </data>
+  <data name="Random" xml:space="preserve">
+    <value>Случайное</value>
+  </data>
+  <data name="GUID" xml:space="preserve">
+    <value>Идентификатор</value>
+  </data>
+  <data name="Date/Time" xml:space="preserve">
+    <value>Дата/Время</value>
+  </data>
+  <data name="sequence" xml:space="preserve">
+    <value>номер</value>
+  </data>
+  <data name="Field Name" xml:space="preserve">
+    <value>Название поля</value>
+  </data>
+  <data name="Field Type" xml:space="preserve">
+    <value>Тип поля</value>
+  </data>
+  <data name="MultilineText" xml:space="preserve">
+    <value>Многострочный текст</value>
+  </data>
+  <data name="Number" xml:space="preserve">
+    <value>Число</value>
+  </data>
+  <data name="Boolean" xml:space="preserve">
+    <value>Логическое значение</value>
+  </data>
+  <data name="File" xml:space="preserve">
+    <value>Картинка</value>
+  </data>
+  <data name="Order Index" xml:space="preserve">
+    <value>Порядковый номер</value>
+  </data>
+  <data name="Optional field description" xml:space="preserve">
+    <value>Опциональное описание поля</value>
+  </data>
+  <data name="Visible in table" xml:space="preserve">
+    <value>Видимость в таблице</value>
+  </data>
+  <data name="Required field" xml:space="preserve">
+    <value>Обязательное поле</value>
+  </data>
+  <data name="Updated" xml:space="preserve">
+    <value>Обновлено</value>
+  </data>
+  <data name="Inventory Name" xml:space="preserve">
+    <value>Название инвентаря</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="Please select at least one inventory to delete." xml:space="preserve">
+    <value>Пожалуйста, выберите хотя бы один инвентарь для удаления.</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>Выберите</value>
+  </data>
+  <data name="Supports" xml:space="preserve">
+    <value>Поддерживает</value>
+  </data>
+  <data name="bold" xml:space="preserve">
+    <value>жирный</value>
+  </data>
+  <data name="italic" xml:space="preserve">
+    <value>курсив</value>
+  </data>
+  <data name="Image URL" xml:space="preserve">
+    <value>Ссылка на картинку</value>
+  </data>
+  <data name="Make inventory public" xml:space="preserve">
+    <value>Сделать инвентарь публичным</value>
+  </data>
+  <data name="Are you sure you want to delete the selected?" xml:space="preserve">
+    <value>Вы уверены, что хотите удалить выбранное?</value>
+  </data>
+  <data name="Manage Access" xml:space="preserve">
+    <value>Управление доступом</value>
+  </data>
+  <data name="User by Email or Username" xml:space="preserve">
+    <value>пользователя по электронной почте или имени</value>
+  </data>
+  <data name="Access Level" xml:space="preserve">
+    <value>Уровень доступа</value>
+  </data>
+  <data name="Read &amp; Write" xml:space="preserve">
+    <value>Чтение и запись</value>
+  </data>
+  <data name="Sort By" xml:space="preserve">
+    <value>Сортировать по</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Почта</value>
+  </data>
+  <data name="Sort Order" xml:space="preserve">
+    <value>Порядок</value>
+  </data>
+  <data name="Ascending" xml:space="preserve">
+    <value>Возростание</value>
+  </data>
+  <data name="Descending" xml:space="preserve">
+    <value>Убывание</value>
+  </data>
+  <data name="Available Components" xml:space="preserve">
+    <value>Доступные компоненты</value>
+  </data>
+  <data name="Drag &amp; Drop" xml:space="preserve">
+    <value>Перетаскивание</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="Uniqueness" xml:space="preserve">
+    <value>Уникальность</value>
+  </data>
+  <data name="Editing" xml:space="preserve">
+    <value>Изменение</value>
+  </data>
+  <data name="Reorder components by dragging" xml:space="preserve">
+    <value>Изменяйте порядок компонентов путем перетаскивания</value>
+  </data>
+  <data name="Drag component outside to remove" xml:space="preserve">
+    <value>Перетащите компонент наружу, чтобы удалить</value>
+  </data>
+  <data name="ID are unique per inventory" xml:space="preserve">
+    <value>Идентификаторы уникальны для каждого инвентаря</value>
+  </data>
+  <data name="Custom IDs can be edited later" xml:space="preserve">
+    <value>Пользовательские идентификаторы можно редактировать позже</value>
+  </data>
+  <data name="Help &amp; Tips" xml:space="preserve">
+    <value>Помощь и советы</value>
+  </data>
+  <data name="Custom ID Format Configuration" xml:space="preserve">
+    <value>Конфигурация пользовательского формата идентификатора</value>
+  </data>
+  <data name="Custom ID Format Builder" xml:space="preserve">
+    <value>Конструктор пользовательских форматов идентификаторов</value>
+  </data>
+  <data name="No components added. Start by adding components from the panel on the right." xml:space="preserve">
+    <value>Компоненты не добавлены. Начните с добавления компонентов с панели справа</value>
+  </data>
+  <data name="Live Preview" xml:space="preserve">
+    <value>Предварительный просмотр</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Обновить</value>
+  </data>
+  <data name="This is how generated IDs will look" xml:space="preserve">
+    <value>Вот как будут выглядеть сгенерированные идентификаторы</value>
+  </data>
+  <data name="Field" xml:space="preserve">
+    <value>Поле</value>
+  </data>
+  <data name="No fields added yet. Click 'Add Field' to create your first field." xml:space="preserve">
+    <value>Поля пока не добавлены. Нажмите «Добавить поле», чтобы создать первое поле.</value>
+  </data>
+  <data name="Basic Info" xml:space="preserve">
+    <value>Базовая информация</value>
+  </data>
+  <data name="Custom ID Format" xml:space="preserve">
+    <value>Пользовательский формат идентификатора</value>
+  </data>
+</root>

@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using FluentValidation;
 using Main.Application.Dtos;
+using Main.Application.Dtos.Inventories.Create;
+using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Interfaces;
 using Main.Domain.entities.inventory;
 using Main.Domain.InterfacesRepository;
@@ -36,6 +38,26 @@ namespace Main.Application.Services
         public async Task<IEnumerable<InventoryDto>> GetAll(CancellationToken cancellationToken = default)
         {
             var inventories = await _inventoryRepository.GetAllAsync(null, "Fields", cancellationToken);
+            return _mapper.Map<IEnumerable<InventoryDto>>(inventories);
+        }
+
+        public async Task<IEnumerable<InventoryDto>> GetUserInventoriesAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            var inventories = await _inventoryRepository.GetAllAsync(
+                filter: i => i.OwnerId == userId,
+                includeProperties: "Fields",
+                cancellationToken: cancellationToken
+            );
+            return _mapper.Map<IEnumerable<InventoryDto>>(inventories);
+        }
+
+        public async Task<IEnumerable<InventoryDto>> GetSharedInventoriesAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            var inventories = await _inventoryRepository.GetAllAsync(
+                filter: i => i.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= 2),
+                includeProperties: "Fields",
+                cancellationToken: cancellationToken
+            );
             return _mapper.Map<IEnumerable<InventoryDto>>(inventories);
         }
 

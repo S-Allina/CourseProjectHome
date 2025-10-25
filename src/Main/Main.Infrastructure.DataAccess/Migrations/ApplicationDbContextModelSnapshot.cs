@@ -373,8 +373,8 @@ namespace Main.Infrastructure.DataAccess.Migrations
                     b.Property<string>("MultilineTextValue")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("NumberValue")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<double?>("NumberValue")
+                        .HasColumnType("float");
 
                     b.Property<string>("TextValue")
                         .HasColumnType("nvarchar(max)");

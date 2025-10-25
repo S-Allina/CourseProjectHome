@@ -1,6 +1,6 @@
 ﻿using Main.Domain.enums.inventory;
 
-namespace Main.Application.Dtos
+namespace Main.Application.Dtos.Items.Index
 {
     public record ItemFieldValueDto
     {
@@ -9,7 +9,7 @@ namespace Main.Application.Dtos
         public FieldType FieldType { get; init; }
         public string? TextValue { get; init; }
         public string? MultilineTextValue { get; init; }
-        public decimal? NumberValue { get; init; }
+        public double? NumberValue { get; init; }
         public string? FileUrl { get; init; }
         public bool? BooleanValue { get; init; }
     }

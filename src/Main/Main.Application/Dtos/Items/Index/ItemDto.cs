@@ -1,4 +1,4 @@
-﻿namespace Main.Application.Dtos
+﻿namespace Main.Application.Dtos.Items.Index
 {
     public record ItemDto
     {

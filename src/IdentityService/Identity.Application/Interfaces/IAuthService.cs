@@ -10,6 +10,6 @@ namespace Identity.Application.Interfaces
         Task<RevokeTokenResponseDto> RevokeRefreshTokenAsync(RevokeTokenRequestDto request);
         Task ForgotPasswordAsync();
         Task<bool> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
-        Task<CurrentUserDto> GoogleCallBackAsync(string returnUrl, string remoteError);
+        //Task<CurrentUserDto> GoogleCallBackAsync(string returnUrl, string remoteError);
     }
 }

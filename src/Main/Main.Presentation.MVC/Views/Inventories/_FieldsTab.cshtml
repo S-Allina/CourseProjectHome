@@ -1,20 +1,22 @@
-﻿@model Main.Application.Dtos.InventoryFormDto
-
+﻿@using Main.Application.Dtos.Inventories.Index
+@model InventoryFormDto
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 <div class="tab-pane fade" id="fields" role="tabpanel" aria-labelledby="fields-tab">
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Inventory Fields</h5>
+            <h5 class="mb-0">@Localizer["Fields"] @Localizer["Inventory"]</h5>
             <button type="button" class="btn btn-success" onclick="addField()">
-                <i class="fas fa-plus me-1"></i>Add Field
+                <i class="fas fa-plus me-1"></i>@Localizer["Add"] @Localizer["Field"]
             </button>
         </div>
         <div class="card-body">
             <div id="fieldsContainer">
-                <!-- Сообщение показывается только если нет полей в модели -->
                 @if (Model.Fields == null || !Model.Fields.Any())
                 {
                     <div class="text-muted text-center py-3" id="noFieldsMessage">
-                        No fields added yet. Click "Add Field" to create your first field.
+                        @Localizer["No fields added yet. Click 'Add Field' to create your first field."]
                     </div>
                 }
                 else

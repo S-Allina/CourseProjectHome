@@ -1,4 +1,6 @@
-﻿namespace Main.Application.Dtos
+﻿using Main.Application.Dtos.Inventories.Create;
+
+namespace Main.Application.Dtos.Inventories.Index
 {
     public class InventoryFormDto
     {

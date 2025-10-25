@@ -1,6 +1,6 @@
 ﻿using Main.Domain.enums.Users;
 
-namespace Main.Application.Dtos
+namespace Main.Application.Dtos.Inventories.Create
 {
     public class CreateInventoryAccessDto
     {

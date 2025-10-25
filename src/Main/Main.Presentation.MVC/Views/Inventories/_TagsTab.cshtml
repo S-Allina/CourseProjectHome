@@ -1,9 +1,12 @@
-﻿@model Main.Application.Dtos.InventoryFormDto
-
+﻿@using Main.Application.Dtos.Inventories.Index
+@model InventoryFormDto
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 <div class="tab-pane fade" id="tags" role="tabpanel" aria-labelledby="tags-tab">
     <div class="card">
         <div class="card-header">
-            <h5 class="mb-0">Tags</h5>
+            <h5 class="mb-0">@Localizer["Tags"]</h5>
         </div>
         <div class="card-body">
             <div class="form-group">

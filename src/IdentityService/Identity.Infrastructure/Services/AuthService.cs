@@ -80,45 +80,65 @@ namespace Identity.Infrastructure.Services
             return userResponse;
         }
 
-        public async Task<CurrentUserDto> GoogleCallBackAsync(string returnUrl, string remoteError)
-        {
-            if (!string.IsNullOrEmpty(remoteError))
-            {
-                throw new Exception($"Error from Google: {remoteError}");
-            }
+        //public async Task<CurrentUserDto> GoogleCallBackAsync(string returnUrl, string remoteError)
+        //{
+        //    var result = await HttpContext.AuthenticateAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
 
-            var info = await _signInManager.GetExternalLoginInfoAsync();
-            if (info == null)
-            {
-                throw new Exception("External login info is null.");
-            }
+        //    if (!result.Succeeded)
+        //    {
+        //        var error = result.Failure?.Message ?? "External authentication failed";
+        //        return BadRequest($"External authentication error: {error}");
+        //    }
 
-            var userEmail = info.Principal.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrEmpty(userEmail))
-            {
-                throw new Exception("Could not retrieve email from Google.");
-            }
+        //    // ✅ Получаем внешнюю информацию
+        //    var externalUser = result.Principal;
+        //    if (externalUser == null)
+        //    {
+        //        return BadRequest("External authentication principal is null");
+        //    }
 
-            var user = await _userManager.FindByEmailAsync(userEmail);
-            if (user == null)
-            {
-                user = new ApplicationUser
-                {
-                    UserName = user.LastName + " " + user.FirstName,
-                    Email = userEmail,
-                    EmailConfirmed = true
-                };
+        //    // ✅ Извлекаем claims
+        //    var claims = externalUser.Claims.ToList();
+        //    var email = claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
 
-                var createResult = await _userManager.CreateAsync(user);
-                if (!createResult.Succeeded)
-                {
-                    throw new Exception($"Failed to create user: {string.Join(separator, createResult.Errors)}");
-                }
-            }
-            var currentUser = await LoginWithoutPasswordAsync(user);
+        //    if (string.IsNullOrEmpty(email))
+        //    {
+        //        return BadRequest("Email claim not found from Google");
+        //    }
 
-            return currentUser;
-        }
+        //    // ✅ Ищем или создаем пользователя
+        //    var user = await _userManager.FindByEmailAsync(email);
+        //    if (user == null)
+        //    {
+        //        var firstName = claims.FirstOrDefault(x => x.Type == ClaimTypes.GivenName)?.Value ?? "";
+        //        var lastName = claims.FirstOrDefault(x => x.Type == ClaimTypes.Surname)?.Value ?? "";
+        //        var name = claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? $"{firstName} {lastName}".Trim();
+
+        //        user = new ApplicationUser
+        //        {
+        //            UserName = email, // Используем email как username
+        //            Email = email,
+        //            EmailConfirmed = true,
+        //            FirstName = firstName,
+        //            LastName = lastName
+        //        };
+
+        //        var createResult = await _userManager.CreateAsync(user);
+        //        if (!createResult.Succeeded)
+        //        {
+        //            throw new Exception($"Failed to create user: {string.Join(", ", createResult.Errors)}");
+        //        }
+        //    }
+
+        //    // ✅ Выходим из внешней схемы
+        //    //await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
+
+        //    // ✅ Логиним пользователя в основной системе
+        //    await _signInManager.SignInAsync(user, isPersistent: false);
+
+        //    var currentUser = await LoginWithoutPasswordAsync(user);
+        //    return currentUser;
+        //}
 
         public async Task<CurrentUserDto> RefreshTokenAsync(RefreshTokenRequestDto request)
         {

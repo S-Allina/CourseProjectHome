@@ -122,32 +122,41 @@ namespace Identity.Presentation.Extention
                 options.Events.RaiseInformationEvents = true;
                 options.Events.RaiseFailureEvents = true;
                 options.Events.RaiseSuccessEvents = true;
+                options.Authentication.CookieAuthenticationScheme = IdentityConstants.ApplicationScheme;
+                options.Authentication.CookieLifetime = TimeSpan.FromHours(1);
             })
             .AddInMemoryClients(new[]
             {
        new Client
-{
-    ClientId = "MainMVCApp",
-    ClientName = "Main MVC Application",
-    ClientSecrets = { new Secret("your-secret".Sha256()) },
-    AllowedGrantTypes = GrantTypes.Code,
-    
-    // Убедитесь, что порты совпадают с вашим Main приложением
-    RedirectUris = { "https://localhost:7004/signin-oidc" },
-    PostLogoutRedirectUris = { "https://localhost:7004/signout-callback-oidc" },
-    FrontChannelLogoutUri = "https://localhost:7004/signout-oidc",
+    {
+        ClientId = "MainMVCApp",
+        ClientName = "Main MVC Application",
+        ClientSecrets = { new Secret("your-secret".Sha256()) },
+        AllowedGrantTypes = GrantTypes.Code,
 
-    AllowedScopes = { "openid", "profile", "email", "api1" },
+        RedirectUris = { "https://localhost:7004/signin-oidc" },
+        PostLogoutRedirectUris = { "https://localhost:7004/signout-callback-oidc" },
+        FrontChannelLogoutUri = "https://localhost:7004/signout-oidc",
 
-    AllowAccessTokensViaBrowser = true,
-    AlwaysIncludeUserClaimsInIdToken = true,
-    RequireConsent = false,
-    RequirePkce = true,
-    AllowPlainTextPkce = false,
-    RequireClientSecret = true,
-    UpdateAccessTokenClaimsOnRefresh = true
-}
-            })
+        AllowedScopes = { "openid", "profile", "email", "api1" },
+
+        AllowAccessTokensViaBrowser = true,
+        AlwaysIncludeUserClaimsInIdToken = true, // ✅ ВАЖНО
+        RequireConsent = false,
+        RequirePkce = true,
+        AllowPlainTextPkce = false,
+        RequireClientSecret = true,
+        UpdateAccessTokenClaimsOnRefresh = true,
+        
+        // ✅ ДОБАВЬТЕ ЭТИ НАСТРОЙКИ
+        AlwaysSendClientClaims = true,
+        ClientClaimsPrefix = "",
+        IdentityProviderRestrictions = new List<string>
+    {
+        "Google",
+        "Local"
+    }
+    } })
             .AddInMemoryIdentityResources(new List<IdentityResource>
             {
         new IdentityResources.OpenId(),
@@ -157,8 +166,9 @@ namespace Identity.Presentation.Extention
             .AddInMemoryApiScopes(new List<ApiScope>
             {
         new ApiScope("api1", "My API")
-            }).AddAspNetIdentity<ApplicationUser>() // ✅ ЭТО КРИТИЧЕСКИ ВАЖНО
-.AddDeveloperSigningCredential(); ;
+            }).AddAspNetIdentity<ApplicationUser>()
+.AddProfileService<CustomProfileService>() // ✅ ДОБАВЬТЕ ЭТУ СТРОКУ
+.AddDeveloperSigningCredential();
 
             // ✅ ОБЯЗАТЕЛЬНО добавьте Signing Credential
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
@@ -198,6 +208,8 @@ namespace Identity.Presentation.Extention
 
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddHttpClient<IMainApiClient, MainApiClient>();
+            services.AddScoped<IMainApiClient, MainApiClient>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IUserRegistrationService, UserRegistrationService>();
@@ -221,8 +233,11 @@ namespace Identity.Presentation.Extention
                 {
                     options.ClientId = configuration["Auth:Google:ClientID"];
                     options.ClientSecret = configuration["Auth:Google:ClientSecret"];
-                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme; // ✅ Важно для IdentityServer
+                    options.CallbackPath = "/signin-google"; // ✅ Должен совпадать с Google Console
                     options.SaveTokens = true;
+                    options.Scope.Add("profile");
+                    options.Scope.Add("email");
                 });
 
             return services;

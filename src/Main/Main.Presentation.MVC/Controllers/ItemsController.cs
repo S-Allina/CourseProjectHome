@@ -1,4 +1,6 @@
-﻿using Main.Application.Dtos;
+﻿using Main.Application.Dtos.Inventories.Index;
+using Main.Application.Dtos.Items.Create;
+using Main.Application.Dtos.Items.Index;
 using Main.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -164,5 +166,34 @@ namespace Main.Presentation.MVC.Controllers
         //{
         //    return _context.Items.Any(e => e.Id == id);
         //}
+
+
+        [HttpGet("{inventoryId}/stats")]
+        public async Task<ActionResult<InventoryStatsDto>> GetInventoryStats(int inventoryId)
+        {
+            try
+            {
+                var stats = await _itemService.GetInventoryStatsAsync(inventoryId);
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Error calculating statistics" });
+            }
+        }
+
+        [HttpGet("inventory/{inventoryId}/numeric")]
+        public async Task<ActionResult<List<NumericFieldStats>>> GetNumericStats(int inventoryId)
+        {
+            try
+            {
+                var stats = await _itemService.GetNumericFieldStatsAsync(inventoryId);
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Error calculating numeric statistics" });
+            }
+        }
     }
 }

@@ -1,68 +1,22 @@
-﻿@model IEnumerable<Main.Application.Dtos.InventoryDto>
-
+﻿@using Main.Application.Dtos.Inventories.Index
+@model IEnumerable<InventoryDto>
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 @{
-    ViewData["Title"] = "Inventories";
+    ViewData["Title"] = @Localizer["Inventories"];
 }
 
 <h1>Inventories</h1>
 
 <p>
-    <a asp-action="Create" class="btn btn-success">Create New Inventory</a>
-    <button type="button" id="deleteSelected" class="btn btn-danger">Delete Selected</button>
+    <a asp-action="Create" class="btn btn-success">@Localizer["Create New"] @Localizer["Inventory"]</a>
+    <button type="button" id="deleteSelected" class="btn btn-danger">@Localizer["Delete"]</button>
 </p>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Select</th>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Category</th>
-            <th>Fields Count</th>
-            <th>Created At</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var inventory in Model)
-        {
-            <tr>
-                <td>
-                    <input type="checkbox" name="selectedIds" value="@inventory.Id" class="rowCheckbox" />
-                </td>
-                <td>
-                    <a href="@Url.Action("Index", "Items", new { inventoryId = inventory.Id })"
-                       class="text-primary fw-bold">
-                        @inventory.Name
-                    </a>
-                </td>
-                <td>
-                    @if (!string.IsNullOrEmpty(inventory.Description))
-                    {
-                        <div class="inventory-description">
-                            <!-- Показываем превью в таблице -->
-                            <span class="description-preview">@Html.Raw(inventory.DescriptionPreview)</span>
-
-                            <!-- Полное описание в тултипе -->
-                            <i class="fas fa-info-circle text-muted ms-1"
-                               data-bs-toggle="tooltip"
-                               data-bs-html="true"
-                               title="@Html.Raw(inventory.DescriptionHtml)"></i>
-                        </div>
-                    }
-                    else
-                    {
-                        <span class="text-muted">No description</span>
-                    }
-                </td>
-                <td>@inventory.CategoryId</td>
-                <td>
-                    <span class="badge bg-secondary">@inventory.Fields.Count fields</span>
-                </td>
-                <td>@inventory.CreatedAt.ToString("d")</td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="tab-pane fade show active" id="my-inventories" role="tabpanel" aria-labelledby="my-inventories-tab">
+    @await Html.PartialAsync("_InventoryTable", Model, new ViewDataDictionary(ViewData) { { "TableType", "inventories" } })
+</div>
 
 @section Scripts {
     <script>
@@ -70,12 +24,11 @@
             const selectedCheckboxes = document.querySelectorAll('.rowCheckbox:checked');
 
             if (selectedCheckboxes.length === 0) {
-                alert('Please select at least one inventory to delete.');
+                alert('@Localizer["Please select at least one inventory to delete."]');
                 return;
             }
 
-            if (confirm('Are you sure you want to delete the selected inventories?')) {
-                // Собираем ID и отправляем форму
+            if (confirm('@Localizer["Are you sure you want to delete the selected?"]')) {
                 const form = document.createElement('form');
                 form.method = 'post';
                 form.action = '@Url.Action("Delete")';

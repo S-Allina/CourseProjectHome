@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Main.Application.Dtos;
+using Main.Application.Dtos.Inventories.Create;
 using Main.Application.Interfaces;
 using Main.Application.Mapper;
 using Main.Application.Services;
@@ -10,9 +10,11 @@ using Main.Infrastructure.DataAccess.Repositories;
 using Main.Presentation.MVC.Constans;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Globalization;
 
 namespace Main.Presentation.MVC
 {
@@ -64,7 +66,7 @@ namespace Main.Presentation.MVC
                 options.GetClaimsFromUserInfoEndpoint = true;
 
                 // Настройка scope - ДОБАВЬТЕ "api1"
-                options.Scope.Clear();
+                options.Scope.Clear(); 
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
@@ -154,7 +156,10 @@ namespace Main.Presentation.MVC
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+            builder.Services.AddControllersWithViews()
+                .AddDataAnnotationsLocalization()
+                .AddViewLocalization();
 
             var app = builder.Build();
 
@@ -166,6 +171,20 @@ namespace Main.Presentation.MVC
             }
 
             app.UseHttpsRedirection();
+
+            var supportedCultures = new[] { "en", "ru", "by" };
+
+            var localizationOptions = new RequestLocalizationOptions()
+                .SetDefaultCulture("en")
+                .AddSupportedCultures(supportedCultures)
+                .AddSupportedUICultures(supportedCultures);
+
+            app.UseRequestLocalization(localizationOptions);
+            Console.WriteLine("=== Localization Settings ===");
+            Console.WriteLine($"Default Culture: {localizationOptions.DefaultRequestCulture.Culture.Name}");
+            Console.WriteLine($"Supported Cultures: {string.Join(", ", localizationOptions.SupportedCultures.Select(c => c.Name))}");
+            Console.WriteLine($"Supported UI Cultures: {string.Join(", ", localizationOptions.SupportedUICultures.Select(c => c.Name))}");
+            Console.WriteLine("=============================");
             app.UseStaticFiles(); // ✅ ДОБАВЬТЕ для обслуживания статических файлов
             app.UseRouting();
 

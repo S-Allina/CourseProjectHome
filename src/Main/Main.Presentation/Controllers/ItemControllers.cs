@@ -1,4 +1,5 @@
-﻿using Main.Application.Dtos;
+﻿using Main.Application.Dtos.Items.Create;
+using Main.Application.Dtos.Items.Index;
 using Main.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

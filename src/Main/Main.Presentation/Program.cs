@@ -1,6 +1,6 @@
 
 using FluentValidation;
-using Main.Application.Dtos;
+using Main.Application.Dtos.Inventories.Create;
 using Main.Application.Interfaces;
 using Main.Application.Mapper;
 using Main.Application.Services;

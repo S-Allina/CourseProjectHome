@@ -1,4 +1,4 @@
-﻿using Main.Application.Dtos;
+﻿using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Interfaces;
 using Main.Domain.InterfacesRepository;
 using Microsoft.AspNetCore.Authorization;

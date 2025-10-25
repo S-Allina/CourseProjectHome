@@ -1,4 +1,4 @@
-﻿namespace Main.Application.Dtos
+﻿namespace Main.Application.Dtos.Inventories.Create
 {
 
     public record CreateInventoryDto

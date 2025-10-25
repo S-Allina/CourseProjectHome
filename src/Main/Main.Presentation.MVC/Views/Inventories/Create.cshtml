@@ -1,7 +1,10 @@
 ﻿@using Main.Application.Dtos
+@using Main.Application.Dtos.Inventories.Index
 @using Main.Domain.enums.inventory
-@model Main.Application.Dtos.InventoryFormDto
-
+@model Main.Application.Dtos.Inventories.Index.InventoryFormDto
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 @{
     ViewData["Title"] = Model.PageTitle;
 }
@@ -13,26 +16,23 @@
         <div id="autoSaveIndicator" class="alert alert-info d-none">
             <div class="d-flex align-items-center">
                 <div class="spinner-border spinner-border-sm me-2" role="status">
-                    <span class="visually-hidden">Loading...</span>
+                    <span class="visually-hidden">@Localizer["Loading"]...</span>
                 </div>
-                <span id="autoSaveMessage">Auto-saving...</span>
+                <span id="autoSaveMessage">@Localizer["Auto-saving"]...</span>
             </div>
         </div>
         <form asp-action="@Model.FormAction" id="inventoryForm" data-is-edit="@Model.IsEditMode.ToString().ToLower()">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-            <!-- ✅ Скрытые поля для автосохранения -->
             <input type="hidden" id="version" name="Version" value="@Model.Version" />
             <input type="hidden" id="lastSavedVersion" value="@Model.Version" />
             <input type="hidden" id="isDirty" value="false" />
 
-            <!-- ✅ Скрытое поле для ID в режиме редактирования -->
             @if (Model.IsEditMode)
             {
                 <input type="hidden" asp-for="Id" />
             }
 
-            <!-- Табы для разных разделов -->
             <partial name="_InventoryTabs" />
 
             <div class="tab-content" id="inventoryTabsContent">
@@ -45,7 +45,7 @@
 
             <div class="mt-4">
                 <button type="submit" class="btn btn-primary">@Model.SubmitButtonText</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+                <a asp-action="Index" class="btn btn-outline-secondary">@Localizer["Back"]</a>
             </div>
         </form>
     </div>
@@ -67,15 +67,12 @@
             isDirty: false,
             saveTimer: null,
             isSaving: false,
-            saveDelay: 8000, // 8 секунд
+            saveDelay: 8000,
 
             init: function() {
                 if (!this.isEditMode) {
-                    console.log('Auto-save disabled: not in edit mode');
                     return;
                 }
-
-                console.log('Initializing auto-save for inventory editing');
                 this.setupChangeTracking();
                 this.setupPeriodicCheck();
                 this.setupBeforeUnload();
@@ -85,7 +82,6 @@
                 const form = document.getElementById('inventoryForm');
                 if (!form) return;
 
-                // Отслеживание изменений в основных полях формы
                 form.addEventListener('input', this.handleChange.bind(this));
                 form.addEventListener('change', this.handleChange.bind(this));
             },
@@ -93,7 +89,6 @@
             handleChange: function(event) {
                 if (event && event.target && event.target.type === 'hidden') return;
 
-                console.log('Change detected, marking as dirty');
                 this.markAsDirty();
                 this.scheduleAutoSave();
             },
@@ -130,11 +125,10 @@
                 }
 
                 this.isSaving = true;
-                this.updateSaveIndicator('Auto-saving...', true);
+                this.updateSaveIndicator(`@Localizer["Auto-saving"]...`, true);
 
                 try {
                     const formData = this.prepareFormData();
-                    console.log('Performing auto-save with data:', formData);
 
                     const response = await fetch('/Inventories/AutoSave', {
                         method: 'POST',
@@ -145,11 +139,8 @@
                         body: JSON.stringify(formData)
                     });
 
-                    console.log('Auto-save response status:', response.status);
-
                     if (response.ok) {
                         const result = await response.json();
-                        console.log('Auto-save result:', result);
 
                         if (result.success) {
                             this.handleSaveSuccess(result);
@@ -160,15 +151,13 @@
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                 } catch (error) {
-                    console.error('Auto-save failed:', error);
-                    this.handleSaveError({ message: 'Auto-save failed. Please save manually.' });
+                    this.handleSaveError({ message: `@Localizer["Auto-save"] @Localizer["failed"] @Localizer["Please save manually"].` });
                 } finally {
                     this.isSaving = false;
                 }
             },
 
             prepareFormData: function() {
-                // Обновляем скрытые поля перед отправкой
                 if (typeof generatePreview === 'function') {
                     generatePreview();
                 }
@@ -198,7 +187,6 @@
                     try {
                         return JSON.parse(hiddenTags.value);
                     } catch (e) {
-                        console.error('Error parsing tags:', e);
                         return [];
                     }
                 }
@@ -253,7 +241,7 @@
                     Version.value = result.Version;
                 }
 
-                this.updateSaveIndicator('All changes saved', false, 'success');
+                this.updateSaveIndicator('@Localizer["All changes saved"]', false, 'success');
 
                 setTimeout(() => {
                     this.hideSaveIndicator();
@@ -262,7 +250,7 @@
 
             handleSaveError: function(result) {
                 console.error('Auto-save error:', result);
-                this.updateSaveIndicator(result.message || 'Auto-save failed', false, 'danger');
+                this.updateSaveIndicator(result.message || `@Localizer["Auto-save"] @Localizer["failed"]`, false, 'danger');
 
                 if (result.isConcurrencyError) {
                     this.handleConcurrencyError(result);
@@ -271,9 +259,9 @@
 
             handleConcurrencyError: function(result) {
                 const userChoice = confirm(
-                    'This inventory was modified by another user. ' +
-                    'Do you want to reload the page to see the latest changes? ' +
-                    'Your unsaved changes will be lost.'
+                        '@Localizer["This inventory was modified by another user."]' +
+        '@Localizer["Do you want to reload the page to see the latest changes?"]' +
+        '@Localizer["Your unsaved changes will be lost."]'
                 );
 
                 if (userChoice) {
@@ -290,7 +278,6 @@
                     return;
                 }
 
-                // Обновляем классы в зависимости от типа
                 indicator.className = `alert alert-${type} ${showSpinner ? '' : 'd-none'}`;
                 if (messageElement) {
                     messageElement.textContent = message;
@@ -311,7 +298,6 @@
             setupPeriodicCheck: function() {
                 setInterval(() => {
                     if (this.isDirty && !this.isSaving) {
-                        console.log('Periodic check: triggering auto-save');
                         this.performAutoSave();
                     }
                 }, 30000);
@@ -321,7 +307,7 @@
                 window.addEventListener('beforeunload', (event) => {
                     if (this.isDirty) {
                         event.preventDefault();
-                        event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                        event.returnValue = '@Localizer["You have unsaved changes. Are you sure you want to leave?"]';
                         return event.returnValue;
                     }
                 });
@@ -331,8 +317,7 @@
         let componentCount = 0;
         let components = [];
 
-        // Initialize Sortable for drag & drop
-                // ===== ACCESS MANAGEMENT =====
+        // ===== ACCESS MANAGEMENT =====
         let accessManager = {
             users: [],
             currentAccessList: @Html.Raw(Json.Serialize(Model.AccessList ?? new List<InventoryAccessDto>())),
@@ -351,7 +336,6 @@
 
                 if (!searchInput) return;
 
-                // Поиск при вводе
                 searchInput.addEventListener('input', this.debounce((e) => {
                     const query = e.target.value.trim();
                     if (query.length >= 2) {
@@ -361,7 +345,6 @@
                     }
                 }, 300));
 
-                // Поиск по кнопке
                 searchBtn.addEventListener('click', () => {
                     const query = searchInput.value.trim();
                     if (query.length >= 2) {
@@ -369,7 +352,6 @@
                     }
                 });
 
-                // Закрытие результатов при клике вне
                 document.addEventListener('click', (e) => {
                     if (!searchResults.contains(e.target) && e.target !== searchInput) {
                         this.hideSearchResults();
@@ -429,7 +411,6 @@
 
             let html = '';
             users.forEach(user => {
-                // Проверяем, не добавлен ли уже пользователь
                 const isAlreadyAdded = this.currentAccessList.some(access => access.userId === user.id);
 
                 html += `
@@ -443,7 +424,7 @@
                         </div>
                         ${isAlreadyAdded ?
                             '<span class="badge bg-secondary">Already added</span>' :
-                            '<button type="button" class="btn btn-sm btn-outline-primary add-user-btn">Add</button>'
+                            `<button type="button" class="btn btn-sm btn-outline-primary add-user-btn">@Localizer["Add"]</button>`
                         }
                     </div>
                 `;
@@ -452,11 +433,10 @@
             resultsContainer.innerHTML = html;
             resultsContainer.style.display = 'block';
 
-            // Обработка добавления пользователей - ИСПРАВЛЕННАЯ ВЕРСИЯ
             resultsContainer.querySelectorAll('.add-user-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    e.preventDefault(); // Предотвращаем действие по умолчанию
-                    e.stopPropagation(); // Останавливаем всплытие события
+                    e.preventDefault();
+                    e.stopPropagation();
                     const item = btn.closest('.dropdown-item');
                     this.addUserToAccessList(
                         item.dataset.userId,
@@ -477,31 +457,26 @@
             },
 
             addUserToAccessList(userId, userName, userEmail) {
-                // Проверяем, не добавлен ли уже пользователь
                 if (this.currentAccessList.some(access => access.userId === userId)) {
-                    this.showToast('User already has access', 'warning');
+                    this.showToast('@Localizer["User already has access"]', 'warning');
                     return;
                 }
 
                 const accessLevel = parseInt(document.getElementById('accessLevelSelect').value);
                 const grantedAt = new Date().toISOString();
 
-                // Добавляем в текущий список
                 this.currentAccessList.push({
                     userId: userId,
                     accessLevel: accessLevel,
                     grantedAt: grantedAt
                 });
 
-                // Обновляем UI
                 this.updateAccessListUI();
 
-                // Обновляем скрытые поля формы
                 this.updateHiddenAccessFields();
 
-                this.showToast('User added successfully', 'success');
+                this.showToast('@Localizer["User added successfully"]', 'success');
 
-                // Триггер автосохранения
                 if (autoSaveManager.isEditMode) {
                     autoSaveManager.handleChange();
                 }
@@ -512,7 +487,6 @@
                 this.updateAccessListUI();
                 this.updateHiddenAccessFields();
 
-                // Триггер автосохранения
                 if (autoSaveManager.isEditMode) {
                     autoSaveManager.handleChange();
                 }
@@ -522,14 +496,13 @@
                 const tbody = document.getElementById('accessListBody');
                 if (!tbody) return;
 
-                // Сортируем список согласно выбранным настройкам
                 const sortedList = this.getSortedAccessList();
 
                 if (sortedList.length === 0) {
                     tbody.innerHTML = `
                         <tr id="noAccessMessage">
                             <td colspan="4" class="text-center text-muted py-4">
-                                No users have access to this inventory yet.
+                                @Localizer["No users have access to this inventory yet"].
                             </td>
                         </tr>
                     `;
@@ -543,12 +516,12 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                        <span class="text-white">${access.userName?.charAt(0)?.toUpperCase() || 'U'}</span>
+                                        <span class="text-white">${access.userEmail?.charAt(0)?.toUpperCase() || 'U'}</span>
                                     </div>
-                                    <div>
-                                        <div class="fw-semibold user-name">${access.userName || 'Loading...'}</div>
-                                        <small class="text-muted user-email">${access.userEmail || 'Loading...'}</small>
-                                    </div>
+                                           <div>
+            <div class="fw-semibold user-name">${access.userName || '@Localizer["Loading"]...'}</div>
+            <small class="text-muted user-email">${access.userEmail || '@Localizer["Loading"]...'}</small>
+        </div>
                                 </div>
                             </td>
                             <td>
@@ -571,7 +544,7 @@
 
                 tbody.innerHTML = html;
                 this.setupRemoveAccess();
-                this.loadUserDetails(); // Загружаем детали пользователей
+                this.loadUserDetails();
             },
 
             updateHiddenAccessFields() {
@@ -631,7 +604,7 @@
                 document.querySelectorAll('.remove-access').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const userId = e.target.closest('button').dataset.userId;
-                        if (confirm('Are you sure you want to remove access for this user?')) {
+                        if (confirm('@Localizer["Are you sure you want to remove access for this user?"]')) {
                             this.removeUserFromAccessList(userId);
                         }
                     });
@@ -739,7 +712,6 @@
             }
         };
 
-        // Инициализация менеджера доступа при загрузке
         document.addEventListener('DOMContentLoaded', function() {
             accessManager.init();
             const formatComponents = document.getElementById('formatComponents');
@@ -751,7 +723,7 @@
                     onEnd: function(evt) {
                         updateComponentsOrder();
                         generatePreview();
-                        // Trigger auto-save
+
                         if (autoSaveManager.isEditMode) {
                             autoSaveManager.handleChange();
                         }
@@ -761,18 +733,14 @@
                 initializeDragToRemove();
             }
 
-            // Initialize auto-save
             autoSaveManager.init();
 
-            // Initialize sample components
             addComponent('fixed-text');
             addComponent('sequence');
             generatePreview();
 
-            // Initialize fields from model
             initializeFieldsFromModel();
 
-            // Initialize tags from model
             @if (Model.Tags != null && Model.Tags.Any())
             {
                         foreach (var tag in Model.Tags)
@@ -816,9 +784,9 @@
                     componentHtml = `
                         <div class="component-item badge bg-primary p-2" draggable="true" data-type="fixed-text" id="${componentId}">
                             <i class="fas fa-grip-vertical me-1"></i>
-                            <span>Fixed Text</span>
+                            <span>@Localizer["Text"]</span>
                             <input type="text" class="form-control form-control-sm d-inline-block w-auto ms-1"
-                                   placeholder="Enter text" value="ITEM"
+                                   placeholder="Enter text" value='@Localizer["ITEM"]'
                                    onchange="updateComponent('${componentId}', this.value)" />
                             <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
                         </div>
@@ -830,7 +798,7 @@
                     componentHtml = `
                         <div class="component-item badge bg-success p-2" draggable="true" data-type="random-20bit" id="${componentId}">
                             <i class="fas fa-grip-vertical me-1"></i>
-                            <span>20-bit Random</span>
+                            <span>20-bit @Localizer["Random"]</span>
                             <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
                         </div>
                     `;
@@ -841,7 +809,7 @@
                     componentHtml = `
                         <div class="component-item badge bg-success p-2" draggable="true" data-type="random-32bit" id="${componentId}">
                             <i class="fas fa-grip-vertical me-1"></i>
-                            <span>32-bit Random</span>
+                            <span>32-bit @Localizer["Random"]</span>
                             <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
                         </div>
                     `;
@@ -852,7 +820,7 @@
                     componentHtml = `
                         <div class="component-item badge bg-success p-2" draggable="true" data-type="random-6digit" id="${componentId}">
                             <i class="fas fa-grip-vertical me-1"></i>
-                            <span>6-digit Random</span>
+                            <span>6-digit @Localizer["Random"]</span>
                             <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
                         </div>
                     `;
@@ -863,7 +831,7 @@
                     componentHtml = `
                         <div class="component-item badge bg-success p-2" draggable="true" data-type="random-9digit" id="${componentId}">
                             <i class="fas fa-grip-vertical me-1"></i>
-                            <span>9-digit Random</span>
+                            <span>9-digit @Localizer["Random"]</span>
                             <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
                         </div>
                     `;
@@ -874,7 +842,7 @@
                     componentHtml = `
                         <div class="component-item badge bg-info p-2" draggable="true" data-type="guid" id="${componentId}">
                             <i class="fas fa-grip-vertical me-1"></i>
-                            <span>GUID</span>
+                            <span>@Localizer["GUID"]</span>
                             <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
                         </div>
                     `;
@@ -885,13 +853,12 @@
                     componentHtml = `
                         <div class="component-item badge bg-warning text-dark p-2" draggable="true" data-type="datetime" id="${componentId}">
                             <i class="fas fa-grip-vertical me-1"></i>
-                            <span>Date/Time</span>
+                            <span>@Localizer["Date/Time"]</span>
                             <select class="form-select form-select-sm d-inline-block w-auto ms-1" onchange="updateComponent('${componentId}', this.value)">
                                 <option value="{YYYYMMDD}">YYYYMMDD</option>
                                 <option value="{YYMMDD}">YYMMDD</option>
                                 <option value="{YYYY-MM-DD}">YYYY-MM-DD</option>
                                 <option value="{DDMMYYYY}">DDMMYYYY</option>
-                                <option value="{UNIX}">Unix Timestamp</option>
                             </select>
                             <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
                         </div>
@@ -903,7 +870,7 @@
                     componentHtml = `
                         <div class="component-item badge bg-danger p-2" draggable="true" data-type="sequence" id="${componentId}">
                             <i class="fas fa-grip-vertical me-1"></i>
-                            <span>Sequence</span>
+                            <span>@Localizer["sequence"]</span>
                             <input type="number" class="form-control form-control-sm d-inline-block w-auto ms-1"
                                    value="6" min="1" max="10"
                                    onchange="updateComponent('${componentId}', '{SEQ:' + this.value + '}')" />
@@ -915,7 +882,6 @@
                     break;
             }
 
-            // Add component to UI
             const noComponentsMessage = document.getElementById('noComponentsMessage');
             const formatComponents = document.getElementById('formatComponents');
 
@@ -926,14 +892,12 @@
                 formatComponents.insertAdjacentHTML('beforeend', componentHtml);
             }
 
-            // Add to components array
             components.push({
                 id: componentId,
                 type: type,
                 value: defaultValue
             });
 
-            // Initialize drag events
             const componentElement = document.getElementById(componentId);
             if (componentElement) {
                 componentElement.addEventListener('dragstart', function(e) {
@@ -943,23 +907,19 @@
 
             generatePreview();
 
-            // Trigger auto-save if in edit mode
             if (autoSaveManager.isEditMode) {
                 autoSaveManager.handleChange();
             }
         }
 
         function removeComponent(componentId) {
-            // Remove from UI
             const componentElement = document.getElementById(componentId);
             if (componentElement) {
                 componentElement.remove();
             }
 
-            // Remove from components array
             components = components.filter(c => c.id !== componentId);
 
-            // Show message if no components left
             if (components.length === 0) {
                 const noComponentsMessage = document.getElementById('noComponentsMessage');
                 if (noComponentsMessage) {
@@ -969,7 +929,6 @@
 
             generatePreview();
 
-            // Trigger auto-save if in edit mode
             if (autoSaveManager.isEditMode) {
                 autoSaveManager.handleChange();
             }
@@ -981,7 +940,6 @@
                 component.value = value;
                 generatePreview();
 
-                // Trigger auto-save if in edit mode
                 if (autoSaveManager.isEditMode) {
                     autoSaveManager.handleChange();
                 }
@@ -1064,7 +1022,6 @@
                 previewElement.value = preview;
             }
 
-            // Update the hidden field for form submission
             const formatString = components.map(c => c.value).join('');
             const hiddenFormatElement = document.getElementById('hiddenCustomIdFormat');
             if (hiddenFormatElement) {
@@ -1103,7 +1060,7 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group mb-3">
-                                    <label class="form-label">Field Name *</label>
+                                    <label class="form-label">@Localizer["Field Name"] *</label>
                                     <input name="Fields[${currentIndex}].Name"
                                            class="form-control field-name"
                                            value="${fieldName}"
@@ -1115,20 +1072,20 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group mb-3">
-                                    <label class="form-label">Field Type *</label>
+                                    <label class="form-label">@Localizer["Field Type"] *</label>
                                     <select name="Fields[${currentIndex}].FieldType" class="form-select field-type" required>
                                         <option value="">Select Type</option>
-                                        <option value="0" ${fieldType === '0' ? 'selected' : ''}>Text</option>
-                                        <option value="1" ${fieldType === '1' ? 'selected' : ''}>MultilineText</option>
-                                        <option value="2" ${fieldType === '2' ? 'selected' : ''}>Number</option>
-                                        <option value="3" ${fieldType === '3' ? 'selected' : ''}>Boolean</option>
-                                        <option value="4" ${fieldType === '4' ? 'selected' : ''}>File</option>
+                                        <option value="0" ${fieldType === '0' ? 'selected' : ''}>@Localizer["Text"]</option>
+                                        <option value="1" ${fieldType === '1' ? 'selected' : ''}>@Localizer["MultilineText"]</option>
+                                        <option value="2" ${fieldType === '2' ? 'selected' : ''}>@Localizer["Number"]</option>
+                                        <option value="3" ${fieldType === '3' ? 'selected' : ''}>@Localizer["Boolean"]</option>
+                                        <option value="4" ${fieldType === '4' ? 'selected' : ''}>@Localizer["File"]</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group mb-3">
-                                    <label class="form-label">Order Index</label>
+                                    <label class="form-label">@Localizer["Order Index"]</label>
                                     <input name="Fields[${currentIndex}].OrderIndex"
                                            type="number"
                                            class="form-control"
@@ -1142,7 +1099,7 @@
                             <textarea name="Fields[${currentIndex}].Description"
                                       class="form-control"
                                       rows="2"
-                                      placeholder="Optional field description">${description}</textarea>
+                                      placeholder='@Localizer["Optional field description"]'>${description}</textarea>
                         </div>
 
                         <div class="row">
@@ -1153,7 +1110,7 @@
                                            type="checkbox"
                                            value="true"
                                            ${isVisibleInTable ? 'checked' : ''} />
-                                    <label class="form-check-label">Visible in table</label>
+                                    <label class="form-check-label">@Localizer["Visible in table"]</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -1163,7 +1120,7 @@
                                            type="checkbox"
                                            value="true"
                                            ${isRequired ? 'checked' : ''} />
-                                    <label class="form-check-label">Required field</label>
+                                    <label class="form-check-label">@Localizer["Required field"]</label>
                                 </div>
                             </div>
                         </div>
@@ -1187,7 +1144,6 @@
             }
         }
 
-        // Функция для инициализации полей из модели
         function initializeFieldsFromModel() {
             @if (Model.Fields != null && Model.Fields.Any())
             {
@@ -1290,7 +1246,6 @@
                 tags.push(tagText);
                 updateTagsDisplay();
 
-                // Trigger auto-save if in edit mode
                 if (autoSaveManager.isEditMode) {
                     autoSaveManager.handleChange();
                 }
@@ -1301,7 +1256,6 @@
             tags = tags.filter(tag => tag !== tagText);
             updateTagsDisplay();
 
-            // Trigger auto-save if in edit mode
             if (autoSaveManager.isEditMode) {
                 autoSaveManager.handleChange();
             }

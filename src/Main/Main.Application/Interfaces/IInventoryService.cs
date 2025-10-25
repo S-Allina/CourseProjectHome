@@ -1,4 +1,6 @@
 ﻿using Main.Application.Dtos;
+using Main.Application.Dtos.Inventories.Create;
+using Main.Application.Dtos.Inventories.Index;
 using Main.Domain.entities.inventory;
 
 namespace Main.Application.Interfaces
@@ -14,6 +16,8 @@ namespace Main.Application.Interfaces
         Task<IEnumerable<InventoryFieldDto>> GetInventoryFields(int id, CancellationToken cancellationToken = default);
         Task<IEnumerable<Category>> GetCategories(CancellationToken cancellationToken = default);
         Task<List<InventorySearchResult>> GetInventoriesByTagAsync(string tagName);
+        Task<IEnumerable<InventoryDto>> GetUserInventoriesAsync(string userId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<InventoryDto>> GetSharedInventoriesAsync(string userId, CancellationToken cancellationToken = default);
 
     }
 }

@@ -1,9 +1,12 @@
-﻿@using Main.Domain.enums.inventory
-@model Main.Application.Dtos.CreateItemDto
+﻿@using Main.Application.Dtos.Inventories.Index
+@using Main.Application.Dtos.Items
+@using Main.Application.Dtos.Items.Create
+@using Main.Domain.enums.inventory
+@model CreateItemDto
 @{
     ViewData["Title"] = "Create Item";
     var customId = ViewData["CustomId"] as string;
-    var inventory = ViewBag.Inventory as Main.Application.Dtos.InventoryDto;
+    var inventory = ViewBag.Inventory as InventoryDto;
 }
 
 <div class="row">
@@ -52,7 +55,7 @@
                             @if (!string.IsNullOrEmpty(inventoryField?.Description))
                             {
                                 <div class="mb-3 mt-0">
-                                    <small class="fw-light">@inventoryField.Description</small>
+                                    <small class="">@inventoryField.Description</small>
                                 </div>
                             }
 
@@ -91,9 +94,9 @@
                                     break;
 
                                 case FieldType.File:
-                                    <input asp-for="FieldValues[i].FileValue" type="file"
+                                    <input asp-for="FieldValues[i].FileUrl" type="file"
                                            class="form-control" required="@field.IsRequired" />
-                                    <span asp-validation-for="FieldValues[i].FileValue" class="text-danger"></span>
+                                    <span asp-validation-for="FieldValues[i].FileUrl" class="text-danger"></span>
                                     <small class="form-text text-muted">Max file size: 10MB</small>
                                     break;
                             }
@@ -148,7 +151,7 @@
                             <div class="d-flex justify-content-between border-bottom py-1">
                                 <span>@field.Name</span>
                                 <span>
-                                    <span class="badge bg-light text-dark">@field.FieldType</span>
+                                    <span class="badge">@field.FieldType</span>
                                     @if (field.IsRequired)
                                     {
                                         <span class="badge bg-danger">Required</span>

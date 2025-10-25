@@ -1,20 +1,22 @@
-﻿@model Main.Application.Dtos.InventoryFormDto
-
+﻿@using Main.Application.Dtos.Inventories.Index
+@model InventoryFormDto
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 <div class="tab-pane fade" id="access" role="tabpanel" aria-labelledby="access-tab">
     <div class="card">
         <div class="card-header">
-            <h5 class="card-title mb-0">Manage Access</h5>
+            <h5 class="card-title mb-0">@Localizer["Manage Access"]</h5>
         </div>
         <div class="card-body">
-            <!-- Поиск и добавление пользователей -->
             <div class="row mb-4">
                 <div class="col-md-8">
-                    <label class="form-label">Add User by Email or Username</label>
+                    <label class="form-label">@Localizer["Add"] @Localizer["User by Email or Username"]</label>
                     <div class="input-group">
                         <input type="text"
                                class="form-control"
                                id="userSearchInput"
-                               placeholder="Enter email or username..."
+                               placeholder="@Localizer["Enter your search term"]..."
                                autocomplete="off">
                         <button class="btn btn-outline-secondary" type="button" id="searchUserBtn">
                             <i class="fas fa-search"></i>
@@ -23,44 +25,39 @@
                     <div id="userSearchResults" class="dropdown-menu w-100" style="display: none;"></div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Access Level</label>
+                    <label class="form-label">@Localizer["Access Level"]</label>
                     <select class="form-select" id="accessLevelSelect">
-                        <option value="1">Read Only</option>
-                        <option value="2" selected>Read & Write</option>
-                        <option value="3">Admin</option>
+                        <option value="1">@Localizer["Read Only"]</option>
+                        <option value="2" selected>@Localizer["Read & Write"]</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Сортировка -->
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <label class="form-label">Sort By</label>
+                    <label class="form-label">@Localizer["Sort By"]</label>
                     <select class="form-select" id="sortAccessList">
-                        <option value="name">Name</option>
-                        <option value="email">Email</option>
-                        <option value="accessLevel">Access Level</option>
-                        <option value="grantedAt">Date Added</option>
+                        <option value="name">@Localizer["Name"]</option>
+                        <option value="email">@Localizer["Email"]</option>
+                        <option value="accessLevel">@Localizer["Access Level"]</option>
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Sort Order</label>
+                    <label class="form-label">@Localizer["Sort Order"]</label>
                     <select class="form-select" id="sortAccessOrder">
-                        <option value="asc">Ascending</option>
-                        <option value="desc">Descending</option>
+                        <option value="asc">@Localizer["Ascending"]</option>
+                        <option value="desc">@Localizer["Descending"]</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Список пользователей с доступом -->
             <div class="table-responsive">
                 <table class="table table-striped" id="accessListTable">
                     <thead>
                         <tr>
-                            <th>User</th>
-                            <th>Access Level</th>
-                            <th>Date Added</th>
-                            <th>Actions</th>
+                            <th>@Localizer["User"]</th>
+                            <th>@Localizer["Access Level"]</th>
+                            <th>@Localizer["Created"]</th>
                         </tr>
                     </thead>
                     <tbody id="accessListBody">
@@ -75,8 +72,8 @@
                                                 <span class="text-white">@(access.UserId?.Substring(0, 1).ToUpper() ?? "U")</span>
                                             </div>
                                             <div>
-                                                <div class="fw-semibold user-name">Loading...</div>
-                                                <small class="text-muted user-email">Loading...</small>
+                                                <div class="fw-semibold user-name">@Localizer["Loading"]...</div>
+                                                <small class="text-muted user-email">@Localizer["Loading"]...</small>
                                             </div>
                                         </div>
                                     </td>
@@ -86,14 +83,14 @@
                                         </span>
                                     </td>
                                     <td class="granted-date">@access.GrantedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                                    <td>
+                                    @* <td>
                                         <button type="button"
                                                 class="btn btn-sm btn-outline-danger remove-access"
                                                 data-user-id="@access.UserId"
                                                 title="Remove Access">
                                             <i class="fas fa-times"></i>
                                         </button>
-                                    </td>
+                                    </td> *@
                                 </tr>
                             }
                         }
@@ -101,7 +98,7 @@
                         {
                             <tr id="noAccessMessage">
                                 <td colspan="4" class="text-center text-muted py-4">
-                                    No users have access to this inventory yet.
+                                    @Localizer["No users have access to this inventory yet"]
                                 </td>
                             </tr>
                         }
@@ -109,7 +106,6 @@
                 </table>
             </div>
 
-            <!-- Скрытые поля для формы -->
             <div id="accessListData">
                 @if (Model.AccessList != null && Model.AccessList.Any())
                 {
@@ -147,9 +143,8 @@
     {
         return accessLevel switch
         {
-            1 => "Read Only",
-            2 => "Read & Write",
-            3 => "Admin",
+            1 => @Localizer["Read Only"],
+            2 => @Localizer["Read & Write"],
             _ => "Unknown"
         };
     }

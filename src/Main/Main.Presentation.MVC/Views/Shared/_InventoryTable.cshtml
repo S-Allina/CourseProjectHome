@@ -1,0 +1,118 @@
+﻿@using Main.Application.Dtos
+@using Main.Application.Dtos.Inventories.Index
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+@model List<InventoryDto>
+@{
+    var tableType = ViewData["TableType"] as string ?? "my";
+    var tableId = tableType;
+}
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">@Localizer["No inventories found"]</h4>
+        <p class="text-muted">
+            @(tableType == "my"
+                    ? "You haven't created any inventories yet."
+                    : "No inventories have been shared with you.")
+    </p>
+    @if (tableType == "my")
+        {
+            <a href="@Url.Action("Create", "Inventories")" class="btn btn-primary mt-2">
+                <i class="fas fa-plus me-2"></i>@Localizer["Create Your First Inventory"]
+            </a>
+        }
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table id="@tableId" class="table-striped table-hover w-100">
+            <thead>
+                <tr>
+                    <th>@Localizer["Select"]</th>
+                    <th>@Localizer["Name"]</th>
+                    <th>@Localizer["Description"]</th>
+                    <th>@Localizer["Category"]</th>
+                    <th>@Localizer["Items"]</th>
+                    <th>@Localizer["Fields"]</th>
+                    <th>@Localizer["Tags"]</th>
+                    <th>@Localizer["Created"]</th>
+                    <th>@Localizer["Updated"]</th>
+                    <th>@Localizer["Owner"]</th>
+                    <th>@Localizer["Status"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var inventory in Model)
+                {
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="selectedIds" value="@inventory.Id" class="rowCheckbox" />
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                @if (!string.IsNullOrEmpty(inventory.ImageUrl))
+                                {
+                                    <img src="@inventory.ImageUrl" class="rounded me-3" style="width: 40px; height: 40px; object-fit: cover;" alt="@inventory.Name">
+                                }
+                                <div>
+                                    <strong>@inventory.Name</strong>
+                                    @if (!inventory.IsPublic)
+                                    {
+                                        <i class="fas fa-lock text-warning ms-1" title=@Localizer["Private"]></i>
+                                    }
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-truncate d-inline-block" style="max-width: 200px;" title="@inventory.Description">
+                                @inventory.Description
+                            </span>
+                        </td>
+                        <td>@(inventory.CategoryId.ToString() ?? @Localizer["No category"])</td>
+                        <td>
+                            <span class="badge bg-info">@inventory.Fields.Count</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">@inventory.Fields.Count</span>
+                        </td>
+                        <td>
+                            @if (inventory.Tags?.Any() == true)
+                            {
+                                foreach (var tag in inventory.Tags.Take(2))
+                                {
+                                    <span class="badge me-1">@tag</span>
+                                }
+                                @if (inventory.Tags.Count > 2)
+                                {
+                                    <span class="badge">+@(inventory.Tags.Count - 2)</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">@Localizer["No tags"]</span>
+                            }
+                        </td>
+                        <td>@inventory.CreatedAt.ToString("MMM dd, yyyy")</td>
+                        <td>@inventory.UpdatedAt.ToString("MMM dd, yyyy")</td>
+                        <td>@inventory.Owner</td>
+                        <td>
+                            @if (inventory.IsPublic)
+                            {
+                                <span class="badge bg-success">@Localizer["Public"]</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning">@Localizer["Private"]</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

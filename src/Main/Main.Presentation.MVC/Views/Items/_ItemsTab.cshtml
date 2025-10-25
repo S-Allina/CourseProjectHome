@@ -1,7 +1,9 @@
-﻿@using Main.Domain.enums.inventory
-@model IEnumerable<Main.Application.Dtos.ItemDto>
+﻿@using Main.Application.Dtos.Inventories.Index
+@using Main.Application.Dtos.Items.Index
+@using Main.Domain.enums.inventory
+@model IEnumerable<ItemDto>
 @{
-    var inventory = ViewBag.SelectedInventory as Main.Application.Dtos.InventoryDto;
+    var inventory = ViewBag.SelectedInventory as InventoryDto;
 }
 
 @if (inventory != null)

@@ -1,25 +1,27 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="@(User.FindFirst("Theme")?.Value?.ToLower() ?? "light")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Main.Presentation.MVC</title>
-    <script type="importmap"></script>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Main.Presentation.MVC.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.10.2/jsoneditor.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Main.Presentation.MVC</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -27,38 +29,46 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index"><i class="fas fa-house me-1"></i>@Localizer["Home"]</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Inventories" asp-action="Index">Inventories</a>
+                            <a class="nav-link" asp-area="" asp-controller="Inventories" asp-action="Index"><i class="fas fa-archive me-1"></i>@Localizer["Inventories"]</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Tags" asp-action="Index">Теги</a>
+                            <a class="nav-link" asp-area="" asp-controller="Tags" asp-action="Index"><i class="fas fa-tags me-1"></i>@Localizer["Tags"]</a>
                         </li>
-                        <li>
-                            <a href="https://auth-frontend.com/login?returnUrl=https://main-app.com">
-                                Войти в систему
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-palette me-1"></i>@Localizer["Theme"]
                             </a>
+                            <ul class="dropdown-menu" aria-labelledby="themeDropdown">
+                                <li>
+                                    <a class="dropdown-item theme-selector" href="#" data-theme="light">
+                                        <i class="fas fa-sun me-2"></i>@Localizer["Light"]
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item theme-selector" href="#" data-theme="dark">
+                                        <i class="fas fa-moon me-2"></i>@Localizer["Dark"]
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
-                        <li>
-                            <a href="http://localhost:5173/theapp/#/theapp/users">
-                            Управление пользователями
-                        </a>
-                        </li>
+
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <a href="/auth/users" class="auth-link">Пользователи</a>
-                            <span>@User.Identity.Name</span>
-                            <a href="/auth/logout">Выйти</a>
+                            <li>
+                                <a class="nav-link" href="http://localhost:5173/theapp/#/theapp/users">
+                                    <i class="fas fa-users me-1"></i>
+                                    @Localizer["Users"]
+                                </a>
+                            </li>
                         }
-                        else
-                        {
-                            <a href="/auth/login">Войти</a>
-                        }
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
                     </ul>
+                    <div>
+                        @await Html.PartialAsync("_SelectLanguagePartial")
+                    </div>
                     <div class="d-flex position-relative">
                         <form class="d-flex me-2" method="get" action="@Url.Action("Index", "Search")" id="globalSearchForm">
                             <div class="input-group">
@@ -66,21 +76,19 @@
                                        class="form-control"
                                        name="q"
                                        id="globalSearchInput"
-                                       placeholder="Поиск по инвентарям, предметам..."
+                                       placeholder="@Localizer["Search"]..."
                                        aria-label="Search"
                                        value="@Context.Request.Query["q"]">
-                                <button class="btn btn-light" type="submit" title="Поиск">
+                                <button class="btn btn-outline-secondary" type="submit" title="@Localizer["Search"]">
                                     <i class="fas fa-search"></i>
                                 </button>
                             </div>
                         </form>
 
-                        <!-- Быстрые результаты поиска -->
                         <div id="quickSearchResults" class="position-absolute top-100 start-0 end-0 mt-1" style="display: none; z-index: 1050;">
                             <div class="card shadow-lg">
                                 <div class="card-body p-2">
                                     <div id="quickSearchContent">
-                                        <!-- Результаты будут загружены через AJAX -->
                                     </div>
                                 </div>
                             </div>
@@ -118,32 +126,17 @@
         </div>
     </footer>
 
-  
-                <script>
-        function redirectToUsers() {
-            const userId = "00ecdf72-7220-4f39-9452-a7c978a36744"; // ID пользователя
-            const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjAwZWNkZjcyLTcyMjAtNGYzOS05NDUyLWE3Yzk3OGEzNjc0NCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJhZG1pbkBnbWFpbC5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJhZG1pbkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6IlRydWUiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsImV4cCI6MTc2MDcwNzM0NCwiaXNzIjoiQXV0aCBBUEkiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUxNzM7aHR0cDovL29yZGVyLWFwaTo4MDtodHRwOi8vY2FydC1hcGk6ODA7aHR0cDovL2lkZW50aXR5LWFwaTo4MDtodHRwOi8vYXBpLWdhdGV3YXk6ODAifQ.d_PAhJOzi_Jg9ueA25TYjARUB38xUNhM2IPyZHlRG5Y"; // JWT токен
-        if (userId && token) {
-               // ✅ Кодируем данные для URL и передаем в хеше
-               const encodedData = btoa(JSON.stringify({ userId, token }));
-
-               // Переходим с данными в хеш-параметре
-               window.location.href = `http://localhost:5173/theapp/#/theapp?auth=${encodedData}`;
-           } else {
-               window.location.href = '/Account/Login';
-           }
-        }
-    </script>
-
-    <!-- Подключаем axios -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.10.2/jsoneditor.min.js"></script>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/globalSearch.js" asp-append-version="true"></script>
-    
+    <script src="~/js/themeManager.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

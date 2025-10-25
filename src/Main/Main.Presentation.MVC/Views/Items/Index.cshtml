@@ -54,11 +54,152 @@
         </div>
     </div>
 </div> *@
+ 
+
+
+@* @model IEnumerable<Main.Application.Dtos.ItemDto>
+
+<div class="container-fluid mt-4">
+    <!-- Индикатор загрузки -->
+    <div id="statsLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading statistics...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading statistics...</p>
+    </div>
+
+    <!-- Контент статистики -->
+    <div id="statsContent" style="display: none;">
+        <!-- Общая статистика -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">📊 Overview</h5>
+                        <small class="text-muted" id="generatedAt"></small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <h3 class="text-primary" id="totalItems">0</h3>
+                                    <small class="text-muted">Total Items</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <h3 class="text-success" id="itemsWithImages">0</h3>
+                                    <small class="text-muted">Items with Images</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <h3 class="text-info" id="itemsWithComments">0</h3>
+                                    <small class="text-muted">Items with Comments</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <h3 class="text-warning" id="totalFields">0</h3>
+                                    <small class="text-muted">Total Fields</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- График распределения типов полей -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">📈 Field Type Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="fieldTypeChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- График активности -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">📅 Recent Activity</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="activityChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Статистика числовых полей -->
+        <div class="row" id="numericStatsSection">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">🔢 Numeric Fields Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="numericFieldsStats" class="row">
+                            <!-- Динамически генерируемая статистика -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Статистика текстовых полей -->
+        <div class="row mt-4" id="textStatsSection">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">📝 Text Fields Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="textFieldsStats">
+                            <!-- Динамически генерируемая статистика -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Популярные теги -->
+        <div class="row mt-4" id="tagsSection">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">🏷️ Popular Tags</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="topTags" class="d-flex flex-wrap gap-2">
+                            <!-- Динамически генерируемые теги -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Сообщение об ошибке -->
+    <div id="statsError" class="alert alert-danger text-center" style="display: none;">
+        <h5>❌ Error Loading Statistics</h5>
+        <p id="errorMessage"></p>
+        <button class="btn btn-primary btn-sm" onclick="loadStatistics()">Try Again</button>
+    </div>
+</div> *@
+@using Main.Application.Dtos.Inventories.Index
+@using Main.Application.Dtos.Items.Index
 @using Main.Domain.enums.inventory
-@model IEnumerable<Main.Application.Dtos.ItemDto>
+
+@model IEnumerable<Main.Application.Dtos.Items.Index.ItemDto>
 @{
     ViewData["Title"] = "Items";
-    var inventory = ViewBag.SelectedInventory as Main.Application.Dtos.InventoryDto;
+    var inventory = ViewBag.SelectedInventory as InventoryDto;
 }
 
 <!-- Верхняя панель с кнопками -->
@@ -94,12 +235,20 @@
             <i class="fas fa-boxes me-1"></i>Items
         </button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="statistics-tab" data-bs-toggle="tab" data-bs-target="#statistics" type="button" role="tab" aria-controls="statistics" aria-selected="false">
+            <i class="fas fa-chart-bar me-1"></i>Statistics
+        </button>
+    </li>
 </ul>
 
 <div class="tab-content" id="myTabContent">
     <!-- Items Tab -->
     <div class="tab-pane fade show active" id="items" role="tabpanel" aria-labelledby="items-tab">
         <partial name="_ItemsTab" model="Model" />
+    </div>
+    <div class="tab-pane fade" id="statistics-tab" role="tabpanel" aria-labelledby="statistics-tab">
+        <partial name="_StatisticsTab" model="Model" />
     </div>
 </div>
 
@@ -131,7 +280,282 @@
         </div>
     </div>
 </div>
-@section Scripts {
+ @section Scripts {
+    <script>
+            // Все функции для статистики теперь в основном скрипте
+        async function loadStatisticsTab() {
+            const inventoryId = @ViewBag.SelectedInventory?.Id;
+            if (!inventoryId) {
+                console.error('Inventory ID not found');
+                return;
+            }
+
+            // Показываем загрузку
+            const statsLoading = document.getElementById('statsLoading');
+            const statsContent = document.getElementById('statsContent');
+            const statsError = document.getElementById('statsError');
+
+            if (statsLoading) statsLoading.style.display = 'block';
+            if (statsContent) statsContent.style.display = 'none';
+            if (statsError) statsError.style.display = 'none';
+
+            try {
+                console.log('Loading statistics for inventory:', inventoryId);
+
+                // Загружаем данные с сервера
+                const response = await fetch(`/api/items/${inventoryId}/stats`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const stats = await response.json();
+                console.log('Statistics loaded:', stats);
+
+                renderStatistics(stats);
+
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                if (statsLoading) statsLoading.style.display = 'none';
+                if (statsError) {
+                    statsError.style.display = 'block';
+                    document.getElementById('errorMessage').textContent = 'Error loading statistics: ' + error.message;
+                }
+            }
+        }
+
+        // Рендеринг статистики
+        function renderStatistics(stats) {
+            console.log('Rendering statistics:', stats);
+
+            // Обновляем основную статистику
+            updateElementText('totalItems', stats.totalItems);
+            updateElementText('itemsWithImages', stats.itemsWithImages);
+            updateElementText('itemsWithComments', stats.itemsWithComments);
+            updateElementText('totalFields', stats.totalFields);
+
+            // Создаем графики
+            createFieldTypeChart(stats.fieldTypeDistribution);
+            createActivityChart(stats.activityStats);
+
+            // Рендерим статистику полей
+            renderNumericFieldsStats(stats.numericFieldsStats);
+            renderTextFieldsStats(stats.textFieldsStats);
+
+            // Показываем контент
+            const statsLoading = document.getElementById('statsLoading');
+            const statsContent = document.getElementById('statsContent');
+
+            if (statsLoading) statsLoading.style.display = 'none';
+            if (statsContent) statsContent.style.display = 'block';
+        }
+
+        function updateElementText(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value.toLocaleString();
+            }
+        }
+
+        function createFieldTypeChart(distribution) {
+            const ctx = document.getElementById('fieldTypeDistributionChart');
+            if (!ctx) {
+                console.error('Field type chart element not found');
+                return;
+            }
+
+            new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Numeric', 'Text', 'Boolean', 'Date', 'File', 'Multiline Text'],
+                    datasets: [{
+                        data: [
+                            distribution.numericFieldsCount,
+                            distribution.textFieldsCount,
+                            distribution.booleanFieldsCount,
+                            distribution.dateFieldsCount,
+                            distribution.fileFieldsCount,
+                            distribution.multilineTextFieldsCount
+                        ],
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Field Types Distribution'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createActivityChart(activityStats) {
+            const ctx = document.getElementById('activityChart');
+            if (!ctx) {
+                console.error('Activity chart element not found');
+                return;
+            }
+
+            new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Created (7d)', 'Created (30d)', 'Updated (7d)', 'Comments (7d)', 'Likes (7d)'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [
+                            activityStats.itemsCreatedLast7Days,
+                            activityStats.itemsCreatedLast30Days,
+                            activityStats.itemsUpdatedLast7Days,
+                            activityStats.commentsAddedLast7Days,
+                            activityStats.likesAddedLast7Days
+                        ],
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Recent Activity'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderNumericFieldsStats(numericStats) {
+            const container = document.getElementById('numericFieldsStats');
+            if (!container) return;
+
+            if (!numericStats || numericStats.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center text-muted py-3">No numeric fields data available</div>';
+                return;
+            }
+
+            let html = '';
+            numericStats.forEach(stat => {
+                html += `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="card-title mb-0">${stat.fieldName}</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center small">
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted">Average</div>
+                                        <div class="fw-bold">${stat.average.toFixed(2)}</div>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted">Count</div>
+                                        <div class="fw-bold">${stat.count}</div>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted">Min</div>
+                                        <div class="fw-bold">${stat.min.toFixed(2)}</div>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted">Max</div>
+                                        <div class="fw-bold">${stat.max.toFixed(2)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderTextFieldsStats(textStats) {
+            const container = document.getElementById('textFieldsStats');
+            if (!container) return;
+
+            if (!textStats || textStats.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-3">No text fields data available</div>';
+                return;
+            }
+
+            let html = '<div class="row">';
+            textStats.forEach(stat => {
+                html += `
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="card-title mb-0">${stat.fieldName}</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-4 text-center">
+                                        <div class="text-muted">Total</div>
+                                        <div class="fw-bold">${stat.totalValues}</div>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <div class="text-muted">Unique</div>
+                                        <div class="fw-bold">${stat.uniqueValues}</div>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <div class="text-muted">Empty</div>
+                                        <div class="fw-bold">${stat.emptyValues}</div>
+                                    </div>
+                                </div>
+                                ${stat.topValues && stat.topValues.length > 0 ? `
+                                    <h6 class="mt-3">Top Values:</h6>
+                                    <div class="small">
+                                        ${stat.topValues.slice(0, 3).map(value => `
+                                            <div class="d-flex justify-content-between">
+                                                <span class="text-truncate" style="max-width: 70%;">${value.value}</span>
+                                                <span class="text-muted">${value.count} (${value.percentage.toFixed(1)}%)</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            container.innerHTML = html;
+        }
+
+        // Инициализация вкладки статистики
+        document.addEventListener('DOMContentLoaded', function() {
+            const statisticsTab = document.getElementById('statistics-tab');
+            if (statisticsTab) {
+                statisticsTab.addEventListener('shown.bs.tab', function() {
+                    console.log('Statistics tab shown');
+                    loadStatisticsTab();
+                });
+            }
+
+            // Если уже на вкладке статистики, загружаем сразу
+            if (document.getElementById('statistics-tab')?.classList.contains('active')) {
+                console.log('Already on statistics tab, loading...');
+                setTimeout(() => {
+                    loadStatisticsTab();
+                }, 100);
+            }
+        });
+    </script>
     <script>
         function showItemDetails(itemId) {
             fetch(`@Url.Action("GetItemDetails")/${itemId}`)
@@ -295,4 +719,300 @@
             user-select: none;
         }
     </style>
-}
+} 
+@* @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let statsChart1, statsChart2;
+
+        // Загружаем статистику при переходе на вкладку
+        document.addEventListener('DOMContentLoaded', function() {
+            const statisticsTab = document.getElementById('statistics-tab');
+            if (statisticsTab) {
+                statisticsTab.addEventListener('shown.bs.tab', function() {
+                    loadStatistics();
+                });
+            }
+
+            // Если уже на вкладке статистики, загружаем сразу
+            if (document.getElementById('statistics-tab').classList.contains('active')) {
+                loadStatistics();
+            }
+        });
+
+        async function loadStatistics() {
+            const inventoryId = @ViewBag.SelectedInventory?.Id;
+            if (!inventoryId) {
+                showError('Inventory ID not found');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`/api/Items/${inventoryId}/stats`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const stats = await response.json();
+                renderStatistics(stats);
+
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                showError('Failed to load statistics: ' + error.message);
+            }
+        }
+
+        function renderStatistics(stats) {
+            hideLoading();
+
+            // Обновляем основную статистику
+            document.getElementById('totalItems').textContent = stats.totalItems.toLocaleString();
+            document.getElementById('itemsWithImages').textContent = stats.itemsWithImages.toLocaleString();
+            document.getElementById('itemsWithComments').textContent = stats.itemsWithComments.toLocaleString();
+            document.getElementById('totalFields').textContent = stats.totalFields.toLocaleString();
+            document.getElementById('generatedAt').textContent = `Generated: ${new Date(stats.generatedAt).toLocaleString()}`;
+
+            // Создаем графики
+            createFieldTypeChart(stats.fieldTypeDistribution);
+            createActivityChart(stats.activityStats);
+
+            // Рендерим статистику полей
+            renderNumericFieldsStats(stats.numericFieldsStats);
+            renderTextFieldsStats(stats.textFieldsStats);
+            renderTopTags(stats.topTags);
+
+            // Показываем контент
+            document.getElementById('statsContent').style.display = 'block';
+        }
+
+        function createFieldTypeChart(distribution) {
+            const ctx = document.getElementById('fieldTypeChart').getContext('2d');
+
+            if (statsChart1) {
+                statsChart1.destroy();
+            }
+
+            statsChart1 = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Numeric', 'Text', 'Boolean', 'Date', 'File', 'Multiline Text'],
+                    datasets: [{
+                        data: [
+                            distribution.numericFieldsCount,
+                            distribution.textFieldsCount,
+                            distribution.booleanFieldsCount,
+                            distribution.dateFieldsCount,
+                            distribution.fileFieldsCount,
+                            distribution.multilineTextFieldsCount
+                        ],
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Field Types Distribution'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createActivityChart(activityStats) {
+            const ctx = document.getElementById('activityChart').getContext('2d');
+
+            if (statsChart2) {
+                statsChart2.destroy();
+            }
+
+            statsChart2 = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Items Created (7d)', 'Items Created (30d)', 'Items Updated (7d)', 'Comments (7d)', 'Likes (7d)'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [
+                            activityStats.itemsCreatedLast7Days,
+                            activityStats.itemsCreatedLast30Days,
+                            activityStats.itemsUpdatedLast7Days,
+                            activityStats.commentsAddedLast7Days,
+                            activityStats.likesAddedLast7Days
+                        ],
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Recent Activity'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderNumericFieldsStats(numericStats) {
+            const container = document.getElementById('numericFieldsStats');
+
+            if (!numericStats || numericStats.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center text-muted py-3">No numeric fields data available</div>';
+                return;
+            }
+
+            let html = '';
+            numericStats.forEach(stat => {
+                html += `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="card-title mb-0">${stat.fieldName}</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center small">
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted">Average</div>
+                                        <div class="fw-bold">${stat.average.toFixed(2)}</div>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted">Count</div>
+                                        <div class="fw-bold">${stat.count}</div>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted">Min</div>
+                                        <div class="fw-bold">${stat.min.toFixed(2)}</div>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted">Max</div>
+                                        <div class="fw-bold">${stat.max.toFixed(2)}</div>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted">Sum</div>
+                                        <div class="fw-bold">${stat.sum.toFixed(2)}</div>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted">Std Dev</div>
+                                        <div class="fw-bold">${stat.standardDeviation.toFixed(2)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderTextFieldsStats(textStats) {
+            const container = document.getElementById('textFieldsStats');
+
+            if (!textStats || textStats.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-3">No text fields data available</div>';
+                return;
+            }
+
+            let html = '<div class="row">';
+            textStats.forEach(stat => {
+                html += `
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="card-title mb-0">${stat.fieldName}</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-4 text-center">
+                                        <div class="text-muted">Total</div>
+                                        <div class="fw-bold">${stat.totalValues}</div>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <div class="text-muted">Unique</div>
+                                        <div class="fw-bold">${stat.uniqueValues}</div>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <div class="text-muted">Empty</div>
+                                        <div class="fw-bold">${stat.emptyValues}</div>
+                                    </div>
+                                </div>
+                                ${stat.topValues && stat.topValues.length > 0 ? `
+                                    <h6 class="mt-3">Top Values:</h6>
+                                    <div class="small">
+                                        ${stat.topValues.slice(0, 5).map(value => `
+                                            <div class="d-flex justify-content-between">
+                                                <span>${value.value}</span>
+                                                <span class="text-muted">${value.count} (${value.percentage.toFixed(1)}%)</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            container.innerHTML = html;
+        }
+
+        function renderTopTags(topTags) {
+            const container = document.getElementById('topTags');
+
+            if (!topTags || topTags.length === 0) {
+                container.innerHTML = '<div class="text-muted">No tags available</div>';
+                return;
+            }
+
+            let html = '';
+            topTags.forEach(tag => {
+                const percentage = Math.min(100, Math.max(20, tag.percentage)); // Минимальный размер 20%
+                html += `
+                    <span class="badge bg-primary position-relative" style="font-size: ${percentage / 10 + 0.8}em;">
+                        ${tag.value}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-light text-dark">
+                            ${tag.count}
+                        </span>
+                    </span>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function showLoading() {
+            document.getElementById('statsLoading').style.display = 'block';
+            document.getElementById('statsContent').style.display = 'none';
+            document.getElementById('statsError').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('statsLoading').style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('statsLoading').style.display = 'none';
+            document.getElementById('statsContent').style.display = 'none';
+            document.getElementById('statsError').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+    </script>
+} *@

@@ -40,18 +40,18 @@ namespace Main.Application.Dtos
         public string Email { get; set; }
     }
 
-    public class QuickSearchResult
-    {
-        public List<QuickSearchItem> Results { get; set; } = new();
-        public string SearchTerm { get; set; }
-    }
+    //public class QuickSearchResult
+    //{
+    //    public List<QuickSearchItem> Results { get; set; } = new();
+    //    public string SearchTerm { get; set; }
+    //}
 
-    public class QuickSearchItem
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Type { get; set; } // "Inventory", "Item", "User"
-        public string AdditionalInfo { get; set; }
-        public string Url { get; set; }
-    }
+    //public class QuickSearchItem
+    //{
+    //    public int Id { get; set; }
+    //    public string Name { get; set; }
+    //    public string Type { get; set; } // "Inventory", "Item", "User"
+    //    public string AdditionalInfo { get; set; }
+    //    public string Url { get; set; }
+    //}
 }

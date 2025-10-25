@@ -1,29 +1,32 @@
-﻿<ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+<ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">
-            <i class="fas fa-info-circle me-1"></i>Basic Info
+            <i class="fas fa-info-circle me-1"></i>@Localizer["Basic Info"]
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="customid-tab" data-bs-toggle="tab" data-bs-target="#customid" type="button" role="tab" aria-controls="customid" aria-selected="false">
-            <i class="fas fa-id-card me-1"></i>Custom ID Format
+            <i class="fas fa-id-card me-1"></i>@Localizer["Custom ID Format"]
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="fields-tab" data-bs-toggle="tab" data-bs-target="#fields" type="button" role="tab" aria-controls="fields" aria-selected="false">
-            <i class="fas fa-list me-1"></i>Fields
+            <i class="fas fa-list me-1"></i>@Localizer["Fields"]
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="tags-tab" data-bs-toggle="tab" data-bs-target="#tags" type="button" role="tab" aria-controls="tags" aria-selected="false">
-            <i class="fas fa-tags me-1"></i>Tags
+            <i class="fas fa-tags me-1"></i>@Localizer["Tags"]
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="access-tab" data-bs-toggle="tab"
                 data-bs-target="#access" type="button" role="tab"
                 aria-controls="access" aria-selected="false">
-            <i class="fas fa-users me-1"></i>Access Control
+            <i class="fas fa-users me-1"></i>@Localizer["Manage Access"]
         </button>
     </li>
 </ul>

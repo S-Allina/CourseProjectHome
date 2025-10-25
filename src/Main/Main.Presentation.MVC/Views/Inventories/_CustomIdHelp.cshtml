@@ -1,13 +1,16 @@
-﻿<div class="card mt-3">
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
+<div class="card mt-3">
     <div class="card-header">
-        <h6 class="mb-0">Help & Tips</h6>
+        <h6 class="mb-0">@Localizer["Help & Tips"]</h6>
     </div>
     <div class="card-body">
         <div class="small">
-            <p><strong>Drag & Drop:</strong> Reorder components by dragging</p>
-            <p><strong>Remove:</strong> Drag component outside to remove</p>
-            <p><strong>Uniqueness:</strong> IDs are unique per inventory</p>
-            <p><strong>Editing:</strong> Custom IDs can be edited later</p>
+            <p><strong>@Localizer["Drag & Drop"]:</strong> @Localizer["Reorder components by dragging"]</p>
+            <p><strong>@Localizer["Remove"]:</strong> @Localizer["Drag component outside to remove"]</p>
+            <p><strong>@Localizer["Uniqueness"]:</strong> @Localizer["ID are unique per inventory"]</p>
+            <p><strong>@Localizer["Editing"]:</strong> @Localizer["Custom IDs can be edited later"]</p>
         </div>
     </div>
 </div>
