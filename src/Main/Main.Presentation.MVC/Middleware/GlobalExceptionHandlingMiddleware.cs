@@ -30,84 +30,73 @@ namespace Main.Presentation.MVC.Middleware
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             string message;
-            List<string?> errors = null;
+            string alertType = "danger";
 
             switch (exception)
             {
-                //case Product.Domain.Exceptions.ProductException validationException:
-
-                //    status = HttpStatusCode.BadRequest;
-                //    _response.DisplayMessage = "Ошибка валидации.";
-                //    _response.ErrorMessages = validationException.Errors;
-                //    _response.IsSuccess = false;
-
-                //    _logger.LogWarning(exception, "Product validation error: {Message}", _response.ErrorMessages);
-                //    break;
-
                 case FluentValidation.ValidationException fluentValidationException:
-                    message = "Ошибка валидации." + fluentValidationException.Message;
-                    errors = fluentValidationException.Errors.Select(e => e.ErrorMessage).ToList();
-
-                    _logger.LogWarning(exception, "FluentValidation error: {Message}", errors);
+                    message = "Ошибка валидации: " + fluentValidationException.Message;
+                    alertType = "warning";
+                    _logger.LogWarning(exception, "FluentValidation error: {Message}", message);
                     break;
 
                 case ArgumentException argumentException:
                     message = argumentException.Message;
-
+                    alertType = "warning";
                     _logger.LogWarning(exception, "ArgumentException: {Message}", message);
                     break;
 
                 case KeyNotFoundException keyNotFoundException:
-                    message = keyNotFoundException.Message;
-
+                    message = "Ресурс не найден: " + keyNotFoundException.Message;
+                    alertType = "warning";
                     _logger.LogWarning(exception, "KeyNotFoundException: {Message}", message);
                     break;
 
                 case UnauthorizedAccessException unauthorizedAccessException:
-                    message = exception.Message;
-
+                    message = "Доступ запрещен: " + exception.Message;
+                    alertType = "danger";
                     _logger.LogWarning(exception, "UnauthorizedAccessException: {Message}", message);
                     break;
 
                 case DbUpdateConcurrencyException dbUpdateConcurrencyException:
-                    message = dbUpdateConcurrencyException.Message;
-
-                    _logger.LogWarning(exception, "DbUpdateConcurrencyException, {Message}", message);
+                    message = "Конфликт данных: " + dbUpdateConcurrencyException.Message;
+                    alertType = "warning";
+                    _logger.LogWarning(exception, "DbUpdateConcurrencyException: {Message}", message);
                     break;
+
                 case InvalidOperationException invalidOperationException:
-                    message = invalidOperationException.Message;
-
-                    _logger.LogWarning(exception, "DbUpdateConcurrencyException, {Message}", message);
+                    message = "Ошибка операции: " + invalidOperationException.Message;
+                    alertType = "warning";
+                    _logger.LogWarning(exception, "InvalidOperationException: {Message}", message);
                     break;
-                default:
-                    message = "Произошла непредвиденная ошибка." + exception.Message;
 
+                default:
+                    message = "Произошла непредвиденная ошибка. Пожалуйста, попробуйте позже.";
+                    alertType = "danger";
                     _logger.LogCritical(exception, "Unhandled exception: {Message}", exception.Message);
                     break;
             }
 
+            await HandleException(context, message, alertType);
+        }
 
-            // Для AJAX запросов
-            if (context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-            {
-                context.Response.ContentType = "application/json";
-                context.Response.StatusCode = 500;
-                var result = JsonSerializer.Serialize(new { error = message });
-                await context.Response.WriteAsync(result);
-                return;
-            }
+        private async Task HandleException(HttpContext context, string message, string alertType)
+        {
+            // Получаем TempData
+            var tempDataFactory = context.RequestServices.GetRequiredService<ITempDataDictionaryFactory>();
+            var tempData = tempDataFactory.GetTempData(context);
 
-            // Для обычных запросов сохраняем ошибку в TempData и редиректим на страницу ошибки
-            var tempDataProvider = context.RequestServices.GetService<ITempDataProvider>();
-            if (tempDataProvider != null)
-            {
-                var tempData = tempDataProvider.LoadTempData(context);
-                tempData["Error"] = message;
-                tempDataProvider.SaveTempData(context, tempData);
-            }
+            // Сохраняем ошибку
+            tempData["ErrorAlertMessage"] = message;
+            tempData["ErrorAlertType"] = alertType;
+            tempData.Save();
 
-            // Редирект на красивую страницу ошибки
-            context.Response.Redirect("/Error");
+            // Редирект на предыдущую страницу
+            var referer = context.Request.Headers["Referer"].ToString();
+            var redirectUrl = !string.IsNullOrEmpty(referer) ? referer : "/";
+
+            context.Response.Redirect(redirectUrl);
+            await Task.CompletedTask;
         }
     }
 }

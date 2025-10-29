@@ -20,7 +20,7 @@ namespace Main.Application.Services
             try
             {
                 var inventory = await _inventoryRepository.GetFirstAsync(
-                    i => i.Id == inventoryId, null, cancellationToken);
+                    i => i.Id == inventoryId, cancellationToken);
 
                 if (inventory == null)
                     throw new ArgumentException("Inventory not found");
@@ -101,7 +101,7 @@ namespace Main.Application.Services
 
         private async Task<string> GenerateSequenceComponentAsync(int inventoryId, int digits, CancellationToken cancellationToken)
         {
-            var inventory = await _inventoryRepository.GetFirstAsync(i => i.Id == inventoryId, null, cancellationToken);
+            var inventory = await _inventoryRepository.GetFirstAsync(i => i.Id == inventoryId, cancellationToken);
 
             if (inventory == null) return "1".PadLeft(digits, '0');
 

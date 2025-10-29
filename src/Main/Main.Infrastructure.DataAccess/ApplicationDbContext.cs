@@ -18,6 +18,7 @@ namespace Main.Infrastructure.DataAccess
         public DbSet<Item> Items { get; set; }
         public DbSet<ItemFieldValue> ItemFieldValues { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<Like> ItemLikes { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<InventoryTag> InventoryTags { get; set; }
@@ -98,7 +99,6 @@ namespace Main.Infrastructure.DataAccess
                 .WithMany(u => u.Likes)
                 .HasForeignKey(l => l.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-
             // ===== СУЩЕСТВУЮЩАЯ КОНФИГУРАЦИЯ (с небольшими обновлениями) =====
 
             // ItemFieldValue конфигурация

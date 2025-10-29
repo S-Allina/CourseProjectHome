@@ -5,7 +5,7 @@
 
 function initializeDataTables() {
     // Инициализация для обеих таблиц
-    $('#myInventoriesTable, #sharedInventoriesTable, #inventories').DataTable({
+    $('#myInventoriesTable, #sharedInventoriesTable').DataTable({
         pageLength: 10,
         responsive: true,
         order: [[3, 'desc']], // Сортировка по дате создания

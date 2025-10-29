@@ -20,56 +20,123 @@
         </div>
     </div>
 
-    <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="my-inventories-tab" data-bs-toggle="tab"
-                    data-bs-target="#my-inventories" type="button" role="tab"
-                    aria-controls="my-inventories" aria-selected="true">
-                <i class="fas fa-user me-2"></i>@Localizer["My Inventories"]
-                <span class="badge bg-primary ms-2">@Model.UserInventories.Count</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="shared-inventories-tab" data-bs-toggle="tab"
-                    data-bs-target="#shared-inventories" type="button" role="tab"
-                    aria-controls="shared-inventories" aria-selected="false">
-                <i class="fas fa-users me-2"></i>@Localizer["Shared With Me"]
-                <span class="badge bg-success ms-2">@Model.SharedInventories.Count</span>
-            </button>
-        </li>
-    </ul>
-
-    <div class="tab-content" id="inventoryTabsContent">
-        <div class="tab-pane fade show active" id="my-inventories" role="tabpanel" aria-labelledby="my-inventories-tab">
-            <partial name="_InventoryTable" model="Model.UserInventories" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "myInventoriesTable" } })" />
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock me-2"></i>@Localizer["Recent Inventories"]
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentInventories.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>@Localizer["Name"]</th>
+                                        <th>@Localizer["Description"]</th>
+                                        <th>@Localizer["Author"]</th>
+                                        <th>@Localizer["Created"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var inventory in Model.RecentInventories)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(inventory.ImageUrl))
+                                                {
+                                                    <img src="@inventory.ImageUrl" alt="@inventory.Name"
+                                                         class="rounded me-2" style="width: auto; height: 30px; object-fit: cover;">
+                                                }
+                                                <a href="@Url.Action("Details", "Inventories", new { id = inventory.Id })">
+                                                    @inventory.Name
+                                                </a>
+                                            </td>
+                                            <td>
+                                                @if (string.IsNullOrEmpty(inventory.Description))
+                                                {
+                                                    <span class="text-muted">@Localizer["No description"]</span>
+                                                }
+                                                else
+                                                {
+                                                    <span title="@inventory.Description">@inventory.DescriptionPreview</span>
+                                                }
+                                            </td>
+                                            <td>@($"{inventory.Owner?.FirstName} {inventory.Owner?.LastName}")</td>
+                                            <td>@inventory.CreatedAt.ToString("dd.MM.yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>@Localizer["No recent inventories"]</p>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
 
-        <div class="tab-pane fade" id="shared-inventories" role="tabpanel" aria-labelledby="shared-inventories-tab">
-            <partial name="_InventoryTable" model="Model.SharedInventories" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "sharedInventoriesTable" } })" />
+        <!-- Таблица популярных инвентарей -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i>@Localizer["Popular Inventories"]
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.PopularInventories.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>@Localizer["Name"]</th>
+                                        <th>@Localizer["Items Count"]</th>
+                                        <th>@Localizer["Author"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var inventory in Model.PopularInventories)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(inventory.ImageUrl))
+                                                {
+                                                    <img src="@inventory.ImageUrl" alt="@inventory.Name"
+                                                         class="rounded me-2" style="width: auto; height: 30px; object-fit: cover;">
+                                                }
+                                                <a href="@Url.Action("Details", "Inventories", new { id = inventory.Id })">
+                                                    @inventory.Name
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">@inventory.ItemsCount</span>
+                                            </td>
+                                            <td>@($"{inventory.Owner?.FirstName} {inventory.Owner?.LastName}")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-chart-line fa-2x mb-2"></i>
+                            <p>@Localizer["No popular inventories"]</p>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const activeTab = localStorage.getItem('activeInventoryTab') || 'my-inventories-tab';
-            const tab = new bootstrap.Tab(document.getElementById(activeTab));
-            tab.show();
-
-            document.querySelectorAll('#inventoryTabs button').forEach(tabEl => {
-                tabEl.addEventListener('shown.bs.tab', function (event) {
-                    localStorage.setItem('activeInventoryTab', event.target.id);
-                });
-            });
-
-            initializeDataTables();
-        });
-
-                function confirmDelete(inventoryId, inventoryName) {
-            if (confirm(`Are you sure you want to delete inventory "${inventoryName}"? This action cannot be undone.`)) {
-                console.log('Deleting inventory:', inventoryId);
-            }
-        }
-    </script>
-}

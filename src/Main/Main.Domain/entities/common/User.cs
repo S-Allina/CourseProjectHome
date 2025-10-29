@@ -4,7 +4,7 @@ using Main.Domain.entities.item;
 
 namespace Main.Domain.entities.common
 {
-    public class User
+    public class User:BaseEntity
     {
         public string Id { get; set; }
         public string FirstName { get; set; }

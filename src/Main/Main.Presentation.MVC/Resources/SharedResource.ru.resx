@@ -435,4 +435,13 @@
   <data name="Custom ID Format" xml:space="preserve">
     <value>Пользовательский формат идентификатора</value>
   </data>
+  <data name="Basic Information" xml:space="preserve">
+    <value>Базовая информация</value>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>Вход</value>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>Выход</value>
+  </data>
 </root>

@@ -29,7 +29,9 @@ namespace Main.Application.Mapper
             // Inventory → InventoryDto
             CreateMap<Inventory, InventoryDto>()
                 .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags.Select(t => t.Tag.Name).ToList()))
-                .ForMember(dest => dest.Fields, opt => opt.MapFrom(src => src.Fields));
+                .ForMember(dest => dest.Fields, opt => opt.MapFrom(src => src.Fields))
+                            .ForMember(dest => dest.Owner, opt => opt.MapFrom(src => src.Owner));
+            ;
 
             CreateMap<InventoryDto, Inventory>()
                 .ForMember(dest => dest.Fields, opt => opt.MapFrom((src, dest, destMember, context) =>
@@ -44,10 +46,8 @@ namespace Main.Application.Mapper
                         return field;
                     }).ToList();
                 }))
-                .ForMember(dest => dest.Tags, opt => opt.Ignore()) // Tags обрабатываем отдельно
-                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Tags, opt => opt.Ignore()) 
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
-                .ForMember(dest => dest.OwnerId, opt => opt.Ignore())
                 .ForMember(dest => dest.Items, opt => opt.Ignore())
                 .ForMember(dest => dest.Comments, opt => opt.Ignore())
                 .ForMember(dest => dest.AccessList, opt => opt.Ignore());
@@ -91,8 +91,8 @@ namespace Main.Application.Mapper
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
                 .ForMember(dest => dest.GrantedById, opt => opt.MapFrom(src => src.GrantedById))
                 .ForMember(dest => dest.GrantedAt, opt => opt.MapFrom(src => src.GrantedAt))
-                .ForMember(dest => dest.AccessLevel, opt => opt.MapFrom(src => src.AccessLevel))
-                .ForMember(dest => dest.Inventory, opt => opt.MapFrom(src => src.Inventory));
+                .ForMember(dest => dest.AccessLevel, opt => opt.MapFrom(src => src.AccessLevel));
+                //.ForMember(dest => dest.Inventory, opt => opt.MapFrom(src => src.Inventory));
 
             // InventoryFormDto → Inventory (для обратного маппинга, если нужно)
             CreateMap<InventoryFormDto, Inventory>()
@@ -107,10 +107,8 @@ namespace Main.Application.Mapper
                     src.Version != null ? Convert.FromBase64String(src.Version) : new byte[8]))
                 .ForMember(dest => dest.Tags, opt => opt.Ignore()) // Обрабатывается отдельно
                 .ForMember(dest => dest.Fields, opt => opt.Ignore()) // Обрабатывается отдельно
-                .ForMember(dest => dest.AccessList, opt => opt.Ignore()) // Обрабатывается отдельно
-                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.AccessList, opt => opt.Ignore()) 
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
-                .ForMember(dest => dest.OwnerId, opt => opt.Ignore())
                 .ForMember(dest => dest.Items, opt => opt.Ignore())
                 .ForMember(dest => dest.Comments, opt => opt.Ignore());
 

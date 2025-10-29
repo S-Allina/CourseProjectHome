@@ -3,14 +3,14 @@ using System.Linq.Expressions;
 
 namespace Main.Domain.InterfacesRepository
 {
-    public interface IBaseRepository<T> where T : BaseEntity
+    public interface IBaseRepository<TEntity>
     {
-        Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> filter = null, string? includeProperties = null, CancellationToken cancellationToken = default);
-        Task<T> GetFirstAsync(Expression<Func<T, bool>> filter = null, string? includeProperties = null, CancellationToken cancellationToken = default);
-        Task<T> CreateAsync(T item, CancellationToken cancellationToken = default);
-        Task<T> UpdateAsync(T item, CancellationToken cancellationToken = default);
-        Task DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
-        Task<bool> IsExistsAsync(Expression<Func<T, bool>> filter = null, CancellationToken cancellationToken = default);
+        Task<IEnumerable<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> filter = null, CancellationToken cancellationToken = default, params string[] includeProperties);
+        Task<TEntity> GetFirstAsync(Expression<Func<TEntity, bool>> filter = null, CancellationToken cancellationToken = default, params string[] includeProperties);
+        Task<TEntity> CreateAsync(TEntity item, CancellationToken cancellationToken = default);
+        Task<TEntity> UpdateAsync(TEntity item, CancellationToken cancellationToken = default);
+        Task DeleteAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default);
+        Task<bool> IsExistsAsync(Expression<Func<TEntity, bool>> filter = null, CancellationToken cancellationToken = default);
         //Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(
         //   int pageNumber,
         //   int pageSize,

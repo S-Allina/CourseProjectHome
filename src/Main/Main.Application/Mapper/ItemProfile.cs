@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Main.Application.Dtos.Items.Index;
+using Main.Domain.entities.common;
 using Main.Domain.entities.item;
 
 namespace Main.Application.Mapper
@@ -15,6 +16,7 @@ namespace Main.Application.Mapper
                 .ForMember(dest => dest.FieldValues, opt => opt.MapFrom(src => src.FieldValues))
                                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
 
+            CreateMap<User, UserDto>().ReverseMap();
 
             CreateMap<ItemFieldValue, ItemFieldValueDto>()
                 .ForMember(dest => dest.FieldName, opt => opt.MapFrom(src => src.InventoryField.Name))

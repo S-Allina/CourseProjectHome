@@ -2,6 +2,7 @@
 using Main.Application.Dtos.Items.Create;
 using Main.Application.Dtos.Items.Index;
 using Main.Application.Interfaces;
+using Main.Domain.entities.inventory;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Main.Presentation.MVC.Controllers
@@ -30,7 +31,7 @@ namespace Main.Presentation.MVC.Controllers
                 var inventory = await _inventoryService.GetById(inventoryId.Value, cancellationToken);
 
                 ViewBag.SelectedInventory = inventory;
-                return View(items);
+                return View(items.ToList());
             }
 
             // Иначе показываем список инвентарей
@@ -49,22 +50,16 @@ namespace Main.Presentation.MVC.Controllers
         }
 
         // GET: Items/Details/5
-        public async Task<IActionResult> Details(int? id)
+        [HttpGet]
+        public async Task<IActionResult> Details([FromQuery] int id)
         {
-            //if (id == null)
-            //{
-            //    return NotFound();
-            //}
+            var item = await _itemService.GetByIdAsync(id);
+            if (item == null)
+            {
+                return NotFound();
+            }
 
-            ////var item = await _context.Items
-            ////    .Include(i => i.Inventory)
-            ////    .FirstOrDefaultAsync(m => m.Id == id);
-            //if (item == null)
-            //{
-            //    return NotFound();
-            //}
-
-            return View();
+            return View(item);
         }
         public async Task<IActionResult> Create(int inventoryId, CancellationToken cancellationToken)
         {
@@ -114,37 +109,46 @@ namespace Main.Presentation.MVC.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(int itemId, CancellationToken cancellationToken)
         {
-            var item = await _itemService.GetByIdAsync(id, cancellationToken);
-            try
+            var item = await _itemService.GetByIdAsync(itemId, cancellationToken);
+            var inventory = await _inventoryService.GetById(item.InventoryId, cancellationToken);
+            if (inventory == null)
             {
+                return NotFound();
+            }
 
-                if (item == null)
+            var createDto = new CreateItemDto
+            {
+                Id= item.Id,
+                InventoryId = item.InventoryId,
+                CustomId = item.CustomId,
+                CreatedById = item.CreatedById,
+                CreatedAt = item.CreatedAt,
+                FieldValues = inventory.Fields.Select(f => new CreateItemFieldValueDto
                 {
-                    return NotFound();
-                }
+                    InventoryFieldId = f.Id,
+                    FieldName = f.Name,
+                    FieldType = f.FieldType,
+                    TextValue = item.FieldValues.First(i=>i.InventoryFieldId==f.Id).TextValue,
+                    MultilineTextValue = item.FieldValues.First(i => i.InventoryFieldId == f.Id).MultilineTextValue,
+                    BooleanValue = item.FieldValues.First(i => i.InventoryFieldId == f.Id).BooleanValue,
+                    FileUrl=item.FieldValues.First(i => i.InventoryFieldId == f.Id).FileUrl,
+                    NumberValue=item.FieldValues.First(i => i.InventoryFieldId == f.Id).NumberValue,
+                    IsRequired = f.IsRequired
+                }).ToList()
+            };
 
-                var inventory = await _inventoryService.GetById(item.InventoryId, cancellationToken);
-
-                ViewBag.Inventory = inventory;
-                return View(item);
-            }
-            catch (Exception)
-            {
-                return RedirectToAction("Index", new { inventoryId = item?.InventoryId });
-            }
+            ViewBag.Inventory = inventory;
+            ViewData["CustomId"] = await _customIdService.GenerateCustomIdAsync(item.InventoryId, cancellationToken);
+            return View(createDto);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, ItemDto dto, CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(ItemDto dto, CancellationToken cancellationToken)
         {
-            dto = dto with { CreatedById = "dfhbmcnv" };
-
             var inventory = await _inventoryService.GetById(dto.InventoryId, cancellationToken);
-
-
 
             await _itemService.UpdateItemAsync(dto, cancellationToken);
 
@@ -168,32 +172,19 @@ namespace Main.Presentation.MVC.Controllers
         //}
 
 
-        [HttpGet("{inventoryId}/stats")]
-        public async Task<ActionResult<InventoryStatsDto>> GetInventoryStats(int inventoryId)
-        {
-            try
-            {
-                var stats = await _itemService.GetInventoryStatsAsync(inventoryId);
-                return Ok(stats);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = "Error calculating statistics" });
-            }
-        }
+        //[HttpGet("{inventoryId}/stats")]
+        //public async Task<ActionResult<InventoryStatsDto>> GetInventoryStats(int inventoryId)
+        //{
+        //    try
+        //    {
+        //        var stats = await _itemService.GetInventoryStatsAsync(inventoryId);
+        //        return Ok(stats);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { error = "Error calculating statistics" });
+        //    }
+        //}
 
-        [HttpGet("inventory/{inventoryId}/numeric")]
-        public async Task<ActionResult<List<NumericFieldStats>>> GetNumericStats(int inventoryId)
-        {
-            try
-            {
-                var stats = await _itemService.GetNumericFieldStatsAsync(inventoryId);
-                return Ok(stats);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = "Error calculating numeric statistics" });
-            }
-        }
     }
 }

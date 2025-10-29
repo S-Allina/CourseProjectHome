@@ -3,125 +3,147 @@
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<SharedResource> Localizer
+
 <div class="tab-pane fade" id="access" role="tabpanel" aria-labelledby="access-tab">
     <div class="card">
         <div class="card-header">
             <h5 class="card-title mb-0">@Localizer["Manage Access"]</h5>
         </div>
         <div class="card-body">
-            <div class="row mb-4">
-                <div class="col-md-8">
-                    <label class="form-label">@Localizer["Add"] @Localizer["User by Email or Username"]</label>
-                    <div class="input-group">
-                        <input type="text"
-                               class="form-control"
-                               id="userSearchInput"
-                               placeholder="@Localizer["Enter your search term"]..."
-                               autocomplete="off">
-                        <button class="btn btn-outline-secondary" type="button" id="searchUserBtn">
-                            <i class="fas fa-search"></i>
-                        </button>
+            <!-- Checkbox для управления доступностью -->
+            <div class="form-group form-check mb-4">
+                <input class="form-check-input" type="checkbox" id="accessControlToggle" checked />
+                <label class="form-check-label" for="accessControlToggle">
+                    @Localizer["Public"]
+                </label>
+            </div>
+
+            <div class="access-management-section">
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <label class="form-label">@Localizer["Add"] @Localizer["User by Email or Username"]</label>
+                        <div class="input-group">
+                            <input type="text"
+                                   class="form-control access-control"
+                                   id="userSearchInput"
+                                   placeholder="@Localizer["Enter your search term"]..."
+                                   autocomplete="off">
+                            <button class="btn btn-outline-secondary access-control" type="button" id="searchUserBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div id="userSearchResults" class="dropdown-menu w-100" style="display: none;"></div>
                     </div>
-                    <div id="userSearchResults" class="dropdown-menu w-100" style="display: none;"></div>
+                    <div class="col-md-4">
+                        <label class="form-label">@Localizer["Access Level"]</label>
+                        <select class="form-select access-control" id="accessLevelSelect">
+                            <option value="1">@Localizer["Read Only"]</option>
+                            <option value="2" selected>@Localizer["Read & Write"]</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">@Localizer["Access Level"]</label>
-                    <select class="form-select" id="accessLevelSelect">
-                        <option value="1">@Localizer["Read Only"]</option>
-                        <option value="2" selected>@Localizer["Read & Write"]</option>
-                    </select>
-                </div>
-            </div>
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">@Localizer["Sort By"]</label>
-                    <select class="form-select" id="sortAccessList">
-                        <option value="name">@Localizer["Name"]</option>
-                        <option value="email">@Localizer["Email"]</option>
-                        <option value="accessLevel">@Localizer["Access Level"]</option>
-                    </select>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">@Localizer["Sort By"]</label>
+                        <select class="form-select access-control" id="sortAccessList">
+                            <option value="name">@Localizer["Name"]</option>
+                            <option value="email">@Localizer["Email"]</option>
+                            <option value="accessLevel">@Localizer["Access Level"]</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">@Localizer["Sort Order"]</label>
+                        <select class="form-select access-control" id="sortAccessOrder">
+                            <option value="asc">@Localizer["Ascending"]</option>
+                            <option value="desc">@Localizer["Descending"]</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">@Localizer["Sort Order"]</label>
-                    <select class="form-select" id="sortAccessOrder">
-                        <option value="asc">@Localizer["Ascending"]</option>
-                        <option value="desc">@Localizer["Descending"]</option>
-                    </select>
-                </div>
-            </div>
 
-            <div class="table-responsive">
-                <table class="table table-striped" id="accessListTable">
-                    <thead>
-                        <tr>
-                            <th>@Localizer["User"]</th>
-                            <th>@Localizer["Access Level"]</th>
-                            <th>@Localizer["Created"]</th>
-                        </tr>
-                    </thead>
-                    <tbody id="accessListBody">
-                        @if (Model.AccessList != null && Model.AccessList.Any())
-                        {
-                            foreach (var access in Model.AccessList.OrderBy(a => a.UserId))
+                <div class="form-group form-check mb-3">
+                    <input class="form-check-input access-control" asp-for="IsPublic" />
+                    <label class="form-check-label" asp-for="IsPublic">
+                        @Localizer["Make inventory public"]
+                    </label>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped access-control" id="accessListTable">
+                        <thead>
+                            <tr>
+                                <th>@Localizer["User"]</th>
+                                <th>@Localizer["Access Level"]</th>
+                                <th>@Localizer["Created"]</th>
+                                <th>@Localizer["Actions"]</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accessListBody">
+                            @if (Model.AccessList != null && Model.AccessList.Any())
                             {
-                                <tr data-user-id="@access.UserId">
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                <span class="text-white">@(access.UserId?.Substring(0, 1).ToUpper() ?? "U")</span>
+                                foreach (var access in Model.AccessList.OrderBy(a => a.UserId))
+                                {
+                                    <tr data-user-id="@access.UserId">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                    <span class="text-white">@(access.UserId?.Substring(0, 1).ToUpper() ?? "U")</span>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-semibold user-name">@Localizer["Loading"]...</div>
+                                                    <small class="text-muted user-email">@Localizer["Loading"]...</small>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <div class="fw-semibold user-name">@Localizer["Loading"]...</div>
-                                                <small class="text-muted user-email">@Localizer["Loading"]...</small>
-                                            </div>
-                                        </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge @GetAccessLevelBadgeClass(access.AccessLevel)">
+                                                @GetAccessLevelText(access.AccessLevel)
+                                            </span>
+                                        </td>
+                                        <td class="granted-date">@access.GrantedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger remove-access access-control"
+                                                    data-user-id="@access.UserId"
+                                                    title="Remove Access">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr id="noAccessMessage">
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        @Localizer["No users have access to this inventory yet"]
                                     </td>
-                                    <td>
-                                        <span class="badge @GetAccessLevelBadgeClass(access.AccessLevel)">
-                                            @GetAccessLevelText(access.AccessLevel)
-                                        </span>
-                                    </td>
-                                    <td class="granted-date">@access.GrantedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                                    @* <td>
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-danger remove-access"
-                                                data-user-id="@access.UserId"
-                                                title="Remove Access">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </td> *@
                                 </tr>
                             }
-                        }
-                        else
-                        {
-                            <tr id="noAccessMessage">
-                                <td colspan="4" class="text-center text-muted py-4">
-                                    @Localizer["No users have access to this inventory yet"]
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                        </tbody>
+                    </table>
+                </div>
 
-            <div id="accessListData">
-                @if (Model.AccessList != null && Model.AccessList.Any())
-                {
-                    foreach (var access in Model.AccessList)
+                <div id="accessListData">
+                    @if (Model.AccessList != null && Model.AccessList.Any())
                     {
-                        <input type="hidden"
-                               name="AccessList[@(access.UserId)].UserId"
-                               value="@access.UserId" />
-                        <input type="hidden"
-                               name="AccessList[@(access.UserId)].AccessLevel"
-                               value="@access.AccessLevel" />
-                        <input type="hidden"
-                               name="AccessList[@(access.UserId)].GrantedAt"
-                               value="@access.GrantedAt.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                        foreach (var access in Model.AccessList)
+                        {
+                            <input type="hidden"
+                                   class="access-control"
+                                   name="AccessList[@(access.UserId)].UserId"
+                                   value="@access.UserId" />
+                            <input type="hidden"
+                                   class="access-control"
+                                   name="AccessList[@(access.UserId)].AccessLevel"
+                                   value="@access.AccessLevel" />
+                            <input type="hidden"
+                                   class="access-control"
+                                   name="AccessList[@(access.UserId)].GrantedAt"
+                                   value="@access.GrantedAt.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                        }
                     }
-                }
+                </div>
             </div>
         </div>
     </div>
@@ -149,3 +171,110 @@
         };
     }
 }
+
+<style>
+    .access-management-section.disabled {
+        opacity: 0.6;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    .access-control:disabled {
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+
+    .access-control.disabled-table {
+        background-color: #f8f9fa;
+    }
+
+        .access-control.disabled-table thead th {
+            background-color: #e9ecef;
+            color: #6c757d;
+        }
+
+        .access-control.disabled-table tbody td {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+
+    .form-check-input:checked ~ .access-management-section .access-control {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .form-check-input:not(:checked) ~ .access-management-section .access-control {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const accessControlToggle = document.getElementById('accessControlToggle');
+        const accessControls = document.querySelectorAll('.access-control');
+        const accessManagementSection = document.querySelector('.access-management-section');
+        const accessListTable = document.getElementById('accessListTable');
+
+        function toggleAccessControls() {
+            if (!accessControlToggle.checked) {
+                // Включить все элементы
+                accessControls.forEach(control => {
+                    control.disabled = false;
+                    control.classList.remove('disabled');
+                });
+                accessManagementSection.classList.remove('disabled');
+                if (accessListTable) {
+                    accessListTable.classList.remove('disabled-table');
+                }
+            } else {
+                // Отключить все элементы
+                accessControls.forEach(control => {
+                    control.disabled = true;
+                    control.classList.add('disabled');
+                });
+                accessManagementSection.classList.add('disabled');
+                if (accessListTable) {
+                    accessListTable.classList.add('disabled-table');
+                }
+            }
+        }
+
+        // Инициализация при загрузке
+        toggleAccessControls();
+
+        // Обработчик изменения чекбокса
+        accessControlToggle.addEventListener('change', toggleAccessControls);
+
+        // Дополнительная логика для кнопок удаления
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-access')) {
+                const removeButton = e.target.closest('.remove-access');
+                if (removeButton.disabled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            }
+        });
+
+        // Предотвращение событий на отключенных элементах
+        accessControls.forEach(control => {
+            control.addEventListener('click', function(e) {
+                if (this.disabled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            });
+
+            control.addEventListener('keydown', function(e) {
+                if (this.disabled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            });
+        });
+    });
+</script>

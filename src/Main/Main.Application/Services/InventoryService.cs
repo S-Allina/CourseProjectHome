@@ -4,7 +4,10 @@ using Main.Application.Dtos;
 using Main.Application.Dtos.Inventories.Create;
 using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Interfaces;
+using Main.Application.Interfaces.ImgBBStorage;
+using Main.Domain.entities.common;
 using Main.Domain.entities.inventory;
+using Main.Domain.enums.Users;
 using Main.Domain.InterfacesRepository;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
@@ -16,61 +19,60 @@ namespace Main.Application.Services
         private readonly IInventoryRepository _inventoryRepository;
         private readonly IInventoryFieldRepository _inventoryFieldRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IUsersService _usersService;
         private readonly IValidator<CreateInventoryDto> _fluentValidator;
         private readonly IMapper _mapper;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IImgBBStorageService _imgBBStorageService;
 
         public InventoryService(
             IInventoryRepository inventoryRepository,
             ICategoryRepository categoryRepository,
             IInventoryFieldRepository inventoryFieldRepository,
             IValidator<CreateInventoryDto> fluentValidator,
-        IMapper mapper, IHttpContextAccessor httpContextAccessor)
+            IUsersService usersService,
+            IImgBBStorageService imgBBStorageService,
+        IMapper mapper)
         {
             _inventoryRepository = inventoryRepository;
             _inventoryFieldRepository = inventoryFieldRepository;
             _categoryRepository = categoryRepository;
             _fluentValidator = fluentValidator;
             _mapper = mapper;
-            _httpContextAccessor = httpContextAccessor;
+            _imgBBStorageService = imgBBStorageService;
+            _usersService = usersService;
         }
 
         public async Task<IEnumerable<InventoryDto>> GetAll(CancellationToken cancellationToken = default)
         {
-            var inventories = await _inventoryRepository.GetAllAsync(null, "Fields", cancellationToken);
+            var inventories = await _inventoryRepository.GetAllAsync(null, cancellationToken, "Fields");
             return _mapper.Map<IEnumerable<InventoryDto>>(inventories);
         }
 
-        public async Task<IEnumerable<InventoryDto>> GetUserInventoriesAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<InventoryDto>> GetUserInventoriesAsync(CancellationToken cancellationToken = default)
         {
-            var inventories = await _inventoryRepository.GetAllAsync(
-                filter: i => i.OwnerId == userId,
-                includeProperties: "Fields",
-                cancellationToken: cancellationToken
-            );
+            var userId = _usersService.GetCurrentUserId();
+            var inventories = await _inventoryRepository.GetAllAsync(i => i.OwnerId == userId, cancellationToken, "Fields", "Owner", "Category");
             return _mapper.Map<IEnumerable<InventoryDto>>(inventories);
         }
 
-        public async Task<IEnumerable<InventoryDto>> GetSharedInventoriesAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<InventoryDto>> GetSharedInventoriesAsync(CancellationToken cancellationToken = default)
         {
-            var inventories = await _inventoryRepository.GetAllAsync(
-                filter: i => i.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= 2),
-                includeProperties: "Fields",
-                cancellationToken: cancellationToken
-            );
+            var userId = _usersService.GetCurrentUserId();
+
+            var inventories = await _inventoryRepository.GetAllAsync(i => i.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= 2), cancellationToken, "Fields", "Owner");
             return _mapper.Map<IEnumerable<InventoryDto>>(inventories);
         }
 
         public async Task<InventoryDto> GetById(int id, CancellationToken cancellationToken = default)
         {
-            var inventories = await _inventoryRepository.GetFirstAsync(i => i.Id == id, "Fields", cancellationToken);
+            var inventories = await _inventoryRepository.GetFirstAsync(i => i.Id == id, cancellationToken, "Fields","AccessList");
 
             return _mapper.Map<InventoryDto>(inventories);
         }
 
         public async Task<IEnumerable<InventoryFieldDto>> GetInventoryFields(int id, CancellationToken cancellationToken = default)
         {
-            var fields = await _inventoryFieldRepository.GetAllAsync(f => f.InventoryId == id, null, cancellationToken);
+            var fields = await _inventoryFieldRepository.GetAllAsync(f => f.InventoryId == id, cancellationToken);
 
             return _mapper.Map<IEnumerable<InventoryFieldDto>>(fields);
         }
@@ -79,12 +81,14 @@ namespace Main.Application.Services
         {
             var fluentValidationResult = await _fluentValidator.ValidateAsync(createDto, cancellationToken);
             if (!fluentValidationResult.IsValid)
-            {
                 throw new ValidationException(fluentValidationResult.Errors);
-            }
+
+            if (createDto.Image != null)
+                createDto.ImageUrl = await _imgBBStorageService.UploadFileAsync(createDto.Image);
+
             var inventory = _mapper.Map<Inventory>(createDto);
 
-            inventory.OwnerId = GetCurrentUserId();
+            inventory.OwnerId = _usersService.GetCurrentUserId();
             await AddFieldsToInventory(inventory, createDto.Fields);
             await AddInventoryAccessToInventory(inventory, createDto.AccessList);
             var createdInventory = await _inventoryRepository.CreateAsync(inventory, cancellationToken);
@@ -94,7 +98,7 @@ namespace Main.Application.Services
 
         public async Task<IEnumerable<Category>> GetCategories(CancellationToken cancellationToken)
         {
-            return await _categoryRepository.GetAllAsync(null, null, cancellationToken);
+            return await _categoryRepository.GetAllAsync(null, cancellationToken);
         }
 
         public async Task<bool> DeleteInventoryAsync(int[] ids, CancellationToken cancellationToken = default)
@@ -106,8 +110,9 @@ namespace Main.Application.Services
 
         public async Task<InventoryDto> UpdateInventoryAsync(InventoryDto inventoryDto, CancellationToken cancellationToken = default)
         {
-            try
-            {
+                if (inventoryDto.Image != null)
+                    inventoryDto.ImageUrl = await _imgBBStorageService.UploadFileAsync(inventoryDto.Image);
+
                 var inventory = _mapper.Map<Inventory>(inventoryDto);
 
                 var result = await _inventoryRepository.UpdateInventoryAsync(inventory, cancellationToken);
@@ -115,32 +120,67 @@ namespace Main.Application.Services
                 var resultDto = _mapper.Map<InventoryDto>(result);
 
                 return resultDto;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
         }
 
-        public async Task<bool> HasWriteAccessAsync(int inventoryId, CancellationToken cancellationToken = default)
+        public async Task<bool> HasWriteAccessAsync(int inventoryId, AccessLevel accessLevel, CancellationToken cancellationToken = default)
         {
-            var inventory = await _inventoryRepository.GetFirstAsync(i => i.Id == inventoryId, "AccessList", cancellationToken);
+            var inventory = await _inventoryRepository.GetFirstAsync(i => i.Id == inventoryId, cancellationToken, "AccessList");
 
             if (inventory == null)
                 throw new ArgumentException("Инвентарь не найден");
 
-            var userId = GetCurrentUserId();
+            var userId = _usersService.GetCurrentUserId();
 
             return inventory.OwnerId == userId ||
                    inventory.IsPublic ||
-                   inventory.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= 2);
+                   inventory.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= (int)accessLevel);
         }
 
         public async Task<List<InventorySearchResult>> GetInventoriesByTagAsync(string tagName)
         {
             return null;
         }
+        public async Task<IEnumerable<InventoryDto>> GetRecentInventoriesAsync(int count, CancellationToken cancellationToken = default)
+        {
+            var inventories = await _inventoryRepository.GetAllAsync(
+                i => i.IsPublic || i.AccessList.Any(a => a.UserId == _usersService.GetCurrentUserId()),
+                cancellationToken, "Fields", "Owner"
+            );
 
+            // Берем только указанное количество самых свежих
+            var recentInventories = inventories.OrderByDescending(i => i.CreatedAt).Take(count).ToList();
+
+            return _mapper.Map<IEnumerable<InventoryDto>>(recentInventories);
+        }
+
+        public async Task<IEnumerable<InventoryDto>> GetPopularInventoriesAsync(int count, CancellationToken cancellationToken = default)
+        {
+            // Получаем все инвентари с количеством товаров
+            var inventoriesWithItemCount = await _inventoryRepository.GetAllAsync(null,  cancellationToken, "Items", "Owner");
+            var inventoriesWithItemCountDto = inventoriesWithItemCount.Select(i => new InventoryDto
+            {
+                Id = i.Id,
+                Name = i.Name,
+                Description = i.Description,
+                OwnerId = i.OwnerId,
+                Owner = _mapper.Map<UserDto>(i.Owner),
+                ImageUrl = i.ImageUrl,
+                IsPublic = i.IsPublic,
+                CreatedAt = i.CreatedAt,
+                UpdatedAt = i.UpdatedAt,
+                ItemsCount = i.Items.Count 
+            });
+            // Фильтруем по доступности (публичные или доступные пользователю)
+            var userId = _usersService.GetCurrentUserId();
+            
+            // Сортируем по количеству товаров (по убыванию) и берем топ-N
+            var popularInventories = inventoriesWithItemCountDto
+                .OrderByDescending(i => i.ItemsCount)
+                .Take(count)
+                .ToList();
+
+            return (popularInventories);
+        }
         private async Task AddFieldsToInventory(Inventory inventory, List<CreateInventoryFieldDto> fieldDtos)
         {
             if (!fieldDtos.Any()) return;
@@ -164,7 +204,7 @@ namespace Main.Application.Services
         {
             if (!accessDtos.Any()) return;
 
-            var userId = GetCurrentUserId();
+            var userId = _usersService.GetCurrentUserId();
             foreach (var dto in accessDtos)
             {
                 inventory.AccessList.Add(new InventoryAccess
@@ -176,11 +216,6 @@ namespace Main.Application.Services
                     GrantedAt = DateTime.UtcNow
                 });
             }
-        }
-
-        private string GetCurrentUserId()
-        {
-            return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
         }
     }
 }

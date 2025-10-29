@@ -17,13 +17,22 @@ namespace Main.Infrastructure.DataAccess.Repositories
             this.dbSet = _db.Set<T>();
         }
 
-        public async Task<T> GetFirstAsync(Expression<Func<T, bool>> filter = null, string? includeProperties = null, CancellationToken cancellationToken = default)
+        public async Task<T> GetFirstAsync(
+     Expression<Func<T, bool>> filter = null,
+     CancellationToken cancellationToken = default,
+     params string[] includeProperties) 
         {
             IQueryable<T> query = dbSet;
 
-            if (includeProperties != null)
+            if (includeProperties != null && includeProperties.Length > 0)
             {
-                query = query.Include(includeProperties);
+                foreach (var includeProperty in includeProperties)
+                {
+                    if (!string.IsNullOrWhiteSpace(includeProperty))
+                    {
+                        query = query.Include(includeProperty.Trim());
+                    }
+                }
             }
 
             if (filter != null)
@@ -36,13 +45,20 @@ namespace Main.Infrastructure.DataAccess.Repositories
             }
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> filter = null, string? includeProperties = null, CancellationToken cancellationToken = default)
+
+        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> filter = null, CancellationToken cancellationToken = default, params string[] includeProperties)
         {
             IQueryable<T> query = dbSet;
 
-            if (includeProperties != null)
+            if (includeProperties != null && includeProperties.Length > 0)
             {
-                query = query.Include(includeProperties);
+                foreach (var includeProperty in includeProperties)
+                {
+                    if (!string.IsNullOrWhiteSpace(includeProperty))
+                    {
+                        query = query.Include(includeProperty.Trim());
+                    }
+                }
             }
 
             if (filter != null)
@@ -50,7 +66,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 query = query.Where(filter);
             }
 
-            return await query.ToListAsync(cancellationToken);
+            return await query.AsNoTracking().ToListAsync(cancellationToken);
         }
 
         public async Task<T> CreateAsync(T entity, CancellationToken cancellationToken)

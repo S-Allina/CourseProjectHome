@@ -1,13 +1,17 @@
 ﻿using FluentValidation;
 using Main.Application.Dtos.Inventories.Create;
+using Main.Application.Hubs;
 using Main.Application.Interfaces;
+using Main.Application.Interfaces.ImgBBStorage;
 using Main.Application.Mapper;
 using Main.Application.Services;
 using Main.Application.Validators;
 using Main.Domain.InterfacesRepository;
 using Main.Infrastructure.DataAccess;
 using Main.Infrastructure.DataAccess.Repositories;
+using Main.Infrastructure.ImgBBStorage;
 using Main.Presentation.MVC.Constans;
+using Main.Presentation.MVC.Middleware;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Localization;
@@ -64,7 +68,8 @@ namespace Main.Presentation.MVC
                 options.ResponseType = "code";
                 options.SaveTokens = true;
                 options.GetClaimsFromUserInfoEndpoint = true;
-
+                options.SignedOutCallbackPath = "/signout-callback-oidc";
+                options.RemoteSignOutPath = "/signout-oidc";
                 // Настройка scope - ДОБАВЬТЕ "api1"
                 options.Scope.Clear(); 
                 options.Scope.Add("openid");
@@ -134,7 +139,7 @@ namespace Main.Presentation.MVC
 
             builder.Services.AddHttpClient("AuthService", client =>
             {
-                client.BaseAddress = new Uri("https://localhost:7052"); // ❌ ЗАМЕНИТЕ на адрес IdentityServer API
+                client.BaseAddress = new Uri("https://localhost:7052");
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             });
             builder.Services.AddHttpContextAccessor();
@@ -146,6 +151,12 @@ namespace Main.Presentation.MVC
             builder.Services.AddScoped<ITagRepository, TagRepository>();
             builder.Services.AddScoped<IInventoryService, InventoryService>();
             builder.Services.AddScoped<ITagService, TagService>();
+            builder.Services.AddScoped<IUserRepository,  UserRepository>();
+            builder.Services.AddScoped<IUsersService, UsersService>();
+            builder.Services.AddScoped<IInventoryStatsService, InventoryStatsService>();
+            builder.Services.AddScoped<IImgBBStorageService, ImgBBStorageService>();
+            builder.Services.AddScoped<IChatRepository, ChatRepository>();
+            builder.Services.AddScoped<IChatService, ChatService>();
             builder.Services.AddScoped<ICustomIdService, CustomIdService>();
             builder.Services.AddScoped<IItemRepository, ItemRepository>();
             builder.Services.AddScoped<ISearchRepository, SearchRepository>();
@@ -153,6 +164,7 @@ namespace Main.Presentation.MVC
             builder.Services.AddScoped<IValidator<CreateInventoryDto>, CreateInventoryDtoValidator>();
             builder.Services.AddScoped<IValidator<CreateInventoryFieldDto>, CreateInventoryFieldDtoValidator>();
             builder.Services.AddAutoMapper(typeof(InventoryProfile));
+            builder.Services.AddSignalR();
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
@@ -180,17 +192,12 @@ namespace Main.Presentation.MVC
                 .AddSupportedUICultures(supportedCultures);
 
             app.UseRequestLocalization(localizationOptions);
-            Console.WriteLine("=== Localization Settings ===");
-            Console.WriteLine($"Default Culture: {localizationOptions.DefaultRequestCulture.Culture.Name}");
-            Console.WriteLine($"Supported Cultures: {string.Join(", ", localizationOptions.SupportedCultures.Select(c => c.Name))}");
-            Console.WriteLine($"Supported UI Cultures: {string.Join(", ", localizationOptions.SupportedUICultures.Select(c => c.Name))}");
-            Console.WriteLine("=============================");
             app.UseStaticFiles(); // ✅ ДОБАВЬТЕ для обслуживания статических файлов
             app.UseRouting();
 
             app.UseCors("CorsPolicy");
 
-            //app.UseMiddleware<AuthRedirectMiddleware>();
+            app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
             // ✅ ПРАВИЛЬНЫЙ порядок middleware
             app.UseAuthentication(); // ДОЛЖЕН быть перед UseAuthorization
             app.UseAuthorization();
@@ -207,6 +214,7 @@ namespace Main.Presentation.MVC
             });
 
             app.MapStaticAssets();
+            app.MapHub<ChatHub>("/chatHub");
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")

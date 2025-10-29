@@ -8,18 +8,12 @@
 
 @if (inventory != null)
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <a href="@Url.Action("Index", "Inventories")" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i>Back to Inventories
-            </a>
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-1">
+            
             <a href="@Url.Action("Create", new { inventoryId = inventory.Id })" class="btn btn-success">
                 <i class="fas fa-plus me-1"></i>Add New Item
             </a>
-            <p>
-                <button type="button" id="deleteSelected" class="btn btn-danger">Delete Selected</button>
-            </p>
-        </div>
+        <button type="button" id="deleteSelected" class="btn btn-danger "> <i class=" fas fa-trash me-1"></i>Delete Selected</button>
     </div>
 
     <!-- Таблица товаров -->
@@ -31,6 +25,8 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
+                    <link href="d:\itandition\courseproject\src\main\main.presentation.mvc\views\items\_itemstab.cshtml.css" rel="stylesheet" />
+                    <a href="d:\itandition\courseproject\src\main\main.presentation.mvc\views\items\_itemstab.cshtml">d:\itandition\courseproject\src\main\main.presentation.mvc\views\items\_itemstab.cshtml</a>
                     <table class="table mb-0" id="itemsTable">
                         <thead>
                             <tr>

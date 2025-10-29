@@ -70,3 +70,122 @@ body {
     padding: 0.1em 0.2em;
     border-radius: 0.2em;
 }
+
+/* chat.css */
+.chat-messages {
+    background: #f8f9fa;
+    border-radius: 0.375rem;
+}
+
+.chat-message {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+    .chat-message.current-user {
+        background: #e3f2fd;
+        margin-left: 2rem;
+    }
+
+    .chat-message .message-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+
+    .chat-message .user-name {
+        color: #495057;
+        font-size: 0.875rem;
+    }
+
+    .chat-message .message-time {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+
+    .chat-message .message-text {
+        word-wrap: break-word;
+        line-height: 1.4;
+    }
+
+    .chat-message .message-actions {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .chat-message:hover .message-actions {
+        opacity: 1;
+    }
+
+    .chat-message .message-actions .btn {
+        padding: 0.125rem 0.375rem;
+        margin-left: 0.25rem;
+    }
+
+.system-message {
+    font-style: italic;
+}
+
+.edited-badge {
+    font-size: 0.7rem;
+    color: #6c757d;
+    margin-left: 0.5rem;
+}
+
+.file-attachment {
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 0.375rem;
+    border: 1px solid #dee2e6;
+}
+
+.file-link {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+    .file-link:hover {
+        text-decoration: underline;
+    }
+
+#filePreview {
+    transition: all 0.3s ease;
+}
+
+/* Анимации */
+.chat-message {
+    animation: messageAppear 0.3s ease-out;
+}
+
+@keyframes messageAppear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .chat-message .message-actions {
+        position: static;
+        opacity: 1;
+        margin-top: 0.5rem;
+    }
+
+    .chat-message.current-user {
+        margin-left: 0;
+    }
+}

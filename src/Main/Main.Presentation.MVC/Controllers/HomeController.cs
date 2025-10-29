@@ -1,4 +1,5 @@
 using Main.Application.Dtos.Inventories.Index;
+using Main.Application.Helpers;
 using Main.Application.Interfaces;
 using Main.Presentation.MVC.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -22,20 +23,21 @@ namespace Main.Presentation.MVC.Controllers
         }
 
         [HttpGet]
-        [Authorize]
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                // Новые задачи для требуемых таблиц
+                var recentInventoriesTask = await _inventoryService.GetRecentInventoriesAsync(10, cancellationToken); // последние 10 инвентарей
+                var popularInventoriesTask = await _inventoryService.GetPopularInventoriesAsync(5, cancellationToken); // 5 самых популярных
 
-                var userInventoriesTask = await _inventoryService.GetUserInventoriesAsync(userId, cancellationToken);
-                var sharedInventoriesTask = await _inventoryService.GetSharedInventoriesAsync(userId, cancellationToken);
+                // Ожидаем все задачи одновременно
 
                 var model = new HomeViewModel
                 {
-                    UserInventories = userInventoriesTask.ToList(),
-                    SharedInventories = sharedInventoriesTask.ToList()
+                    RecentInventories = recentInventoriesTask.ToList(),
+                    PopularInventories = popularInventoriesTask.ToList()
                 };
 
                 return View(model);
@@ -46,7 +48,7 @@ namespace Main.Presentation.MVC.Controllers
                 return View(new HomeViewModel());
             }
         }
-        [HttpPost]
+            [HttpPost]
         public IActionResult SetLanguage(string culture, string returnUrl)
         {
             Response.Cookies.Append(
@@ -73,6 +75,9 @@ namespace Main.Presentation.MVC.Controllers
     {
         public List<InventoryDto> UserInventories { get; set; } = new();
         public List<InventoryDto> SharedInventories { get; set; } = new();
+        public List<InventoryDto> RecentInventories { get; set; } = new();
+        public List<InventoryDto> PopularInventories { get; set; } = new();
         public string ActiveTab { get; set; } = "my-inventories";
     }
+
 }

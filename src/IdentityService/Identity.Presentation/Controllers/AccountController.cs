@@ -1,5 +1,8 @@
 ﻿// Controllers/AccountController.cs в Auth проекте
 using Identity.Domain.Entity;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Web;
@@ -52,8 +55,9 @@ namespace Identity.Presentation.Controllers
         public async Task<IActionResult> Logout(string logoutId)
         {
             await _signInManager.SignOutAsync();
-            return Redirect("http://localhost:5173");
+            return Redirect("https://localhost:7004");
         }
+
     }
 
     public class LoginInputModel

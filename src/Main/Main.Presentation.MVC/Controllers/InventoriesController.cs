@@ -11,12 +11,17 @@ namespace Main.Presentation.MVC.Controllers
     public class InventoriesController : Controller
     {
         private readonly IInventoryService _inventoryService;
+        private readonly IUsersService _usersService;
         private readonly ILogger<InventoriesController> _logger;
+        private readonly IInventoryStatsService _statsService;
         public InventoriesController(IInventoryService inventoryService,
-            ILogger<InventoriesController> logger)
+            ILogger<InventoriesController> logger,
+            IInventoryStatsService statsService, IUsersService usersService)
         {
             _inventoryService = inventoryService;
             _logger = logger;
+            _statsService = statsService;
+            _usersService = usersService;
         }
 
         //// GET: Inventories
@@ -81,50 +86,67 @@ namespace Main.Presentation.MVC.Controllers
             ViewData["Categories"] = categoriesList;
             return View("Create", model); // Используем одно представление
         }
-
+        public async Task<IActionResult> StatsPartial(int inventoryId)
+        {
+            try
+            {
+                var stats = await _statsService.GetInventoryStatsAsync(inventoryId);
+                return PartialView("_StatisticsTab", stats);
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку
+                return PartialView("_StatsError", new { Message = "Ошибка загрузки статистики" });
+            }
+        }
         // GET: Edit
         public async Task<IActionResult> Edit(int id)
         {
             var inventory = await _inventoryService.GetById(id);
             if (inventory == null) return NotFound();
-
-            var model = new InventoryFormDto
+            if (inventory.OwnerId == _usersService.GetCurrentUserId() || _usersService.GetCurrentUserRole() == "Admin")
             {
-                Id = inventory.Id,
-                Name = inventory.Name,
-                Description = inventory.Description,
-                CategoryId = inventory.CategoryId,
-                ImageUrl = inventory.ImageUrl,
-                IsPublic = inventory.IsPublic,
-                CustomIdFormat = inventory.CustomIdFormat,
-                Tags = inventory.Tags,
-                Version = Convert.ToBase64String(inventory.Version),
-                Fields = inventory.Fields.Select(f => new CreateInventoryFieldDto
+                var model = new InventoryFormDto
                 {
-                    Id = f.Id,
-                    Name = f.Name,
-                    Description = f.Description,
-                    FieldType = f.FieldType,
-                    OrderIndex = f.OrderIndex,
-                    IsVisibleInTable = f.IsVisibleInTable,
-                    IsRequired = f.IsRequired
-                }).ToList()
-            };
-            var categories = await _inventoryService.GetCategories(CancellationToken.None);
-            var categoriesList = categories
-        .OrderBy(c => c.Name)
-        .Select(c => new SelectListItem
-        {
-            Value = c.Id.ToString(),
-            Text = c.Name
-        }).ToList();
-            categoriesList.Add(new SelectListItem
+                    Id = inventory.Id,
+                    Name = inventory.Name,
+                    Description = inventory.Description,
+                    CategoryId = inventory.CategoryId,
+                    ImageUrl = inventory.ImageUrl,
+                    IsPublic = inventory.IsPublic,
+                    OwnerId = inventory.OwnerId,
+                    CustomIdFormat = inventory.CustomIdFormat,
+                    Tags = inventory.Tags,
+                    Version = Convert.ToBase64String(inventory.Version),
+                    AccessList = inventory.AccessList,
+                    Fields = inventory.Fields.Select(f => new CreateInventoryFieldDto
+                    {
+                        Id = f.Id,
+                        Name = f.Name,
+                        Description = f.Description,
+                        FieldType = f.FieldType,
+                        OrderIndex = f.OrderIndex,
+                        IsVisibleInTable = f.IsVisibleInTable,
+                        IsRequired = f.IsRequired
+                    }).ToList()
+                };
+                var categories = await _inventoryService.GetCategories(CancellationToken.None);
+                var categoriesList = categories
+            .OrderBy(c => c.Name)
+            .Select(c => new SelectListItem
             {
-                Value = null,
-                Text = "Другое"
-            });
-            ViewData["Categories"] = categoriesList;
-            return View("Create", model); // Используем то же представление
+                Value = c.Id.ToString(),
+                Text = c.Name
+            }).ToList();
+                categoriesList.Add(new SelectListItem
+                {
+                    Value = null,
+                    Text = "Другое"
+                });
+                ViewData["Categories"] = categoriesList;
+                return View("Create", model); // Используем то же представление
+            }
+            else throw new UnauthorizedAccessException("У вас нет права редактирования инвенторя.");
         }
 
 
@@ -139,16 +161,8 @@ namespace Main.Presentation.MVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(InventoryDto inventory, CancellationToken cancellationToken)
         {
-            try
-            {
-                var ownerId = "kjilsfhrfbeibkv ";
-                inventory = inventory with { OwnerId = ownerId };
                 await _inventoryService.UpdateInventoryAsync(inventory);
-            }
-            catch (DbUpdateConcurrencyException)
-            {
 
-            }
             return RedirectToAction("Index", "Items", new { inventoryId = inventory.Id });
         }
 

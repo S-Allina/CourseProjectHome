@@ -1,7 +1,8 @@
 ﻿@using Main.Application.Dtos.Inventories.Index
+@using Main.Application.Dtos.Items.Create
 @using Main.Application.Dtos.Items.Index
 @using Main.Domain.enums.inventory
-@model ItemDto
+@model CreateItemDto
 @{
     ViewData["Title"] = "Edit Item";
     var inventory = ViewBag.Inventory as InventoryDto;
@@ -16,6 +17,8 @@
             <div class="card-body">
                 <form asp-action="Edit" method="post" enctype="multipart/form-data">
                     <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="CreatedById" />
+                    <input type="hidden" asp-for="CreatedAt" />
                     <input type="hidden" asp-for="InventoryId" />
 
                     <div class="mb-3">

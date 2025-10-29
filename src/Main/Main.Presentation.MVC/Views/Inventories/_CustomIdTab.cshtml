@@ -1,45 +1,42 @@
-﻿@using Main.Application.Dtos.Inventories.Index
-@model InventoryFormDto
-@using Microsoft.AspNetCore.Mvc.Localization
-@using Microsoft.Extensions.Localization
-@inject IStringLocalizer<SharedResource> Localizer
+﻿@model Main.Application.Dtos.Inventories.Index.InventoryFormDto
+
 <div class="tab-pane fade" id="customid" role="tabpanel" aria-labelledby="customid-tab">
     <div class="card">
         <div class="card-header">
-            <h5 class="mb-0">@Localizer["Custom ID Format Configuration"]</h5>
+            <h5 class="mb-0">Custom ID Format Configuration</h5>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-8">
                     <div class="mb-4">
-                        <label class="form-label fw-bold">@Localizer["Custom ID Format Builder"]</label>
+                        <label class="form-label fw-bold">Custom ID Format Builder</label>
                         <input type="hidden" asp-for="CustomIdFormat" id="hiddenCustomIdFormat" />
-                        <div class="border rounded p-3 mb-3" id="formatBuilder">
+                        <!-- Format Builder Area -->
+                        <div class="border rounded p-3 bg-light mb-3" id="formatBuilder">
                             <div class="d-flex flex-wrap gap-2 min-height-50" id="formatComponents">
+                                <!-- Components will be added here -->
                                 <div class="text-muted text-center w-100 py-3" id="noComponentsMessage">
-                                    @Localizer["No components added. Start by adding components from the panel on the right"].
+                                    No components added. Start by adding components from the panel on the right.
                                 </div>
                             </div>
                         </div>
 
                         <!-- Preview -->
                         <div class="mb-3">
-                            <label class="form-label">@Localizer["Live Preview"]</label>
+                            <label class="form-label">Live Preview</label>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="customIdPreview" readonly />
+                                <input type="text" class="form-control" id="customIdPreview" readonly placeholder="Preview will appear here" />
                                 <button type="button" class="btn btn-outline-secondary" onclick="generatePreview()">
-                                    <i class="fas fa-sync-alt"></i> @Localizer["Refresh"]
+                                    <i class="fas fa-sync-alt"></i> Refresh
                                 </button>
                             </div>
-                            <small class="form-text text-muted">@Localizer["This is how generated IDs will look"]</small>
+                            <small class="form-text text-muted">This is how generated IDs will look</small>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-md-4">
-                    <div class="card">
-                        <partial name="_CustomIdComponents" />
-                    </div>
+                    <partial name="_CustomIdComponents" />
 
                     <partial name="_CustomIdHelp" />
                 </div>

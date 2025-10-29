@@ -4,7 +4,6 @@
     {
         public int Id { get; set; }
         public int InventoryId { get; set; }
-        public InventoryFormDto Inventory { get; set; }
 
         public string UserId { get; set; }
         public string GrantedById { get; set; }

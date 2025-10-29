@@ -16,12 +16,12 @@
         <div id="autoSaveIndicator" class="alert alert-info d-none">
             <div class="d-flex align-items-center">
                 <div class="spinner-border spinner-border-sm me-2" role="status">
-                    <span class="visually-hidden">@Localizer["Loading"]...</span>
+                    <span class="visually-hidden">@Localizer["Loading"]</span>
                 </div>
-                <span id="autoSaveMessage">@Localizer["Auto-saving"]...</span>
+                <span id="autoSaveMessage">@Localizer["Auto-saving"]</span>
             </div>
         </div>
-        <form asp-action="@Model.FormAction" id="inventoryForm" data-is-edit="@Model.IsEditMode.ToString().ToLower()">
+        <form asp-action="@Model.FormAction" id="inventoryForm" data-is-edit="@Model.IsEditMode.ToString().ToLower()" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <input type="hidden" id="version" name="Version" value="@Model.Version" />
@@ -31,6 +31,8 @@
             @if (Model.IsEditMode)
             {
                 <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="OwnerId" value="@Model.OwnerId"/>
+                <input type="hidden" asp-for="CreatedAt"/>
             }
 
             <partial name="_InventoryTabs" />
@@ -125,8 +127,7 @@
                 }
 
                 this.isSaving = true;
-                this.updateSaveIndicator(`@Localizer["Auto-saving"]...`, true);
-
+                this.updateSaveIndicator(`@Localizer["Auto-saving"]`, true);
                 try {
                     const formData = this.prepareFormData();
 
@@ -151,7 +152,7 @@
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                 } catch (error) {
-                    this.handleSaveError({ message: `@Localizer["Auto-save"] @Localizer["failed"] @Localizer["Please save manually"].` });
+                    this.handleSaveError({ message: '@Localizer["Auto-save"] @Localizer["failed"] @Localizer["Please save manually"].' });
                 } finally {
                     this.isSaving = false;
                 }
@@ -250,7 +251,7 @@
 
             handleSaveError: function(result) {
                 console.error('Auto-save error:', result);
-                this.updateSaveIndicator(result.message || `@Localizer["Auto-save"] @Localizer["failed"]`, false, 'danger');
+                this.updateSaveIndicator(result.message || '@Localizer["Auto-save"] @Localizer["failed"]', false, 'danger');
 
                 if (result.isConcurrencyError) {
                     this.handleConcurrencyError(result);
@@ -307,7 +308,7 @@
                 window.addEventListener('beforeunload', (event) => {
                     if (this.isDirty) {
                         event.preventDefault();
-                        event.returnValue = '@Localizer["You have unsaved changes. Are you sure you want to leave?"]';
+                        event.returnValue = "You have unsaved changes. Are you sure you want to leave?";
                         return event.returnValue;
                     }
                 });
@@ -1094,12 +1095,20 @@
                             </div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea name="Fields[${currentIndex}].Description"
-                                      class="form-control"
-                                      rows="2"
-                                      placeholder='@Localizer["Optional field description"]'>${description}</textarea>
+                         <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label">
+                            @Localizer["Description"]
+                            <small class="text-muted">(@Localizer["Supports"] Markdown)</small>
+                            </label>
+                            <textarea name="Fields[${currentIndex}].Description" class="form-control" rows="2"
+                                  placeholder="@Localizer["Supports"] **@Localizer["bold"]**, *@Localizer["italic"]*, [links](http://example.com), etc."></textarea>
+
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <strong>Markdown:</strong>
+                                **@Localizer["bold"]**, *@Localizer["italic"]*
+                                </small>
+                            </div>
                         </div>
 
                         <div class="row">

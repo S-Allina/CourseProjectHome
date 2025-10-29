@@ -7,7 +7,7 @@
     ViewData["Title"] = @Localizer["Inventories"];
 }
 
-<h1>Inventories</h1>
+<h1>@Localizer["Inventories"]</h1>
 
 <p>
     <a asp-action="Create" class="btn btn-success">@Localizer["Create New"] @Localizer["Inventory"]</a>
@@ -15,7 +15,7 @@
 </p>
 
 <div class="tab-pane fade show active" id="my-inventories" role="tabpanel" aria-labelledby="my-inventories-tab">
-    @await Html.PartialAsync("_InventoryTable", Model, new ViewDataDictionary(ViewData) { { "TableType", "inventories" } })
+    <partial name="_InventoryTable" model="Model" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "sharedInventoriesTable" } })" />
 </div>
 
 @section Scripts {

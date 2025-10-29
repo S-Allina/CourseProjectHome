@@ -1,0 +1,156 @@
+﻿@model InventoryStatsDto
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using Main.Application.Dtos.Inventories.Index
+@using Main.Domain.enums.inventory
+
+@{
+    // Собираем все поля с диаграммами в один список
+    var allChartFields = new List<dynamic>();
+
+    // Добавляем числовые поля
+    foreach (var field in Model.FieldStatistics.Where(f => f.FieldType == FieldType.Number && f.NonEmptyValuesCount > 0))
+    {
+        allChartFields.Add(new { Type = "numeric", Data = field });
+    }
+
+    // Добавляем Boolean поля
+    foreach (var field in Model.FieldStatistics.Where(f => f.FieldType == FieldType.Boolean && f.ValueCounts.Any()))
+    {
+        allChartFields.Add(new { Type = "boolean", Data = field });
+    }
+
+    // Добавляем текстовые поля (Text и MultilineText)
+    foreach (var field in Model.FieldStatistics.Where(f =>
+        (f.FieldType == FieldType.Text || f.FieldType == FieldType.MultilineText) &&
+        f.ValueCounts.Any()))
+    {
+        allChartFields.Add(new { Type = "text", Data = field });
+    }
+}
+
+<div class="inventory-stats">
+    <h3>Статистика инвентаря</h3>
+
+    @if (Model != null)
+    {
+        <div class="stats-overview mb-4">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h4>@Model.TotalItems</h4>
+                        <p>Всего предметов</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h4>@Model.TotalFields</h4>
+                        <p>Поля</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h4>@(Model.OldestItemDate?.ToString("dd.MM.yyyy") ?? "N/A")</h4>
+                        <p>Самый старый предмет</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h4>@(Model.NewestItemDate?.ToString("dd.MM.yyyy") ?? "N/A")</h4>
+                        <p>Самый новый предмет</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Все диаграммы вместе в одной сетке -->
+        @if (allChartFields.Any())
+        {
+            <div class="all-charts-section mb-5">
+                <h4>Статистика полей</h4>
+                <div class="row">
+                    @foreach (var field in allChartFields)
+                    {
+                        <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-4">
+                            @if (field.Type == "numeric")
+                            {
+                                var numericStat = field.Data as FieldStatsDto;
+                                <div class="chart-card h-100">
+                                    <h5>@numericStat.FieldName</h5>
+                                    <canvas id="numericChart-@numericStat.FieldId"
+                                            data-min="@(numericStat.MinValue?.ToString("F2")?.Replace(",", ".") ?? "0")"
+                                            data-avg="@(numericStat.AverageValue?.ToString("F2")?.Replace(",", ".") ?? "0")"
+                                            data-max="@(numericStat.MaxValue?.ToString("F2")?.Replace(",", ".") ?? "0")"
+                                            data-name="@numericStat.FieldName"
+                                            height="200"></canvas>
+                                    <div class="numeric-summary">
+                                        <span>Min: @(numericStat.MinValue?.ToString("F2") ?? "N/A")</span>
+                                        <span>Max: @(numericStat.MaxValue?.ToString("F2") ?? "N/A")</span>
+                                        <span>Avg: @(numericStat.AverageValue?.ToString("F2") ?? "N/A")</span>
+                                    </div>
+                                </div>
+                            }
+                            else if (field.Type == "boolean")
+                            {
+                                var booleanStat = field.Data as FieldStatsDto;
+                                var trueCount = booleanStat.ValueCounts.GetValueOrDefault("True", 0);
+                                var falseCount = booleanStat.ValueCounts.GetValueOrDefault("False", 0);
+                                var labels = new List<string> { "True", "False" };
+                                var data = new List<int> { trueCount, falseCount };
+
+                                <div class="chart-card h-100">
+                                    <h5>@booleanStat.FieldName</h5>
+                                    <canvas id="booleanChart-@booleanStat.FieldId"
+                                            data-labels='@Html.Raw(Json.Serialize(labels))'
+                                            data-data='@Html.Raw(Json.Serialize(data))'
+                                            data-name="@booleanStat.FieldName"
+                                            height="200"></canvas>
+                                    <div class="boolean-summary">
+                                        <span>True: @trueCount</span>
+                                        <span>False: @falseCount</span>
+                                        <span>Всего: @booleanStat.NonEmptyValuesCount</span>
+                                    </div>
+                                </div>
+                            }
+                            else if (field.Type == "text")
+                            {
+                                var textStat = field.Data as FieldStatsDto;
+                                var topValues = textStat.ValueCounts.OrderByDescending(v => v.Value).Take(10).ToList();
+                                var labels = topValues.Select(v => $"{v.Key} ({v.Value})").ToList();
+                                var data = topValues.Select(v => v.Value).ToList();
+
+                                <div class="chart-card h-100">
+                                    <h5>@textStat.FieldName</h5>
+                                    <canvas id="textChart-@textStat.FieldId"
+                                            data-labels='@Html.Raw(Json.Serialize(labels))'
+                                            data-data='@Html.Raw(Json.Serialize(data))'
+                                            data-name="@textStat.FieldName"
+                                            height="200"></canvas>
+                                    <div class="text-summary">
+                                        <span>Уникальных значений: @textStat.UniqueValuesCount</span>
+                                        <span>Всего значений: @textStat.NonEmptyValuesCount</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (!allChartFields.Any())
+        {
+            <div class="alert alert-info">
+                Нет данных для отображения статистики
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">Загрузка...</span>
+            </div>
+        </div>
+    }
+</div>

@@ -11,9 +11,6 @@ namespace Main.Application.Interfaces
         Task<int> DeleteItemAsync(int[] ids, CancellationToken cancellationToken = default);
         Task<ItemDto> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<ItemDto> UpdateItemAsync(ItemDto itemDto, CancellationToken cancellationToken = default);
-        Task<InventoryStatsDto> GetInventoryStatsAsync(int inventoryId);
-        Task<List<NumericFieldStats>> GetNumericFieldStatsAsync(int inventoryId);
-        Task<List<TextFieldStats>> GetTextFieldStatsAsync(int inventoryId);
         //Task<IEnumerable<InventoryDto>> GetAll(CancellationToken cancellationToken = default);
         //Task<InventoryDto> GetById(int id, CancellationToken cancellationToken = default);
         //Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);

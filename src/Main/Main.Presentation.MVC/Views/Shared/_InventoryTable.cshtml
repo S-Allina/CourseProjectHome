@@ -37,7 +37,6 @@ else
                     <th>@Localizer["Name"]</th>
                     <th>@Localizer["Description"]</th>
                     <th>@Localizer["Category"]</th>
-                    <th>@Localizer["Items"]</th>
                     <th>@Localizer["Fields"]</th>
                     <th>@Localizer["Tags"]</th>
                     <th>@Localizer["Created"]</th>
@@ -49,7 +48,7 @@ else
             <tbody>
                 @foreach (var inventory in Model)
                 {
-                    <tr>
+                    <tr class="clickable-row" data-inventory-id="@inventory.Id" style="cursor: pointer;">
                         <td>
                             <input type="checkbox" name="selectedIds" value="@inventory.Id" class="rowCheckbox" />
                         </td>
@@ -75,9 +74,6 @@ else
                         </td>
                         <td>@(inventory.CategoryId.ToString() ?? @Localizer["No category"])</td>
                         <td>
-                            <span class="badge bg-info">@inventory.Fields.Count</span>
-                        </td>
-                        <td>
                             <span class="badge bg-secondary">@inventory.Fields.Count</span>
                         </td>
                         <td>
@@ -99,7 +95,7 @@ else
                         </td>
                         <td>@inventory.CreatedAt.ToString("MMM dd, yyyy")</td>
                         <td>@inventory.UpdatedAt.ToString("MMM dd, yyyy")</td>
-                        <td>@inventory.Owner</td>
+                        <td>@inventory.Owner?.LastName @inventory.Owner?.FirstName </td>
                         <td>
                             @if (inventory.IsPublic)
                             {
@@ -115,4 +111,36 @@ else
             </tbody>
         </table>
     </div>
+    <script>
+        // Обработка двойного клика по строке таблицы
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableRows = document.querySelectorAll('.clickable-row');
+
+            tableRows.forEach(row => {
+                row.addEventListener('dblclick', function(e) {
+                    if (e.target.type === 'checkbox' || e.target.classList.contains('rowCheckbox')) {
+                        return;
+                    }
+                    const inventoryId = this.getAttribute('data-inventory-id');
+                    window.location.href = '@Url.Action("Index", "Items")' + '?inventoryId=' + inventoryId;
+                });
+
+                const checkbox = row.querySelector('.rowCheckbox');
+                if (checkbox) {
+                    checkbox.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                    });
+                }
+            });
+
+            // Предотвращаем выделение текста при двойном клике
+            tableRows.forEach(row => {
+                row.addEventListener('mousedown', function(e) {
+                    if (e.detail > 1 && e.target.type !== 'checkbox' && !e.target.classList.contains('rowCheckbox')) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        });
+    </script>
 }

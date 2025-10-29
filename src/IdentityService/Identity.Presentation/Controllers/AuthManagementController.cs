@@ -35,7 +35,6 @@ namespace Identity.Presentation.Controllers
         [HttpGet("check-auth")]
         public async Task<IActionResult> CheckAuthentication()
         {
-            ;
             if (User.Identity.IsAuthenticated)
             {
                 var user = await _userManager.GetUserAsync(User);

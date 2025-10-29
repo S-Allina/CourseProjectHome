@@ -16,7 +16,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
         public async Task<IEnumerable<Inventory>> SearchAsync(string searchTerm, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(searchTerm))
-                return await GetAllAsync(null, null, cancellationToken);
+                return await GetAllAsync(null, cancellationToken);
 
             return await dbSet
                 .Where(i => EF.Functions.FreeText(i.Name, searchTerm) ||
@@ -27,7 +27,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
         public async Task<IEnumerable<Inventory>> SearchWithDetailsAsync(string searchTerm, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(searchTerm))
-                return await GetAllAsync(null, "Fields,Tags.Tag,Category", cancellationToken);
+                return await GetAllAsync(null, cancellationToken, "Fields","Tags.Tag","Category");
 
             return await dbSet
                 .Include(i => i.Fields)
@@ -53,7 +53,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
                 // Обновляем скалярные свойства
                 _db.Entry(existingInventory).CurrentValues.SetValues(inventory);
-                existingInventory.OwnerId = "fgvsfgv";
                 existingInventory.UpdatedAt = DateTime.UtcNow;
 
                 // Обрабатываем изменения в коллекции Fields

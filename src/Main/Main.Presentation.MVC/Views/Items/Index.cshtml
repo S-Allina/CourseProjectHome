@@ -1,200 +1,7 @@
-﻿@* @using Main.Domain.enums.inventory
-@model IEnumerable<Main.Application.Dtos.ItemDto>
-@{
-    ViewData["Title"] = "Items";
-    var inventory = ViewBag.SelectedInventory as Main.Application.Dtos.InventoryDto;
-}
-
-<ul class="nav nav-tabs" id="myTab" role="tablist">
-    <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="items-tab" data-bs-toggle="tab" data-bs-target="#items" type="button" role="tab" aria-controls="items" aria-selected="true">
-            <i class="fas fa-boxes me-1"></i>Items
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab" aria-controls="chat" aria-selected="false">
-            <i class="fas fa-comments me-1"></i>Chat
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">
-            <i class="fas fa-cog me-1"></i>Settings
-        </button>
-    </li>
-</ul>
-
-<div class="tab-content" id="myTabContent">
-    <!-- Items Tab -->
-    <div class="tab-pane fade show active" id="items" role="tabpanel" aria-labelledby="items-tab">
-        <partial name="_ItemsTab" model="Model" />
-    </div>
-
-    <!-- Chat Tab -->
-    <div class="tab-pane fade" id="chat" role="tabpanel" aria-labelledby="chat-tab">
-        <partial name="_ChatTab" />
-    </div>
-
-    <!-- Settings Tab -->
-    <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
-        <partial name="_SettingsTab" />
-    </div>
-</div>
-
-<!-- Модальное окно для деталей товара -->
-<div class="modal fade" id="itemDetailsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Item Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="itemDetailsContent">
-                <!-- Контент загружается через AJAX -->
-            </div>
-        </div>
-    </div>
-</div> *@
- 
-
-
-@* @model IEnumerable<Main.Application.Dtos.ItemDto>
-
-<div class="container-fluid mt-4">
-    <!-- Индикатор загрузки -->
-    <div id="statsLoading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading statistics...</span>
-        </div>
-        <p class="mt-2 text-muted">Loading statistics...</p>
-    </div>
-
-    <!-- Контент статистики -->
-    <div id="statsContent" style="display: none;">
-        <!-- Общая статистика -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">📊 Overview</h5>
-                        <small class="text-muted" id="generatedAt"></small>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-md-3 mb-3">
-                                <div class="border rounded p-3 bg-light">
-                                    <h3 class="text-primary" id="totalItems">0</h3>
-                                    <small class="text-muted">Total Items</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="border rounded p-3 bg-light">
-                                    <h3 class="text-success" id="itemsWithImages">0</h3>
-                                    <small class="text-muted">Items with Images</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="border rounded p-3 bg-light">
-                                    <h3 class="text-info" id="itemsWithComments">0</h3>
-                                    <small class="text-muted">Items with Comments</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="border rounded p-3 bg-light">
-                                    <h3 class="text-warning" id="totalFields">0</h3>
-                                    <small class="text-muted">Total Fields</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <!-- График распределения типов полей -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">📈 Field Type Distribution</h5>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="fieldTypeChart" height="300"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- График активности -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">📅 Recent Activity</h5>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="activityChart" height="300"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Статистика числовых полей -->
-        <div class="row" id="numericStatsSection">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">🔢 Numeric Fields Statistics</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="numericFieldsStats" class="row">
-                            <!-- Динамически генерируемая статистика -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Статистика текстовых полей -->
-        <div class="row mt-4" id="textStatsSection">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">📝 Text Fields Statistics</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="textFieldsStats">
-                            <!-- Динамически генерируемая статистика -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Популярные теги -->
-        <div class="row mt-4" id="tagsSection">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">🏷️ Popular Tags</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="topTags" class="d-flex flex-wrap gap-2">
-                            <!-- Динамически генерируемые теги -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Сообщение об ошибке -->
-    <div id="statsError" class="alert alert-danger text-center" style="display: none;">
-        <h5>❌ Error Loading Statistics</h5>
-        <p id="errorMessage"></p>
-        <button class="btn btn-primary btn-sm" onclick="loadStatistics()">Try Again</button>
-    </div>
-</div> *@
-@using Main.Application.Dtos.Inventories.Index
+﻿@using Main.Application.Dtos.Inventories.Index
 @using Main.Application.Dtos.Items.Index
 @using Main.Domain.enums.inventory
+@using System.Security.Claims
 
 @model IEnumerable<Main.Application.Dtos.Items.Index.ItemDto>
 @{
@@ -218,14 +25,10 @@
         }
     </div>
     <div class="btn-group">
-        <!-- ✅ Кнопка настроек - переход к редактированию инвентаря -->
         <a href="@Url.Action("Edit", "Inventories", new { id = inventory?.Id })"
            class="btn btn-outline-primary">
             <i class="fas fa-cog me-1"></i>Settings
         </a>
-        <button type="button" class="btn btn-outline-secondary" id="chatToggle">
-            <i class="fas fa-comments me-1"></i>Chat
-        </button>
     </div>
 </div>
 
@@ -240,6 +43,12 @@
             <i class="fas fa-chart-bar me-1"></i>Statistics
         </button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab" aria-controls="chat" aria-selected="false">
+            <i class="fas fa-comments me-1"></i>Chat
+            <span class="badge bg-primary ms-1" id="onlineCount">0</span>
+        </button>
+    </li>
 </ul>
 
 <div class="tab-content" id="myTabContent">
@@ -247,24 +56,23 @@
     <div class="tab-pane fade show active" id="items" role="tabpanel" aria-labelledby="items-tab">
         <partial name="_ItemsTab" model="Model" />
     </div>
-    <div class="tab-pane fade" id="statistics-tab" role="tabpanel" aria-labelledby="statistics-tab">
-        <partial name="_StatisticsTab" model="Model" />
-    </div>
-</div>
 
-<!-- Уберите модальное окно настроек - оно больше не нужно -->
-<!-- ✅ Боковая панель чата -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="chatOffcanvas" aria-labelledby="chatOffcanvasLabel">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="chatOffcanvasLabel">
-            <i class="fas fa-comments me-2"></i>Chat
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    <!-- Statistics Tab -->
+    <div class="tab-pane fade" id="statistics" role="tabpanel" aria-labelledby="statistics-tab">
+        <div id="stats-container">
+            @* <partial name="_StatisticsTab" model="Model" /> *@
+        </div>
     </div>
-    <div class="offcanvas-body">
+
+    <!-- Chat Tab -->
+    <div class="tab-pane fade" id="chat" role="tabpanel" aria-labelledby="chat-tab">
         <partial name="_ChatTab" />
     </div>
 </div>
+
+<a href="@Url.Action("Index", "Inventories")" class="btn btn-outline-secondary mt-3">
+    <i class="fas fa-arrow-left me-1"></i>Back to Inventories
+</a>
 
 <!-- Модальное окно для деталей товара -->
 <div class="modal fade" id="itemDetailsModal" tabindex="-1">
@@ -280,154 +88,231 @@
         </div>
     </div>
 </div>
- @section Scripts {
+
+<!-- Hidden field для данных -->
+<input type="hidden" id="inventoryId" value="@inventory?.Id" />
+<input type="hidden" id="currentUserId" value="@User.FindFirstValue(ClaimTypes.NameIdentifier)" />
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
-            // Все функции для статистики теперь в основном скрипте
+        // Основная функция загрузки статистики
         async function loadStatisticsTab() {
-            const inventoryId = @ViewBag.SelectedInventory?.Id;
+            const inventoryId = @(inventory?.Id ?? 0);
             if (!inventoryId) {
                 console.error('Inventory ID not found');
                 return;
             }
 
-            // Показываем загрузку
-            const statsLoading = document.getElementById('statsLoading');
-            const statsContent = document.getElementById('statsContent');
-            const statsError = document.getElementById('statsError');
+            const statsContainer = document.getElementById('stats-container');
+            if (!statsContainer) return;
 
-            if (statsLoading) statsLoading.style.display = 'block';
-            if (statsContent) statsContent.style.display = 'none';
-            if (statsError) statsError.style.display = 'none';
+            // Показываем загрузку
+            statsContainer.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading statistics...</p>
+                </div>
+            `;
 
             try {
                 console.log('Loading statistics for inventory:', inventoryId);
 
-                // Загружаем данные с сервера
-                const response = await fetch(`/api/items/${inventoryId}/stats`);
+                // Загружаем Partial View через контроллер
+                const response = await fetch(`/Inventories/StatsPartial?inventoryId=${inventoryId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const stats = await response.json();
-                console.log('Statistics loaded:', stats);
+                const html = await response.text();
+                statsContainer.innerHTML = html;
 
-                renderStatistics(stats);
+                // Инициализируем диаграммы после загрузки контента
+                initializeCharts();
 
             } catch (error) {
                 console.error('Error loading statistics:', error);
-                if (statsLoading) statsLoading.style.display = 'none';
-                if (statsError) {
-                    statsError.style.display = 'block';
-                    document.getElementById('errorMessage').textContent = 'Error loading statistics: ' + error.message;
+                statsContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5>Error loading statistics</h5>
+                        <p class="mb-0">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Функция для инициализации всех диаграмм
+        function initializeCharts() {
+            console.log('Initializing charts...');
+
+            // Инициализируем диаграммы для числовых полей
+            document.querySelectorAll('[id^="numericChart-"]').forEach(canvas => {
+                try {
+                    const fieldId = canvas.id.replace('numericChart-', '');
+                    const minValue = parseFloat(canvas.dataset.min) || 0;
+                    const avgValue = parseFloat(canvas.dataset.avg) || 0;
+                    const maxValue = parseFloat(canvas.dataset.max) || 0;
+                    const fieldName = canvas.dataset.name || 'Field';
+
+                    console.log(`Creating numeric chart for field ${fieldId}:`, { minValue, avgValue, maxValue });
+                    createNumericChart(fieldId, minValue, avgValue, maxValue, fieldName);
+                } catch (error) {
+                    console.error('Error creating numeric chart:', error);
                 }
+            });
+                    document.querySelectorAll('[id^="booleanChart-"]').forEach(canvas => {
+            try {
+                const fieldId = canvas.id.replace('booleanChart-', '');
+                const fieldName = canvas.dataset.name || 'Field';
+
+                // Безопасный парсинг JSON
+                let labels = [];
+                let data = [];
+
+                try {
+                    labels = JSON.parse(canvas.dataset.labels || '[]');
+                    data = JSON.parse(canvas.dataset.data || '[]');
+                } catch (jsonError) {
+                    console.error('JSON parsing error:', jsonError);
+                }
+
+                console.log(`Creating boolean chart for field ${fieldId}:`, { labels, data });
+
+                if (labels && data && labels.length > 0 && data.length > 0) {
+                    createBooleanChart(fieldId, labels, data, fieldName);
+                } else {
+                    console.warn(`No data for boolean chart ${fieldId}`);
+                    const container = canvas.closest('.chart-card');
+                    if (container) {
+                        canvas.style.display = 'none';
+                        const message = document.createElement('div');
+                        message.className = 'alert alert-info mt-3';
+                        message.textContent = 'No data available for chart';
+                        container.appendChild(message);
+                    }
+                }
+            } catch (error) {
+                console.error('Error creating boolean chart:', error);
             }
+        });
+            // Инициализируем диаграммы для текстовых полей
+            document.querySelectorAll('[id^="textChart-"]').forEach(canvas => {
+                try {
+                    const fieldId = canvas.id.replace('textChart-', '');
+                    const fieldName = canvas.dataset.name || 'Field';
+
+                    // Безопасный парсинг JSON
+                    let labels = [];
+                    let data = [];
+
+                    try {
+                        labels = JSON.parse(canvas.dataset.labels || '[]');
+                        data = JSON.parse(canvas.dataset.data || '[]');
+                    } catch (jsonError) {
+                        console.error('JSON parsing error:', jsonError);
+                    }
+
+                    console.log(`Creating text chart for field ${fieldId}:`, { labels, data });
+
+                    if (labels && data && labels.length > 0 && data.length > 0) {
+                        createTextChart(fieldId, labels, data, fieldName);
+                    } else {
+                        console.warn(`No data for text chart ${fieldId}`);
+                        const container = canvas.closest('.chart-card');
+                        if (container) {
+                            canvas.style.display = 'none';
+                            const message = document.createElement('div');
+                            message.className = 'alert alert-info mt-3';
+                            message.textContent = 'No data available for chart';
+                            container.appendChild(message);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error creating text chart:', error);
+                }
+            });
         }
 
-        // Рендеринг статистики
-        function renderStatistics(stats) {
-            console.log('Rendering statistics:', stats);
-
-            // Обновляем основную статистику
-            updateElementText('totalItems', stats.totalItems);
-            updateElementText('itemsWithImages', stats.itemsWithImages);
-            updateElementText('itemsWithComments', stats.itemsWithComments);
-            updateElementText('totalFields', stats.totalFields);
-
-            // Создаем графики
-            createFieldTypeChart(stats.fieldTypeDistribution);
-            createActivityChart(stats.activityStats);
-
-            // Рендерим статистику полей
-            renderNumericFieldsStats(stats.numericFieldsStats);
-            renderTextFieldsStats(stats.textFieldsStats);
-
-            // Показываем контент
-            const statsLoading = document.getElementById('statsLoading');
-            const statsContent = document.getElementById('statsContent');
-
-            if (statsLoading) statsLoading.style.display = 'none';
-            if (statsContent) statsContent.style.display = 'block';
-        }
-
-        function updateElementText(elementId, value) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.textContent = value.toLocaleString();
-            }
-        }
-
-        function createFieldTypeChart(distribution) {
-            const ctx = document.getElementById('fieldTypeDistributionChart');
-            if (!ctx) {
-                console.error('Field type chart element not found');
-                return;
-            }
+                function createBooleanChart(fieldId, labels, data, fieldName) {
+            const ctx = document.getElementById('booleanChart-' + fieldId);
+            if (!ctx) return;
 
             new Chart(ctx.getContext('2d'), {
-                type: 'doughnut',
+                type: 'pie',
                 data: {
-                    labels: ['Numeric', 'Text', 'Boolean', 'Date', 'File', 'Multiline Text'],
+                    labels: labels,
                     datasets: [{
-                        data: [
-                            distribution.numericFieldsCount,
-                            distribution.textFieldsCount,
-                            distribution.booleanFieldsCount,
-                            distribution.dateFieldsCount,
-                            distribution.fileFieldsCount,
-                            distribution.multilineTextFieldsCount
-                        ],
+                        data: data,
                         backgroundColor: [
-                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
-                        ]
+                            '#1cc88a',  // Зеленый для True
+                            '#e74a3b'   // Красный для False
+                        ],
+                        borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     plugins: {
                         legend: {
-                            position: 'bottom'
+                            position: 'right'
                         },
                         title: {
                             display: true,
-                            text: 'Field Types Distribution'
+                            text: fieldName
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
                         }
                     }
                 }
             });
         }
 
-        function createActivityChart(activityStats) {
-            const ctx = document.getElementById('activityChart');
-            if (!ctx) {
-                console.error('Activity chart element not found');
-                return;
-            }
+        // Функция для создания диаграмм числовых полей
+        function createNumericChart(fieldId, minValue, avgValue, maxValue, fieldName) {
+            const ctx = document.getElementById('numericChart-' + fieldId);
+            if (!ctx) return;
 
             new Chart(ctx.getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: ['Created (7d)', 'Created (30d)', 'Updated (7d)', 'Comments (7d)', 'Likes (7d)'],
+                    labels: ['Min', 'Average', 'Max'],
                     datasets: [{
-                        label: 'Count',
-                        data: [
-                            activityStats.itemsCreatedLast7Days,
-                            activityStats.itemsCreatedLast30Days,
-                            activityStats.itemsUpdatedLast7Days,
-                            activityStats.commentsAddedLast7Days,
-                            activityStats.likesAddedLast7Days
+                        label: fieldName,
+                        data: [minValue, avgValue, maxValue],
+                        backgroundColor: [
+                            'rgba(78, 115, 223, 0.8)',
+                            'rgba(28, 200, 138, 0.8)',
+                            'rgba(231, 74, 59, 0.8)'
                         ],
-                        backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                        borderColor: [
+                            'rgba(78, 115, 223, 1)',
+                            'rgba(28, 200, 138, 1)',
+                            'rgba(231, 74, 59, 1)'
+                        ],
+                        borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     plugins: {
                         legend: {
-                            display: false
+                            display: true
                         },
                         title: {
                             display: true,
-                            text: 'Recent Activity'
+                            text: fieldName
                         }
                     },
                     scales: {
@@ -439,102 +324,37 @@
             });
         }
 
-        function renderNumericFieldsStats(numericStats) {
-            const container = document.getElementById('numericFieldsStats');
-            if (!container) return;
+        // Функция для создания круговых диаграмм текстовых полей
+        function createTextChart(fieldId, labels, data, fieldName) {
+            const ctx = document.getElementById('textChart-' + fieldId);
+            if (!ctx) return;
 
-            if (!numericStats || numericStats.length === 0) {
-                container.innerHTML = '<div class="col-12 text-center text-muted py-3">No numeric fields data available</div>';
-                return;
-            }
-
-            let html = '';
-            numericStats.forEach(stat => {
-                html += `
-                    <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="card h-100">
-                            <div class="card-header bg-primary text-white">
-                                <h6 class="card-title mb-0">${stat.fieldName}</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row text-center small">
-                                    <div class="col-6 mb-2">
-                                        <div class="text-muted">Average</div>
-                                        <div class="fw-bold">${stat.average.toFixed(2)}</div>
-                                    </div>
-                                    <div class="col-6 mb-2">
-                                        <div class="text-muted">Count</div>
-                                        <div class="fw-bold">${stat.count}</div>
-                                    </div>
-                                    <div class="col-6 mb-2">
-                                        <div class="text-muted">Min</div>
-                                        <div class="fw-bold">${stat.min.toFixed(2)}</div>
-                                    </div>
-                                    <div class="col-6 mb-2">
-                                        <div class="text-muted">Max</div>
-                                        <div class="fw-bold">${stat.max.toFixed(2)}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+            new Chart(ctx.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                            '#858796', '#5a5c69', '#2e59d9', '#17a673', '#2c9faf'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Top ' + data.length + ' values'
+                        }
+                    }
+                }
             });
-
-            container.innerHTML = html;
-        }
-
-        function renderTextFieldsStats(textStats) {
-            const container = document.getElementById('textFieldsStats');
-            if (!container) return;
-
-            if (!textStats || textStats.length === 0) {
-                container.innerHTML = '<div class="text-center text-muted py-3">No text fields data available</div>';
-                return;
-            }
-
-            let html = '<div class="row">';
-            textStats.forEach(stat => {
-                html += `
-                    <div class="col-md-6 mb-4">
-                        <div class="card">
-                            <div class="card-header bg-info text-white">
-                                <h6 class="card-title mb-0">${stat.fieldName}</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-4 text-center">
-                                        <div class="text-muted">Total</div>
-                                        <div class="fw-bold">${stat.totalValues}</div>
-                                    </div>
-                                    <div class="col-4 text-center">
-                                        <div class="text-muted">Unique</div>
-                                        <div class="fw-bold">${stat.uniqueValues}</div>
-                                    </div>
-                                    <div class="col-4 text-center">
-                                        <div class="text-muted">Empty</div>
-                                        <div class="fw-bold">${stat.emptyValues}</div>
-                                    </div>
-                                </div>
-                                ${stat.topValues && stat.topValues.length > 0 ? `
-                                    <h6 class="mt-3">Top Values:</h6>
-                                    <div class="small">
-                                        ${stat.topValues.slice(0, 3).map(value => `
-                                            <div class="d-flex justify-content-between">
-                                                <span class="text-truncate" style="max-width: 70%;">${value.value}</span>
-                                                <span class="text-muted">${value.count} (${value.percentage.toFixed(1)}%)</span>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-
-            container.innerHTML = html;
         }
 
         // Инициализация вкладки статистики
@@ -548,32 +368,17 @@
             }
 
             // Если уже на вкладке статистики, загружаем сразу
-            if (document.getElementById('statistics-tab')?.classList.contains('active')) {
+            if (document.getElementById('statistics')?.classList.contains('active')) {
                 console.log('Already on statistics tab, loading...');
-                setTimeout(() => {
-                    loadStatisticsTab();
-                }, 100);
+                loadStatisticsTab();
             }
         });
     </script>
+
     <script>
+        // Функции для работы с предметами
         function showItemDetails(itemId) {
-            fetch(`@Url.Action("GetItemDetails")/${itemId}`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('itemDetailsContent').innerHTML = html;
-                    new bootstrap.Modal(document.getElementById('itemDetailsModal')).show();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('itemDetailsContent').innerHTML =
-                        '<div class="text-danger">Error loading item details</div>';
-                });
-        }
-    </script>
-    <script>
-         function showItemDetails(itemId) {
-            fetch(`@Url.Action("GetItemDetails")/${itemId}`)
+            fetch(`@Url.Action("GetItemDetails", "Items")/${itemId}`)
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById('itemDetailsContent').innerHTML = html;
@@ -586,120 +391,368 @@
                 });
         }
 
-        // Управление чатом (боковая панель)
-        document.getElementById('chatToggle').addEventListener('click', function() {
-            const chatOffcanvas = new bootstrap.Offcanvas(document.getElementById('chatOffcanvas'));
-            chatOffcanvas.show();
-        });
+    
+        // Удаление выбранных элементов
+        const deleteSelectedBtn = document.getElementById('deleteSelected');
+        if (deleteSelectedBtn) {
+            deleteSelectedBtn.addEventListener('click', function () {
+                const selectedCheckboxes = document.querySelectorAll('.rowCheckbox:checked');
+                if (selectedCheckboxes.length === 0) {
+                    alert('Please select at least one item to delete.');
+                    return;
+                }
 
-        document.getElementById('deleteSelected').addEventListener('click', function () {
-            const selectedCheckboxes = document.querySelectorAll('.rowCheckbox:checked');
-            console.log(selectedCheckboxes);
-            if (selectedCheckboxes.length === 0) {
-                alert('Please select at least one item to delete.');
-                return;
-            }
+                if (confirm('Are you sure you want to delete the selected items?')) {
+                    const form = document.createElement('form');
+                    form.method = 'post';
+                    form.action = '@Url.Action("Delete", "Items")';
 
-            if (confirm('Are you sure you want to delete the selected items?')) {
-                const form = document.createElement('form');
-                form.method = 'post';
-                form.action = '@Url.Action("Delete", "Items")';
+                    selectedCheckboxes.forEach(checkbox => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'selectedIds';
+                        input.value = checkbox.value;
+                        form.appendChild(input);
+                    });
 
-                selectedCheckboxes.forEach(checkbox => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'selectedIds';
-                    input.value = checkbox.value;
-                    form.appendChild(input);
-                });
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
 
-                document.body.appendChild(form);
-                form.submit();
-            }
-        });
-        document.getElementById('deleteSelected').addEventListener('click', function () {
-            const selectedCheckboxes = document.querySelectorAll('.rowCheckbox:checked');
-            console.log(selectedCheckboxes);
-            if (selectedCheckboxes.length === 0) {
-                alert('Please select at least one inventory to delete.');
-                return;
-            }
-
-            if (confirm('Are you sure you want to delete the selected inventories?')) {
-                // Собираем ID и отправляем форму
-                const form = document.createElement('form');
-                form.method = 'post';
-                form.action = '@Url.Action("Delete", "items")';
-
-                selectedCheckboxes.forEach(checkbox => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'selectedIds';
-                    input.value = checkbox.value;
-                    form.appendChild(input);
-                });
-
-                document.body.appendChild(form);
-                form.submit();
-            }
-        });
-    </script>
-    <script>
+        // Обработка двойного клика по строке таблицы
         document.addEventListener('DOMContentLoaded', function() {
-            // Обработка двойного клика по строке таблицы
             const tableRows = document.querySelectorAll('.clickable-row');
 
             tableRows.forEach(row => {
                 row.addEventListener('dblclick', function(e) {
-                    // Предотвращаем срабатывание на чекбоксе
                     if (e.target.type === 'checkbox') {
                         return;
                     }
                     const itemId = this.getAttribute('data-item-id');
-                    navigateToItem(itemId);
+                    if (itemId) {
+                        window.location.href = '@Url.Action("Details", "Items")' + '?id=' + itemId;
+                    }
                 });
 
-                // Обработка клика по чекбоксу - предотвращаем всплытие события
-                // const checkbox = row.querySelector('.rowCheckbox');
-                // if (checkbox) {
-                //     checkbox.addEventListener('click', function(e) {
-                //         e.stopPropagation();
-                //     });
-                // }
-            });
-
-            // Функция перехода к странице предмета
-            function navigateToItem(itemId) {
-                window.location.href = '@Url.Action("Edit", "Items")' + '?id=' + itemId;
-            }
-
-            // Предотвращаем выделение текста при двойном клике
-            tableRows.forEach(row => {
+                // Предотвращаем выделение текста при двойном клике
                 row.addEventListener('mousedown', function(e) {
                     if (e.detail > 1 && e.target.type !== 'checkbox') {
                         e.preventDefault();
                     }
                 });
             });
-
-            // Обработка удаления выбранных элементов
-            // document.getElementById('deleteSelected').addEventListener('click', function() {
-            //     const selectedIds = Array.from(document.querySelectorAll('input[name="selectedIds"]:checked'))
-            //         .map(checkbox => checkbox.value);
-
-            //     if (selectedIds.length === 0) {
-            //         alert('Please select at least one item to delete.');
-            //         return;
-            //     }
-
-            //     if (confirm(`Are you sure you want to delete ${selectedIds.length} selected item(s)?`)) {
-            //         // Здесь будет логика удаления
-            //         console.log('Deleting items:', selectedIds);
-            //     }
-            // });
         });
     </script>
 
+    <script src="~/lib/signalr/signalr.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
+    <script>
+        let connection = null;
+        let inventoryId = 1;
+
+        // Ждем полной загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing chat...');
+            initializeChat();
+        });
+
+        function initializeChat() {
+            // Получаем inventoryId
+            const inventoryIdElement = document.getElementById('inventoryId');
+            if (!inventoryIdElement) {
+                console.error('Inventory ID element not found');
+                return;
+            }
+
+            inventoryId = parseInt(inventoryIdElement.value);
+            console.log('Initializing chat for inventory:', inventoryId);
+
+            // Инициализируем подключение
+            initializeSignalR();
+
+            // Добавляем обработчики событий
+            const sendButton = document.getElementById('sendButton');
+            const messageForm = document.getElementById('messageForm');
+
+            if (sendButton) {
+                sendButton.addEventListener('click', sendMessage);
+            }
+
+            if (messageForm) {
+                messageForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    sendMessage();
+                });
+            }
+
+            // Обработчик Enter для текстового поля
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+            }
+        }
+
+        function initializeSignalR() {
+            console.log('Initializing SignalR connection...');
+
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/chatHub")
+                .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
+
+            // Обработчики сообщений от сервера
+                   connection.on("ReceiveMessage", (message) => {
+            console.log('Received message object:', message);
+
+            if (typeof message === 'string') {
+                // Простое строковое сообщение (системное)
+            } else if (typeof message === 'object') {
+                // Объект сообщения из БД
+                addMessageObject(message);
+            } else {
+                console.warn('Unknown message format:', message);
+            }
+        });
+
+        connection.on("LoadMessageHistory", (messages) => {
+            console.log('Loading message history:', messages);
+            displayMessageHistory(messages);
+        });
+
+        // Обработчики состояния подключения
+        connection.onreconnecting((error) => {
+            console.log('Connection reconnecting...', error);
+            updateStatus('Reconnecting...');
+        });
+
+        connection.onreconnected((connectionId) => {
+            console.log('Connection reconnected:', connectionId);
+            updateStatus('Connected');
+            joinGroup();
+        });
+
+        connection.onclose((error) => {
+            console.log('Connection closed:', error);
+            updateStatus('Disconnected');
+        });
+
+            // Запускаем подключение
+            startConnection();
+        }
+
+        async function startConnection() {
+            try {
+                console.log('Starting SignalR connection...');
+                await connection.start();
+                console.log('SignalR connected successfully');
+                updateStatus('Connected');
+                addMessage('System', 'Connection started successfully');
+
+                // Присоединяемся к группе после подключения
+                await joinGroup();
+            } catch (err) {
+                console.error('SignalR connection failed:', err);
+                updateStatus('Connection failed');
+                addMessage('System', 'Connection failed: ' + err.message);
+
+                // Пытаемся переподключиться через 5 секунд
+                setTimeout(() => startConnection(), 5000);
+            }
+        }
+
+        async function joinGroup() {
+            if (!connection || connection.state !== 'Connected') {
+                console.log('Cannot join group - not connected');
+                return;
+            }
+
+            try {
+                console.log('Joining inventory group:', inventoryId);
+                await connection.invoke("JoinInventoryGroup", inventoryId);
+            } catch (err) {
+                console.error('Error joining group:', err);
+                addMessage('System', 'Error joining group: ' + err.message);
+            }
+        }
+
+        async function sendMessage() {
+            // Проверяем подключение
+            if (!connection || connection.state !== 'Connected') {
+                alert('Not connected to chat. Please wait...');
+                return;
+            }
+
+            // Получаем сообщение
+            const messageInput = document.getElementById('messageInput');
+            if (!messageInput) {
+                console.error('Message input not found');
+                return;
+            }
+
+            const message = messageInput.value.trim();
+            if (!message) {
+                alert('Please enter a message');
+                return;
+            }
+
+            console.log('Sending message:', { inventoryId, message });
+
+            try {
+                // Очищаем поле ввода сразу
+                messageInput.value = '';
+
+                // Показываем наше сообщение локально
+                // addMessage('You', message);
+
+                // Отправляем на сервер
+                await connection.invoke("SendMessage", inventoryId, message);
+                console.log('Message sent successfully');
+
+            } catch (err) {
+                console.error('Error sending message:', err);
+
+                // Возвращаем сообщение в поле ввода при ошибке
+                messageInput.value = message;
+
+                let errorMessage = 'Send message error: ';
+                if (err.message) {
+                    errorMessage += err.message;
+                }
+
+                alert(errorMessage);
+                addMessage('System', 'Failed to send message: ' + err.message);
+            }
+        }
+
+                function addMessageObject(message) {
+            const messagesDiv = document.getElementById('chatMessages');
+            if (!messagesDiv) {
+                console.error('Chat messages container not found');
+                return;
+            }
+
+            // Скрываем индикатор загрузки если он есть
+            const loadingIndicator = document.getElementById('loadingMessages');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message';
+
+            // Проверяем, текущий ли это пользователь
+            const currentUserId = document.getElementById('currentUserId')?.value;
+            const isCurrentUser = message.userId === currentUserId;
+
+            if (isCurrentUser) {
+                messageElement.classList.add('current-user');
+            }
+
+            messageElement.innerHTML = `
+                <div class="message-header">
+                    <strong class="user-name">${escapeHtml(message.userName)}</strong>
+                    <span class="message-time">${message.formattedTime}</span>
+                    ${message.isEdited ? '<span class="edited-badge">edited</span>' : ''}
+                </div>
+                <div class="message-text">${message.message}</div>
+            `;
+
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addMessage(user, message) {
+            const messagesDiv = document.getElementById('chatMessages');
+            if (!messagesDiv) {
+                console.error('Chat messages container not found');
+                return;
+            }
+
+            // Скрываем индикатор загрузки если он есть
+            const loadingIndicator = document.getElementById('loadingMessages');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message';
+
+            // Если это системное сообщение
+            if (user === 'System') {
+                messageElement.classList.add('system-message');
+                messageElement.innerHTML = `<em>${user}: ${escapeHtml(message)}</em>`;
+            } else {
+                messageElement.innerHTML = `<strong>${user}:</strong> ${escapeHtml(message)}`;
+            }
+
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function displayMessageHistory(messages) {
+            const messagesDiv = document.getElementById('chatMessages');
+            if (!messagesDiv) {
+                console.error('Chat messages container not found');
+                return;
+            }
+
+            const loadingIndicator = document.getElementById('loadingMessages');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+
+            messagesDiv.innerHTML = '';
+
+            if (messages && messages.length > 0) {
+                messages.forEach(message => {
+                    addMessageObject(message);
+                });
+            } else {
+                messagesDiv.innerHTML = '<div class="text-center text-muted py-4">No messages yet</div>';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateStatus(status) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (!statusElement) {
+                console.warn('Status element not found');
+                return;
+            }
+
+            // Обновляем текст и цвет статуса
+            const statusText = statusElement.querySelector('.status-text');
+            if (statusText) {
+                statusText.textContent = status;
+            } else {
+                // Если нет элемента с текстом, обновляем весь контент
+                if (status === 'Connected') {
+                    statusElement.innerHTML = '<i class="fas fa-circle me-1"></i><span class="status-text">Connected</span>';
+                    statusElement.className = 'badge bg-success';
+                } else if (status === 'Reconnecting...') {
+                    statusElement.innerHTML = '<i class="fas fa-circle me-1"></i><span class="status-text">Reconnecting...</span>';
+                    statusElement.className = 'badge bg-warning';
+                } else {
+                    statusElement.innerHTML = '<i class="fas fa-circle me-1"></i><span class="status-text">Disconnected</span>';
+                    statusElement.className = 'badge bg-danger';
+                }
+            }
+        }
+    </script>
+}
     <style>
         .clickable-row {
             cursor: pointer;
@@ -710,7 +763,6 @@
                 background-color: #f8f9fa !important;
             }
 
-            /* Убираем pointer для чекбокса */
             .clickable-row .rowCheckbox {
                 cursor: default;
             }
@@ -718,301 +770,56 @@
         tbody tr {
             user-select: none;
         }
+
+        .stat-card {
+            background: #f8f9fc;
+            border-left: 4px solid #4e73df;
+            padding: 20px;
+            text-align: center;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+            .stat-card h4 {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #5a5c69;
+                margin: 0;
+            }
+
+            .stat-card p {
+                color: #858796;
+                margin: 5px 0 0 0;
+            }
+
+        .chart-card {
+            background: white;
+            border: 1px solid #e3e6f0;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            margin-bottom: 1rem;
+        }
+
+        .numeric-summary, .text-summary {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e3e6f0;
+            font-size: 0.9rem;
+            color: #858796;
+        }
+
+        .boolean-summary {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e3e6f0;
+            font-size: 0.9rem;
+            color: #858796;
+        }
+
     </style>
-} 
-@* @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        let statsChart1, statsChart2;
-
-        // Загружаем статистику при переходе на вкладку
-        document.addEventListener('DOMContentLoaded', function() {
-            const statisticsTab = document.getElementById('statistics-tab');
-            if (statisticsTab) {
-                statisticsTab.addEventListener('shown.bs.tab', function() {
-                    loadStatistics();
-                });
-            }
-
-            // Если уже на вкладке статистики, загружаем сразу
-            if (document.getElementById('statistics-tab').classList.contains('active')) {
-                loadStatistics();
-            }
-        });
-
-        async function loadStatistics() {
-            const inventoryId = @ViewBag.SelectedInventory?.Id;
-            if (!inventoryId) {
-                showError('Inventory ID not found');
-                return;
-            }
-
-            showLoading();
-
-            try {
-                const response = await fetch(`/api/Items/${inventoryId}/stats`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const stats = await response.json();
-                renderStatistics(stats);
-
-            } catch (error) {
-                console.error('Error loading statistics:', error);
-                showError('Failed to load statistics: ' + error.message);
-            }
-        }
-
-        function renderStatistics(stats) {
-            hideLoading();
-
-            // Обновляем основную статистику
-            document.getElementById('totalItems').textContent = stats.totalItems.toLocaleString();
-            document.getElementById('itemsWithImages').textContent = stats.itemsWithImages.toLocaleString();
-            document.getElementById('itemsWithComments').textContent = stats.itemsWithComments.toLocaleString();
-            document.getElementById('totalFields').textContent = stats.totalFields.toLocaleString();
-            document.getElementById('generatedAt').textContent = `Generated: ${new Date(stats.generatedAt).toLocaleString()}`;
-
-            // Создаем графики
-            createFieldTypeChart(stats.fieldTypeDistribution);
-            createActivityChart(stats.activityStats);
-
-            // Рендерим статистику полей
-            renderNumericFieldsStats(stats.numericFieldsStats);
-            renderTextFieldsStats(stats.textFieldsStats);
-            renderTopTags(stats.topTags);
-
-            // Показываем контент
-            document.getElementById('statsContent').style.display = 'block';
-        }
-
-        function createFieldTypeChart(distribution) {
-            const ctx = document.getElementById('fieldTypeChart').getContext('2d');
-
-            if (statsChart1) {
-                statsChart1.destroy();
-            }
-
-            statsChart1 = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Numeric', 'Text', 'Boolean', 'Date', 'File', 'Multiline Text'],
-                    datasets: [{
-                        data: [
-                            distribution.numericFieldsCount,
-                            distribution.textFieldsCount,
-                            distribution.booleanFieldsCount,
-                            distribution.dateFieldsCount,
-                            distribution.fileFieldsCount,
-                            distribution.multilineTextFieldsCount
-                        ],
-                        backgroundColor: [
-                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Field Types Distribution'
-                        }
-                    }
-                }
-            });
-        }
-
-        function createActivityChart(activityStats) {
-            const ctx = document.getElementById('activityChart').getContext('2d');
-
-            if (statsChart2) {
-                statsChart2.destroy();
-            }
-
-            statsChart2 = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Items Created (7d)', 'Items Created (30d)', 'Items Updated (7d)', 'Comments (7d)', 'Likes (7d)'],
-                    datasets: [{
-                        label: 'Count',
-                        data: [
-                            activityStats.itemsCreatedLast7Days,
-                            activityStats.itemsCreatedLast30Days,
-                            activityStats.itemsUpdatedLast7Days,
-                            activityStats.commentsAddedLast7Days,
-                            activityStats.likesAddedLast7Days
-                        ],
-                        backgroundColor: 'rgba(54, 162, 235, 0.8)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'Recent Activity'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderNumericFieldsStats(numericStats) {
-            const container = document.getElementById('numericFieldsStats');
-
-            if (!numericStats || numericStats.length === 0) {
-                container.innerHTML = '<div class="col-12 text-center text-muted py-3">No numeric fields data available</div>';
-                return;
-            }
-
-            let html = '';
-            numericStats.forEach(stat => {
-                html += `
-                    <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="card h-100">
-                            <div class="card-header bg-primary text-white">
-                                <h6 class="card-title mb-0">${stat.fieldName}</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row text-center small">
-                                    <div class="col-6 mb-2">
-                                        <div class="text-muted">Average</div>
-                                        <div class="fw-bold">${stat.average.toFixed(2)}</div>
-                                    </div>
-                                    <div class="col-6 mb-2">
-                                        <div class="text-muted">Count</div>
-                                        <div class="fw-bold">${stat.count}</div>
-                                    </div>
-                                    <div class="col-6 mb-2">
-                                        <div class="text-muted">Min</div>
-                                        <div class="fw-bold">${stat.min.toFixed(2)}</div>
-                                    </div>
-                                    <div class="col-6 mb-2">
-                                        <div class="text-muted">Max</div>
-                                        <div class="fw-bold">${stat.max.toFixed(2)}</div>
-                                    </div>
-                                    <div class="col-6 mb-2">
-                                        <div class="text-muted">Sum</div>
-                                        <div class="fw-bold">${stat.sum.toFixed(2)}</div>
-                                    </div>
-                                    <div class="col-6 mb-2">
-                                        <div class="text-muted">Std Dev</div>
-                                        <div class="fw-bold">${stat.standardDeviation.toFixed(2)}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function renderTextFieldsStats(textStats) {
-            const container = document.getElementById('textFieldsStats');
-
-            if (!textStats || textStats.length === 0) {
-                container.innerHTML = '<div class="text-center text-muted py-3">No text fields data available</div>';
-                return;
-            }
-
-            let html = '<div class="row">';
-            textStats.forEach(stat => {
-                html += `
-                    <div class="col-md-6 mb-4">
-                        <div class="card">
-                            <div class="card-header bg-info text-white">
-                                <h6 class="card-title mb-0">${stat.fieldName}</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-4 text-center">
-                                        <div class="text-muted">Total</div>
-                                        <div class="fw-bold">${stat.totalValues}</div>
-                                    </div>
-                                    <div class="col-4 text-center">
-                                        <div class="text-muted">Unique</div>
-                                        <div class="fw-bold">${stat.uniqueValues}</div>
-                                    </div>
-                                    <div class="col-4 text-center">
-                                        <div class="text-muted">Empty</div>
-                                        <div class="fw-bold">${stat.emptyValues}</div>
-                                    </div>
-                                </div>
-                                ${stat.topValues && stat.topValues.length > 0 ? `
-                                    <h6 class="mt-3">Top Values:</h6>
-                                    <div class="small">
-                                        ${stat.topValues.slice(0, 5).map(value => `
-                                            <div class="d-flex justify-content-between">
-                                                <span>${value.value}</span>
-                                                <span class="text-muted">${value.count} (${value.percentage.toFixed(1)}%)</span>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-
-            container.innerHTML = html;
-        }
-
-        function renderTopTags(topTags) {
-            const container = document.getElementById('topTags');
-
-            if (!topTags || topTags.length === 0) {
-                container.innerHTML = '<div class="text-muted">No tags available</div>';
-                return;
-            }
-
-            let html = '';
-            topTags.forEach(tag => {
-                const percentage = Math.min(100, Math.max(20, tag.percentage)); // Минимальный размер 20%
-                html += `
-                    <span class="badge bg-primary position-relative" style="font-size: ${percentage / 10 + 0.8}em;">
-                        ${tag.value}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-light text-dark">
-                            ${tag.count}
-                        </span>
-                    </span>
-                `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function showLoading() {
-            document.getElementById('statsLoading').style.display = 'block';
-            document.getElementById('statsContent').style.display = 'none';
-            document.getElementById('statsError').style.display = 'none';
-        }
-
-        function hideLoading() {
-            document.getElementById('statsLoading').style.display = 'none';
-        }
-
-        function showError(message) {
-            document.getElementById('statsLoading').style.display = 'none';
-            document.getElementById('statsContent').style.display = 'none';
-            document.getElementById('statsError').style.display = 'block';
-            document.getElementById('errorMessage').textContent = message;
-        }
-    </script>
-} *@
+}

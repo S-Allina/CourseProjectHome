@@ -1,4 +1,5 @@
 ﻿using Main.Application.Dtos.Inventories.Create;
+using Microsoft.AspNetCore.Http;
 
 namespace Main.Application.Dtos.Inventories.Index
 {
@@ -9,8 +10,11 @@ namespace Main.Application.Dtos.Inventories.Index
         public string Description { get; set; }
         public int? CategoryId { get; set; }
         public string ImageUrl { get; set; }
+        public IFormFile? Image { get; set; }
         public bool IsPublic { get; set; }
         public string CustomIdFormat { get; set; }
+        public string OwnerId { get; set; }
+        public DateTime CreatedAt { get; set; }
         public string Version { get; set; }
         public List<string> Tags { get; set; } = new();
         public List<InventoryAccessDto> AccessList { get; set; } = new();
