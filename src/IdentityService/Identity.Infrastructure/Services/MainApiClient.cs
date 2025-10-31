@@ -1,6 +1,8 @@
-﻿using Identity.Application.Interfaces;
+﻿using Identity.Application.Configuration;
+using Identity.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,13 +16,13 @@ namespace Identity.Infrastructure.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<MainApiClient> _logger;
-        private readonly string _mainApiBaseUrl;
+        private readonly UrlSettings _urlSettings;
 
-        public MainApiClient(HttpClient httpClient, IConfiguration configuration, ILogger<MainApiClient> logger)
+        public MainApiClient(HttpClient httpClient, ILogger<MainApiClient> logger, IOptions<UrlSettings> urlSettings)
         {
             _httpClient = httpClient;
             _logger = logger;
-            _mainApiBaseUrl ="https://localhost:7004";
+            _urlSettings = urlSettings.Value;
 
             // Настройка HttpClient
             _httpClient.Timeout = TimeSpan.FromSeconds(30);
@@ -39,7 +41,7 @@ namespace Identity.Infrastructure.Services
                     Email = email
                 };
 
-                var response = await _httpClient.PostAsJsonAsync($"{_mainApiBaseUrl}/api/users", request);
+                var response = await _httpClient.PostAsJsonAsync($"{_urlSettings.Main}/api/users", request);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -71,7 +73,7 @@ namespace Identity.Infrastructure.Services
                     Email = email
                 };
 
-                var response = await _httpClient.PutAsJsonAsync($"{_mainApiBaseUrl}/api/users/{userId}", request);
+                var response = await _httpClient.PutAsJsonAsync($"{_urlSettings.Main}/api/users/{userId}", request);
 
                 if (response.IsSuccessStatusCode)
                 {

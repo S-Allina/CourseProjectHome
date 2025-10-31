@@ -81,7 +81,11 @@ namespace Identity.Presentation.Controllers
                 response.Result = user;
                 response.ReturnUrl = request.ReturnUrl;
             }
-            return response;
+            else
+            {
+                throw new Exception("Invalid email or password.");
+            }
+                return response;
         }
 
         //[HttpGet("google-login")]
@@ -140,7 +144,7 @@ namespace Identity.Presentation.Controllers
         {
             await _userRegistrationService.ConfirmEmailAsync(token, email);
 
-            return Redirect("http://localhost:5173/theapp/#/theapp/login");
+            return Redirect("https://s-allina.github.io/theapp/#/theapp/login");
         }
 
         [HttpPost("forgot-password")]

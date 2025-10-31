@@ -6,7 +6,7 @@
 @model IEnumerable<Main.Application.Dtos.Items.Index.ItemDto>
 @{
     ViewData["Title"] = "Items";
-    var inventory = ViewBag.SelectedInventory as InventoryDto;
+    var inventory = ViewBag.SelectedInventory as InventoryTableDto;
 }
 
 <!-- Верхняя панель с кнопками -->
@@ -16,7 +16,7 @@
         @if (!string.IsNullOrEmpty(inventory?.Description))
         {
             <div class="text-muted mb-0 inventory-description-full">
-                @Html.Raw(inventory.DescriptionHtml)
+             @inventory.DescriptionPreview
             </div>
         }
         else
@@ -52,19 +52,15 @@
 </ul>
 
 <div class="tab-content" id="myTabContent">
-    <!-- Items Tab -->
     <div class="tab-pane fade show active" id="items" role="tabpanel" aria-labelledby="items-tab">
         <partial name="_ItemsTab" model="Model" />
     </div>
 
-    <!-- Statistics Tab -->
     <div class="tab-pane fade" id="statistics" role="tabpanel" aria-labelledby="statistics-tab">
         <div id="stats-container">
-            @* <partial name="_StatisticsTab" model="Model" /> *@
         </div>
     </div>
 
-    <!-- Chat Tab -->
     <div class="tab-pane fade" id="chat" role="tabpanel" aria-labelledby="chat-tab">
         <partial name="_ChatTab" />
     </div>
@@ -74,7 +70,6 @@
     <i class="fas fa-arrow-left me-1"></i>Back to Inventories
 </a>
 
-<!-- Модальное окно для деталей товара -->
 <div class="modal fade" id="itemDetailsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -83,13 +78,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="itemDetailsContent">
-                <!-- Контент загружается через AJAX -->
             </div>
         </div>
     </div>
 </div>
 
-<!-- Hidden field для данных -->
 <input type="hidden" id="inventoryId" value="@inventory?.Id" />
 <input type="hidden" id="currentUserId" value="@User.FindFirstValue(ClaimTypes.NameIdentifier)" />
 
@@ -97,7 +90,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        // Основная функция загрузки статистики
         async function loadStatisticsTab() {
             const inventoryId = @(inventory?.Id ?? 0);
             if (!inventoryId) {

@@ -3,6 +3,7 @@ using Main.Application.Dtos.Items.Create;
 using Main.Application.Dtos.Items.Index;
 using Main.Application.Interfaces;
 using Main.Domain.entities.inventory;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Main.Presentation.MVC.Controllers
@@ -20,11 +21,9 @@ namespace Main.Presentation.MVC.Controllers
             _customIdService = customIdService;
         }
 
-        // GET: Items
-        [HttpGet("{id}")]
+        [HttpGet("{inventoryId}")]
         public async Task<IActionResult> Index(int? inventoryId, CancellationToken cancellationToken)
         {
-            // Если передан inventoryId, показываем товары этого инвентаря
             if (inventoryId.HasValue)
             {
                 var items = await _itemService.GetByInventoryAsync(inventoryId.Value, cancellationToken);
@@ -34,12 +33,10 @@ namespace Main.Presentation.MVC.Controllers
                 return View(items.ToList());
             }
 
-            // Иначе показываем список инвентарей
             var inventories = await _inventoryService.GetAll(cancellationToken);
             return View(inventories);
         }
 
-        // Метод для получения товаров в формате JSON (для AJAX)
         [HttpGet]
         public async Task<IActionResult> GetInventoryItems(int inventoryId, CancellationToken cancellationToken)
         {
@@ -49,7 +46,6 @@ namespace Main.Presentation.MVC.Controllers
             return Json(new { Items = items, Inventory = inventory });
         }
 
-        // GET: Items/Details/5
         [HttpGet]
         public async Task<IActionResult> Details([FromQuery] int id)
         {
@@ -61,6 +57,8 @@ namespace Main.Presentation.MVC.Controllers
 
             return View(item);
         }
+
+        [Authorize]
         public async Task<IActionResult> Create(int inventoryId, CancellationToken cancellationToken)
         {
             var inventory = await _inventoryService.GetById(inventoryId, cancellationToken);
@@ -86,9 +84,9 @@ namespace Main.Presentation.MVC.Controllers
             return View(createDto);
         }
 
-        // POST: Items/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize]
         public async Task<IActionResult> Create(CreateItemDto createDto, CancellationToken cancellationToken)
         {
             try
@@ -109,6 +107,7 @@ namespace Main.Presentation.MVC.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> Edit(int itemId, CancellationToken cancellationToken)
         {
             var item = await _itemService.GetByIdAsync(itemId, cancellationToken);
@@ -146,6 +145,7 @@ namespace Main.Presentation.MVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize]
         public async Task<IActionResult> Edit(ItemDto dto, CancellationToken cancellationToken)
         {
             var inventory = await _inventoryService.GetById(dto.InventoryId, cancellationToken);
@@ -156,35 +156,13 @@ namespace Main.Presentation.MVC.Controllers
             return RedirectToAction("Index", new { inventoryId = dto.InventoryId });
 
         }
-        //}
 
-        //// POST: Items/Delete/5
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Delete(int[] selectedIds)
         {
             var id = await _itemService.DeleteItemAsync(selectedIds);
             return RedirectToAction("Index", "Items", new { inventoryId = id });
         }
-
-        //private bool ItemExists(int id)
-        //{
-        //    return _context.Items.Any(e => e.Id == id);
-        //}
-
-
-        //[HttpGet("{inventoryId}/stats")]
-        //public async Task<ActionResult<InventoryStatsDto>> GetInventoryStats(int inventoryId)
-        //{
-        //    try
-        //    {
-        //        var stats = await _itemService.GetInventoryStatsAsync(inventoryId);
-        //        return Ok(stats);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { error = "Error calculating statistics" });
-        //    }
-        //}
-
     }
 }

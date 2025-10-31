@@ -48,8 +48,7 @@ namespace Main.Application.Services
 
             var fieldSchema = await _inventoryService.GetInventoryFields(createDto.InventoryId, cancellationToken);
 
-            ValidateFieldValues(createDto.FieldValues, fieldSchema);
-
+            ValidateAndConvertFieldValues(createDto.FieldValues, fieldSchema.ToList());
             var item = new Item
             {
                 InventoryId = createDto.InventoryId,
@@ -63,7 +62,6 @@ namespace Main.Application.Services
 
             await AddFieldValuesAsync(item, createDto.FieldValues, fieldSchema1, cancellationToken);
 
-            // 7. Сохраняем
             var createdItem = await _itemRepository.CreateAsync(item, cancellationToken);
             return _mapper.Map<ItemDto>(createdItem);
         }
@@ -74,14 +72,6 @@ namespace Main.Application.Services
             await _itemRepository.DeleteAsync(i => ids.Contains(i.Id), cancellationToken);
 
             return inventory.InventoryId;
-        }
-
-        private void ValidateFieldValues(List<CreateItemFieldValueDto> fieldValues, IEnumerable<InventoryFieldDto> fieldSchema)
-        {
-            // Проверяем обязательные поля
-            var requiredFields = fieldSchema.ToList();
-            ValidateAndConvertFieldValues(fieldValues, requiredFields);
-
         }
 
         private void ValidateAndConvertFieldValues(List<CreateItemFieldValueDto> fieldValues, List<InventoryFieldDto> fieldSchema)
@@ -109,6 +99,7 @@ namespace Main.Application.Services
                 result[fieldValue.InventoryFieldId] = value;
             }
         }
+
         private async Task AddFieldValuesAsync(Item item, List<CreateItemFieldValueDto> fieldValues, List<InventoryField> fieldSchema, CancellationToken cancellationToken)
         {
             foreach (var fieldValue in fieldValues)
@@ -140,7 +131,6 @@ namespace Main.Application.Services
                         itemFieldValue.BooleanValue = (bool)fieldValue.BooleanValue;
                         break;
                 }
-
                 item.FieldValues.Add(itemFieldValue);
             }
         }
@@ -195,24 +185,10 @@ namespace Main.Application.Services
             return true;
         }
 
-
-
         private async Task<bool> CheckAccess(int inventoryId, AccessLevel accessLevel, CancellationToken cancellationToken)
         {
             var t = _usersService.GetCurrentUserRole();
             return await _inventoryService.HasWriteAccessAsync(inventoryId, accessLevel, cancellationToken) || _usersService.GetCurrentUserRole() == "Admin";
         }
-
-        //private ActivityStatsDto CalculateActivityStats(List<ItemDto> items)
-        //{
-        //    var now = DateTime.UtcNow;
-
-        //    return new ActivityStats
-        //    {
-        //        ItemsCreatedLast7Days = items.Count(i => i.CreatedAt >= now.AddDays(-7)),
-        //        ItemsCreatedLast30Days = items.Count(i => i.CreatedAt >= now.AddDays(-30)),
-        //        ItemsUpdatedLast7Days = items.Count(i => i.UpdatedAt >= now.AddDays(-7))
-        //    };
-        //}
     }
 }

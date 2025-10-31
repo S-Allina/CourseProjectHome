@@ -9,6 +9,7 @@ namespace Main.Presentation.MVC.Controllers
     public class AccountController : Controller
     {
         private readonly SignInManager<User> _signInManager;
+
         public AccountController()
         {
 

@@ -1,0 +1,28 @@
+﻿@using Main.Application.Interfaces
+@inject IUrlService UrlService
+
+<header>
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
+        <div class="container-fluid">
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                <i class="fas fa-cube me-2"></i>InventoryApp
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#mainNavbar" aria-controls="mainNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <partial name="~/Views/Shared/Components/Header/Navigation.cshtml" />
+
+                <div class="d-flex align-items-center ms-auto">
+                    @* <partial name="Search" /> *@
+                    <partial name="~/Views/Shared/Components/_SelectLanguagePartial.cshtml" />
+                </div>
+                <partial name="~/Views/Shared/Components/Search/Search.cshtml" />
+
+            </div>
+        </div>
+    </nav>
+</header>

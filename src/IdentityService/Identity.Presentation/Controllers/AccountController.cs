@@ -1,10 +1,13 @@
 ﻿// Controllers/AccountController.cs в Auth проекте
+using Identity.Application.Configuration;
 using Identity.Domain.Entity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using NuGet.Configuration;
 using System.Web;
 
 namespace Identity.Presentation.Controllers
@@ -12,10 +15,12 @@ namespace Identity.Presentation.Controllers
     public class AccountController : Controller
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UrlSettings _urlSettings;
 
-        public AccountController(SignInManager<ApplicationUser> signInManager)
+        public AccountController(SignInManager<ApplicationUser> signInManager, IOptions<UrlSettings> urlSettings)
         {
             _signInManager = signInManager;
+            _urlSettings = urlSettings.Value;
         }
 
         [HttpGet]
@@ -23,7 +28,7 @@ namespace Identity.Presentation.Controllers
         {
             // Перенаправляем на React фронтенд для логина
             var decodedReturnUrl = HttpUtility.UrlDecode(returnUrl);
-            var reactLoginUrl = $"http://localhost:5173/theapp/#/theapp/login?returnUrl={Uri.EscapeDataString(decodedReturnUrl)}";
+            var reactLoginUrl = $"{_urlSettings.AuthFront}/theapp/#/theapp/login?returnUrl={Uri.EscapeDataString(decodedReturnUrl)}";
             return Redirect(reactLoginUrl);
         }
 
@@ -47,7 +52,7 @@ namespace Identity.Presentation.Controllers
             }
 
             // Если логин не удался, возвращаем на React с ошибкой
-            var reactErrorUrl = $"http://localhost:5173/login?error=invalid_credentials&returnUrl={Uri.EscapeDataString(model.ReturnUrl)}";
+            var reactErrorUrl = $"{_urlSettings.AuthFront}/login?error=invalid_credentials&returnUrl={Uri.EscapeDataString(model.ReturnUrl)}";
             return Redirect(reactErrorUrl);
         }
 
@@ -55,7 +60,7 @@ namespace Identity.Presentation.Controllers
         public async Task<IActionResult> Logout(string logoutId)
         {
             await _signInManager.SignOutAsync();
-            return Redirect("https://localhost:7004");
+            return Redirect(_urlSettings.Main);
         }
 
     }

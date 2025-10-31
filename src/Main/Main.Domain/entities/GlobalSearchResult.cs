@@ -44,7 +44,7 @@ namespace Main.Domain.entities
     {
         public string Id { get; set; }
         public string Name { get; set; }
-        public string Type { get; set; } // "Inventory", "Item", "User"
+        public string Type { get; set; } 
         public string AdditionalInfo { get; set; }
         public string Url { get; set; }
     }

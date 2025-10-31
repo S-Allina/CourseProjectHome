@@ -48,7 +48,6 @@ namespace Main.Application.Services
                     NonEmptyValuesCount = fieldValues.Count(fv => !IsEmptyValue(fv, field.FieldType))
                 };
 
-                // Для числовых полей
                 if (field.FieldType == FieldType.Number)
                 {
                     var numericValues = fieldValues
@@ -64,7 +63,6 @@ namespace Main.Application.Services
                     }
                 }
 
-                // Для текстовых и мультилайн полей
                 if (field.FieldType == FieldType.Text || field.FieldType == FieldType.MultilineText)
                 {
                     var textValues = fieldValues
@@ -79,7 +77,6 @@ namespace Main.Application.Services
                     stats.UniqueValuesCount = stats.ValueCounts.Count;
                 }
 
-                // Для булевых полей
                 if (field.FieldType == FieldType.Boolean)
                 {
                     var boolValues = fieldValues

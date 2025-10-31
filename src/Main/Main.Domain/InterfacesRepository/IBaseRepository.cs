@@ -11,11 +11,5 @@ namespace Main.Domain.InterfacesRepository
         Task<TEntity> UpdateAsync(TEntity item, CancellationToken cancellationToken = default);
         Task DeleteAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default);
         Task<bool> IsExistsAsync(Expression<Func<TEntity, bool>> filter = null, CancellationToken cancellationToken = default);
-        //Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(
-        //   int pageNumber,
-        //   int pageSize,
-        //   Expression<Func<T, bool>> filter = null,
-        //   string includeProperties = null,
-        //   CancellationToken cancellationToken = default);
     }
 }

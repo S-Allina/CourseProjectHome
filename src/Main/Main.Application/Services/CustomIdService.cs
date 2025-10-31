@@ -17,8 +17,6 @@ namespace Main.Application.Services
 
         public async Task<string> GenerateCustomIdAsync(int inventoryId, CancellationToken cancellationToken = default)
         {
-            try
-            {
                 var inventory = await _inventoryRepository.GetFirstAsync(
                     i => i.Id == inventoryId, cancellationToken);
 
@@ -26,23 +24,14 @@ namespace Main.Application.Services
                     throw new ArgumentException("Inventory not found");
 
                 if (string.IsNullOrEmpty(inventory.CustomIdFormat))
-                    return Guid.NewGuid().ToString("N").Substring(0, 8); // Fallback
+                    return Guid.NewGuid().ToString("N").Substring(0, 8);
 
-                // Генерируем ID из строкового формата
                 var customId = await GenerateFromStringTemplateAsync(inventory.CustomIdFormat, inventoryId, cancellationToken);
 
-                // Проверяем уникальность
                 if (await IsCustomIdExistsAsync(inventoryId, customId, cancellationToken))
-                {
                     return await GenerateCustomIdAsync(inventoryId, cancellationToken);
-                }
 
                 return customId;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error generating custom ID: {ex.Message}", ex);
-            }
         }
 
         private async Task<string> GenerateFromStringTemplateAsync(string template, int inventoryId, CancellationToken cancellationToken)
@@ -95,7 +84,7 @@ namespace Main.Application.Services
                 "YYYY-MM-DD" => DateTime.UtcNow.ToString("yyyy-MM-dd"),
                 "DDMMYYYY" => DateTime.UtcNow.ToString("ddMMyyyy"),
                 "UNIX" => DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
-                _ => component // Если не распознан - возвращаем как есть
+                _ => component
             };
         }
 
@@ -114,7 +103,6 @@ namespace Main.Application.Services
             }
             catch (Exception)
             {
-                // Retry on concurrency conflict
                 return await GenerateSequenceComponentAsync(inventoryId, digits, cancellationToken);
             }
         }
@@ -130,7 +118,6 @@ namespace Main.Application.Services
             return await _itemRepository.IsExistsAsync(i => i.InventoryId == inventoryId && i.CustomId == customId, cancellationToken);
         }
 
-        // Метод для preview (без сохранения в БД)
         public string GeneratePreview(string template)
         {
             if (string.IsNullOrEmpty(template))

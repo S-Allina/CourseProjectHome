@@ -24,7 +24,6 @@ namespace Main.Presentation.MVC.Controllers
             _usersService = usersService;
         }
 
-        //// GET: Inventories
         [HttpGet("Index")]
         [Authorize]
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -33,19 +32,11 @@ namespace Main.Presentation.MVC.Controllers
             return View(t);
         }
 
-        public class GetUsersDetailsRequest
-        {
-            public List<string> UserIds { get; set; } = new();
-        }
-
-
-            [HttpPost]
+        [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([FromForm]
-            CreateInventoryDto createDto,
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Create([FromForm] CreateInventoryDto createDto, CancellationToken cancellationToken = default)
         {
-            Console.WriteLine($"Fields count: {createDto.Fields?.Count}");
             if (createDto.Fields != null)
             {
                 foreach (var field in createDto.Fields)
@@ -55,13 +46,13 @@ namespace Main.Presentation.MVC.Controllers
             }
             var inventory = await _inventoryService.CreateInventoryAsync(createDto, cancellationToken);
 
-            _logger.LogInformation("User created inventory {InventoryId}", inventory.Id);
-
             //return CreatedAtAction(nameof(GetInventory), new { id = inventory.Id }, inventory);
             return RedirectToAction(nameof(Index));
         }
+
         [HttpPost]
-        public async Task<IActionResult> Delete(int[] selectedIds) // Используйте тип вашего ID (int, Guid)
+        [Authorize]
+        public async Task<IActionResult> Delete(int[] selectedIds)
         {
             await _inventoryService.DeleteInventoryAsync(selectedIds);
             return RedirectToAction(nameof(Index));
@@ -70,7 +61,9 @@ namespace Main.Presentation.MVC.Controllers
         public async Task<IActionResult> Create()
         {
             var model = new InventoryFormDto();
+
             var categories = await _inventoryService.GetCategories(CancellationToken.None);
+
             var categoriesList = categories
         .OrderBy(c => c.Name)
         .Select(c => new SelectListItem
@@ -84,22 +77,14 @@ namespace Main.Presentation.MVC.Controllers
                 Text = "Другое"
             });
             ViewData["Categories"] = categoriesList;
-            return View("Create", model); // Используем одно представление
+            return View("Create", model);
         }
         public async Task<IActionResult> StatsPartial(int inventoryId)
         {
-            try
-            {
                 var stats = await _statsService.GetInventoryStatsAsync(inventoryId);
                 return PartialView("_StatisticsTab", stats);
-            }
-            catch (Exception ex)
-            {
-                // Логируем ошибку
-                return PartialView("_StatsError", new { Message = "Ошибка загрузки статистики" });
-            }
         }
-        // GET: Edit
+
         public async Task<IActionResult> Edit(int id)
         {
             var inventory = await _inventoryService.GetById(id);
@@ -144,24 +129,16 @@ namespace Main.Presentation.MVC.Controllers
                     Text = "Другое"
                 });
                 ViewData["Categories"] = categoriesList;
-                return View("Create", model); // Используем то же представление
+                return View("Create", model);
             }
             else throw new UnauthorizedAccessException("У вас нет права редактирования инвенторя.");
         }
 
-
-        //public async Task<IActionResult> Items(int id, CancellationToken cancellationToken)
-        //{
-        //    return RedirectToAction("Index","items",id);
-        //}
-        // POST: Inventories/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(InventoryDto inventory, CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(InventoryDetailsDto inventory, CancellationToken cancellationToken)
         {
-                await _inventoryService.UpdateInventoryAsync(inventory);
+            await _inventoryService.UpdateInventoryAsync(inventory);
 
             return RedirectToAction("Index", "Items", new { inventoryId = inventory.Id });
         }
@@ -174,7 +151,6 @@ namespace Main.Presentation.MVC.Controllers
             {
                 var ownerId = "kjilsfhrfbeibkv";
 
-                // Проверяем, существует ли инвентарь и принадлежит ли пользователю
                 var existingInventory = await _inventoryService.GetById((int)autoSaveDto.Id, cancellationToken);
                 if (existingInventory == null)
                 {
@@ -192,7 +168,7 @@ namespace Main.Presentation.MVC.Controllers
                 }
 
                 // Обновляем инвентарь
-                var updateDto = new InventoryDto
+                var updateDto = new InventoryDetailsDto
                 {
                     Id = (int)autoSaveDto.Id,
                     Name = autoSaveDto.Name,
@@ -244,58 +220,5 @@ namespace Main.Presentation.MVC.Controllers
                 return Json(new { success = false, message = "Auto-save failed. Please try again." });
             }
         }
-        //// GET: Inventories/Details/5
-        //public async Task<IActionResult> Details(int? id)
-        //{
-        //    if (id == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var inventory = await _context.Inventories
-        //        .Include(i => i.Category)
-        //        .FirstOrDefaultAsync(m => m.Id == id);
-        //    if (inventory == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return View(inventory);
-        //}
-
-        //// GET: Inventories/Delete/5
-        //public async Task<IActionResult> Delete(int? id)
-        //{
-        //    if (id == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var inventory = await _context.Inventories
-        //        .Include(i => i.Category)
-        //        .FirstOrDefaultAsync(m => m.Id == id);
-        //    if (inventory == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return View(inventory);
-        //}
-
-        //// POST: Inventories/Delete/5
-        //[HttpPost, ActionName("Delete")]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> DeleteConfirmed(int id)
-        //{
-        //    var inventory = await _context.Inventories.FindAsync(id);
-        //    if (inventory != null)
-        //    {
-        //        _context.Inventories.Remove(inventory);
-        //    }
-
-        //    await _context.SaveChangesAsync();
-        //    return RedirectToAction(nameof(Index));
-        //}
-
     }
 }

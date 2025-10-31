@@ -42,32 +42,32 @@ namespace Main.Application.Services
             _usersService = usersService;
         }
 
-        public async Task<IEnumerable<InventoryDto>> GetAll(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<InventoryTableDto>> GetAll(CancellationToken cancellationToken = default)
         {
-            var inventories = await _inventoryRepository.GetAllAsync(null, cancellationToken, "Fields");
-            return _mapper.Map<IEnumerable<InventoryDto>>(inventories);
+            var inventories = await _inventoryRepository.GetAllAsync(null,cancellationToken, "Owner", "Category");
+            return _mapper.Map<IEnumerable<InventoryTableDto>>(inventories);
         }
 
-        public async Task<IEnumerable<InventoryDto>> GetUserInventoriesAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<InventoryTableDto>> GetUserInventoriesAsync(CancellationToken cancellationToken = default)
         {
             var userId = _usersService.GetCurrentUserId();
-            var inventories = await _inventoryRepository.GetAllAsync(i => i.OwnerId == userId, cancellationToken, "Fields", "Owner", "Category");
-            return _mapper.Map<IEnumerable<InventoryDto>>(inventories);
+            var inventories = await _inventoryRepository.GetAllAsync(i => i.OwnerId == userId, cancellationToken, "Owner", "Category");
+            return _mapper.Map<IEnumerable<InventoryTableDto>>(inventories);
         }
 
-        public async Task<IEnumerable<InventoryDto>> GetSharedInventoriesAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<InventoryTableDto>> GetSharedInventoriesAsync(CancellationToken cancellationToken = default)
         {
             var userId = _usersService.GetCurrentUserId();
 
-            var inventories = await _inventoryRepository.GetAllAsync(i => i.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= 2), cancellationToken, "Fields", "Owner");
-            return _mapper.Map<IEnumerable<InventoryDto>>(inventories);
+            var inventories = await _inventoryRepository.GetAllAsync(i => i.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= 2), cancellationToken, "Owner", "Category");
+            return _mapper.Map<IEnumerable<InventoryTableDto>>(inventories);
         }
 
-        public async Task<InventoryDto> GetById(int id, CancellationToken cancellationToken = default)
+        public async Task<InventoryDetailsDto> GetById(int id, CancellationToken cancellationToken = default)
         {
-            var inventories = await _inventoryRepository.GetFirstAsync(i => i.Id == id, cancellationToken, "Fields","AccessList");
+            var inventories = await _inventoryRepository.GetFirstAsync(i => i.Id == id, cancellationToken, "Fields","AccessList", "Owner", "Category");
 
-            return _mapper.Map<InventoryDto>(inventories);
+            return _mapper.Map<InventoryDetailsDto>(inventories);
         }
 
         public async Task<IEnumerable<InventoryFieldDto>> GetInventoryFields(int id, CancellationToken cancellationToken = default)
@@ -77,7 +77,7 @@ namespace Main.Application.Services
             return _mapper.Map<IEnumerable<InventoryFieldDto>>(fields);
         }
 
-        public async Task<InventoryDto> CreateInventoryAsync(CreateInventoryDto createDto, CancellationToken cancellationToken = default)
+        public async Task<InventoryDetailsDto> CreateInventoryAsync(CreateInventoryDto createDto, CancellationToken cancellationToken = default)
         {
             var fluentValidationResult = await _fluentValidator.ValidateAsync(createDto, cancellationToken);
             if (!fluentValidationResult.IsValid)
@@ -93,7 +93,7 @@ namespace Main.Application.Services
             await AddInventoryAccessToInventory(inventory, createDto.AccessList);
             var createdInventory = await _inventoryRepository.CreateAsync(inventory, cancellationToken);
 
-            return _mapper.Map<InventoryDto>(createdInventory);
+            return _mapper.Map<InventoryDetailsDto>(createdInventory);
         }
 
         public async Task<IEnumerable<Category>> GetCategories(CancellationToken cancellationToken)
@@ -108,7 +108,7 @@ namespace Main.Application.Services
             return true;
         }
 
-        public async Task<InventoryDto> UpdateInventoryAsync(InventoryDto inventoryDto, CancellationToken cancellationToken = default)
+        public async Task<InventoryDetailsDto> UpdateInventoryAsync(InventoryDetailsDto inventoryDto, CancellationToken cancellationToken = default)
         {
                 if (inventoryDto.Image != null)
                     inventoryDto.ImageUrl = await _imgBBStorageService.UploadFileAsync(inventoryDto.Image);
@@ -117,7 +117,7 @@ namespace Main.Application.Services
 
                 var result = await _inventoryRepository.UpdateInventoryAsync(inventory, cancellationToken);
 
-                var resultDto = _mapper.Map<InventoryDto>(result);
+                var resultDto = _mapper.Map<InventoryDetailsDto>(result);
 
                 return resultDto;
         }
@@ -140,40 +140,36 @@ namespace Main.Application.Services
         {
             return null;
         }
-        public async Task<IEnumerable<InventoryDto>> GetRecentInventoriesAsync(int count, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<InventoryTableDto>> GetRecentInventoriesAsync(int count, CancellationToken cancellationToken = default)
         {
             var inventories = await _inventoryRepository.GetAllAsync(
                 i => i.IsPublic || i.AccessList.Any(a => a.UserId == _usersService.GetCurrentUserId()),
                 cancellationToken, "Fields", "Owner"
             );
 
-            // Берем только указанное количество самых свежих
             var recentInventories = inventories.OrderByDescending(i => i.CreatedAt).Take(count).ToList();
 
-            return _mapper.Map<IEnumerable<InventoryDto>>(recentInventories);
+            return _mapper.Map<IEnumerable<InventoryTableDto>>(recentInventories);
         }
 
-        public async Task<IEnumerable<InventoryDto>> GetPopularInventoriesAsync(int count, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<InventoryTableDto>> GetPopularInventoriesAsync(int count, CancellationToken cancellationToken = default)
         {
-            // Получаем все инвентари с количеством товаров
             var inventoriesWithItemCount = await _inventoryRepository.GetAllAsync(null,  cancellationToken, "Items", "Owner");
-            var inventoriesWithItemCountDto = inventoriesWithItemCount.Select(i => new InventoryDto
+            var inventoriesWithItemCountDto = inventoriesWithItemCount.Select(i => new InventoryTableDto
             {
                 Id = i.Id,
                 Name = i.Name,
                 Description = i.Description,
                 OwnerId = i.OwnerId,
-                Owner = _mapper.Map<UserDto>(i.Owner),
                 ImageUrl = i.ImageUrl,
                 IsPublic = i.IsPublic,
                 CreatedAt = i.CreatedAt,
                 UpdatedAt = i.UpdatedAt,
                 ItemsCount = i.Items.Count 
             });
-            // Фильтруем по доступности (публичные или доступные пользователю)
+
             var userId = _usersService.GetCurrentUserId();
             
-            // Сортируем по количеству товаров (по убыванию) и берем топ-N
             var popularInventories = inventoriesWithItemCountDto
                 .OrderByDescending(i => i.ItemsCount)
                 .Take(count)

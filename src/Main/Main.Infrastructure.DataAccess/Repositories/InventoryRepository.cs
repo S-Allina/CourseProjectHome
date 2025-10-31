@@ -10,7 +10,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
         public InventoryRepository(ApplicationDbContext db) : base(db)
         {
             _db = db;
-
         }
 
         public async Task<IEnumerable<Inventory>> SearchAsync(string searchTerm, CancellationToken cancellationToken = default)
@@ -41,9 +40,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
         public async Task<Inventory> UpdateInventoryAsync(Inventory inventory, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                // Загружаем существующую сущность с включением Fields
                 var existingInventory = await _db.Set<Inventory>()
                     .Include(i => i.Fields)
                     .FirstOrDefaultAsync(i => i.Id == inventory.Id, cancellationToken);
@@ -51,21 +47,13 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 if (existingInventory == null)
                     throw new Exception("Inventory not found");
 
-                // Обновляем скалярные свойства
                 _db.Entry(existingInventory).CurrentValues.SetValues(inventory);
                 existingInventory.UpdatedAt = DateTime.UtcNow;
 
-                // Обрабатываем изменения в коллекции Fields
                 await UpdateInventoryFieldsOptimizedAsync(existingInventory, inventory.Fields, cancellationToken);
 
-                // ✅ ВСЕ изменения сохраняются ОДНИМ запросом
                 await _db.SaveChangesAsync(cancellationToken);
                 return existingInventory;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         private async Task UpdateInventoryFieldsOptimizedAsync(Inventory existingInventory, ICollection<InventoryField> newFields, CancellationToken cancellationToken)
@@ -73,21 +61,19 @@ namespace Main.Infrastructure.DataAccess.Repositories
             var existingFieldsDict = existingInventory.Fields.ToDictionary(f => f.Id);
             var newFieldsDict = newFields.Where(f => f.Id != 0).ToDictionary(f => f.Id);
 
-            // 1. Удаляем поля - ОДНА операция для всех
             var fieldsToRemove = existingInventory.Fields
                 .Where(existingField => !newFieldsDict.ContainsKey(existingField.Id))
                 .ToList();
 
             if (fieldsToRemove.Any())
             {
-                _db.Set<InventoryField>().RemoveRange(fieldsToRemove); // ✅ Bulk remove
+                _db.Set<InventoryField>().RemoveRange(fieldsToRemove);
                 foreach (var fieldToRemove in fieldsToRemove)
                 {
                     existingInventory.Fields.Remove(fieldToRemove);
                 }
             }
 
-            // 2. Обновляем существующие поля - EF Core отслеживает изменения автоматически
             foreach (var existingField in existingInventory.Fields.Where(f => newFieldsDict.ContainsKey(f.Id)))
             {
                 if (newFieldsDict.TryGetValue(existingField.Id, out var newField))
@@ -96,7 +82,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 }
             }
 
-            // 3. Добавляем новые поля - ОДНА операция для всех
             var fieldsToAdd = newFields.Where(f => f.Id == 0).ToList();
             if (fieldsToAdd.Any())
             {
@@ -105,7 +90,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                     fieldToAdd.InventoryId = existingInventory.Id;
                     fieldToAdd.CreatedAt = DateTime.UtcNow;
                 }
-                await _db.Set<InventoryField>().AddRangeAsync(fieldsToAdd, cancellationToken); // ✅ Bulk add
+                await _db.Set<InventoryField>().AddRangeAsync(fieldsToAdd, cancellationToken);
                 foreach (var fieldToAdd in fieldsToAdd)
                 {
                     existingInventory.Fields.Add(fieldToAdd);

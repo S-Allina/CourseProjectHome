@@ -18,6 +18,5 @@ namespace Main.Presentation.MVC.Controllers
             _inventoryService = inventoryService;
             _customIdService = customIdService;
         }
-
     }
 }

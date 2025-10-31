@@ -39,7 +39,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
                 if (isFullTextAvailable)
                 {
-                    // Используем Full-Text Search если доступен
                     return await _context.Users
                         .Where(u => EF.Functions.FreeText(u.Email, searchTerm) ||
                                    EF.Functions.FreeText(u.FirstName, searchTerm) ||
@@ -59,7 +58,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 }
                 else
                 {
-                    // Fallback: используем обычный LIKE с индексами
                     var normalizedSearch = $"{searchTerm}%";
                     return await _context.Users
                         .Where(u => u.Email.StartsWith(normalizedSearch) ||
@@ -85,9 +83,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
             }
         }
 
-        /// <summary>
-        /// Получение деталей пользователей по ID
-        /// </summary>
         public async Task<List<UserSearchResult>> GetUsersDetailsAsync(List<string> userIds, CancellationToken cancellationToken = default)
         {
             if (userIds == null || !userIds.Any())
@@ -106,7 +101,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 .ToListAsync(cancellationToken);
         }
 
-        // Обновляем GlobalSearchAsync чтобы включить поиск пользователей
         public async Task<GlobalSearchResult> GlobalSearchAsync(string searchTerm, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
@@ -114,7 +108,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
             var result = new GlobalSearchResult { SearchTerm = searchTerm };
 
-            // 🔍 1. Поиск по инвентарям
             result.Inventories = await _context.Inventories
                 .Include(i => i.Category)
                 .Include(i => i.Items)
@@ -133,7 +126,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 .Take(100)
                 .ToListAsync(cancellationToken);
 
-            // 🔍 2. Поиск по значениям полей предметов
             result.ItemFields = await _context.ItemFieldValues
                 .Include(iv => iv.Item)
                     .ThenInclude(item => item.Inventory)
@@ -155,13 +147,11 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 .Take(100)
                 .ToListAsync(cancellationToken);
 
-            // 🔍 3. Поиск по пользователям (НОВОЕ!)
             result.Users = await SearchUsersAsync(searchTerm, 20, cancellationToken);
 
             return result;
         }
 
-        // Обновляем QuickSearchAsync чтобы включить пользователей
         public async Task<QuickSearchResult> QuickSearchAsync(string searchTerm, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
@@ -169,7 +159,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
             var result = new QuickSearchResult { SearchTerm = searchTerm };
 
-            // ⚡ Быстрый поиск инвентарей
             var inventoryResults = await _context.Inventories
                 .Where(i => EF.Functions.FreeText(i.Name, searchTerm))
                 .Select(i => new QuickSearchItem
@@ -185,7 +174,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 .Take(5)
                 .ToListAsync(cancellationToken);
 
-            // ⚡ Быстрый поиск значений полей предметов
             var itemFieldResults = await _context.ItemFieldValues
                 .Include(iv => iv.Item)
                     .ThenInclude(item => item.Inventory)
@@ -203,7 +191,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 .Take(5)
                 .ToListAsync(cancellationToken);
 
-            // ⚡ Быстрый поиск пользователей (НОВОЕ!)
             var userResults = await SearchUsersAsync(searchTerm, 5, cancellationToken);
             var userSearchItems = userResults.Select(u => new QuickSearchItem
             {
@@ -211,7 +198,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 Name = u.DisplayName,
                 Type = "User",
                 AdditionalInfo = u.Email,
-                Url = "#" // или URL профиля пользователя
+                Url = "#" 
             }).ToList();
 
             result.Results.AddRange(inventoryResults);

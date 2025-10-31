@@ -1,6 +1,6 @@
 ﻿@using Main.Application.Dtos.Inventories.Index
 @{
-    var inventory = ViewBag.SelectedInventory as InventoryDto;
+    var inventory = ViewBag.SelectedInventory as InventoryTableDto;
 }
 
 @if (inventory != null)
@@ -133,7 +133,7 @@
                         <dd class="col-sm-7">@(Model?.Count ?? 0)</dd>
 
                         <dt class="col-sm-5">Fields Count:</dt>
-                        <dd class="col-sm-7">@inventory.Fields.Count</dd>
+                        <dd class="col-sm-7">@inventory.FieldCount</dd>
 
                         <dt class="col-sm-5">Owner:</dt>
                         <dd class="col-sm-7">@inventory.OwnerId</dd>

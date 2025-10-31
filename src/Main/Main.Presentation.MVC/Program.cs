@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using Main.Application.Configuration;
 using Main.Application.Dtos.Inventories.Create;
 using Main.Application.Hubs;
 using Main.Application.Interfaces;
@@ -30,6 +31,9 @@ namespace Main.Presentation.MVC
 
             var configuration = builder.Configuration;
 
+            builder.Services.Configure<UrlSettings>(builder.Configuration.GetSection("Urls"));
+            var urlSettings = configuration.GetSection("Urls").Get<UrlSettings>();
+
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")),
     ServiceLifetime.Scoped);
@@ -38,17 +42,14 @@ namespace Main.Presentation.MVC
             {
                 options.AddPolicy("CorsPolicy", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173",
-            "https://localhost:7004",
-            "https://localhost:7052")
-                            .AllowAnyHeader()
-                            .AllowAnyMethod()
-                            .AllowCredentials();
+                    policy.WithOrigins(urlSettings.AuthFront, urlSettings.Auth, urlSettings.Main)
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
                 });
             });
-
-            // ✅ ПРАВИЛЬНАЯ настройка аутентификации
-            builder.Services.AddAuthentication(options =>
+        // ✅ ПРАВИЛЬНАЯ настройка аутентификации
+        builder.Services.AddAuthentication(options =>
             {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
@@ -61,21 +62,20 @@ namespace Main.Presentation.MVC
             .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
             {
                 // Адрес вашего IdentityServer
-                options.Authority = "https://localhost:7052";
+                options.Authority = urlSettings.Auth;
                 options.ClientId = "MainMVCApp";
-                options.ClientSecret = "your-secret"; // Должен совпадать с секретом в Auth
+                options.ClientSecret = "your-secret";
 
                 options.ResponseType = "code";
                 options.SaveTokens = true;
                 options.GetClaimsFromUserInfoEndpoint = true;
                 options.SignedOutCallbackPath = "/signout-callback-oidc";
                 options.RemoteSignOutPath = "/signout-oidc";
-                // Настройка scope - ДОБАВЬТЕ "api1"
                 options.Scope.Clear(); 
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
-                options.Scope.Add("api1"); // ← ДОБАВЬТЕ ЭТОТ SCOPE
+                options.Scope.Add("api1");
 
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -101,7 +101,6 @@ namespace Main.Presentation.MVC
                     Version = SwaggerConstants.Version
                 });
 
-                // ✅ ОБНОВЛЕННАЯ настройка безопасности для OAuth2/OIDC
                 c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
                 {
                     Type = SecuritySchemeType.OAuth2,
@@ -109,8 +108,8 @@ namespace Main.Presentation.MVC
                     {
                         AuthorizationCode = new OpenApiOAuthFlow
                         {
-                            AuthorizationUrl = new Uri("https://localhost:7052/connect/authorize"),
-                            TokenUrl = new Uri("https://localhost:7052/connect/token"),
+                            AuthorizationUrl = new Uri($"{urlSettings.Auth}/connect/authorize"),
+                            TokenUrl = new Uri($"{urlSettings.Auth}/connect/token"),
                             Scopes = new Dictionary<string, string>
                             {
                                 { "openid", "OpenID" },
@@ -139,16 +138,17 @@ namespace Main.Presentation.MVC
 
             builder.Services.AddHttpClient("AuthService", client =>
             {
-                client.BaseAddress = new Uri("https://localhost:7052");
+                client.BaseAddress = new Uri(urlSettings.Auth);
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             });
             builder.Services.AddHttpContextAccessor();
-            // Регистрация сервисов приложения
+
             builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
             builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
             builder.Services.AddScoped<IInventoryFieldRepository, InventoryFieldRepository>();
             builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
             builder.Services.AddScoped<ITagRepository, TagRepository>();
+            builder.Services.AddScoped<IUrlService, UrlService>();
             builder.Services.AddScoped<IInventoryService, InventoryService>();
             builder.Services.AddScoped<ITagService, TagService>();
             builder.Services.AddScoped<IUserRepository,  UserRepository>();
@@ -172,10 +172,20 @@ namespace Main.Presentation.MVC
             builder.Services.AddControllersWithViews()
                 .AddDataAnnotationsLocalization()
                 .AddViewLocalization();
+            builder.Services.AddWebOptimizer(pipeline =>
+            {
+                pipeline.AddCssBundle("/css/vendor.min.css",
+                    "~/lib/bootstrap/dist/css/bootstrap.min.css",
+                    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css",
+                    "https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css");
 
+                pipeline.AddJavaScriptBundle("/js/vendor.min.js",
+                    "~/lib/jquery/dist/jquery.min.js",
+                    "~/lib/bootstrap/dist/js/bootstrap.bundle.min.js",
+                    "https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js");
+            });
             var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
+            app.UseWebOptimizer();
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
@@ -192,14 +202,14 @@ namespace Main.Presentation.MVC
                 .AddSupportedUICultures(supportedCultures);
 
             app.UseRequestLocalization(localizationOptions);
-            app.UseStaticFiles(); // ✅ ДОБАВЬТЕ для обслуживания статических файлов
+            app.UseStaticFiles();
             app.UseRouting();
 
             app.UseCors("CorsPolicy");
 
             app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
-            // ✅ ПРАВИЛЬНЫЙ порядок middleware
-            app.UseAuthentication(); // ДОЛЖЕН быть перед UseAuthorization
+
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseSwagger();
@@ -208,7 +218,6 @@ namespace Main.Presentation.MVC
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Main API V1");
                 c.RoutePrefix = "swagger";
 
-                // ✅ Настройка OAuth для Swagger UI
                 c.OAuthClientId("MainMVCApp");
                 c.OAuthUsePkce();
             });

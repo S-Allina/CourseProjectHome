@@ -22,7 +22,5 @@ namespace Main.Application.Mapper
                 .ForMember(dest => dest.FieldName, opt => opt.MapFrom(src => src.InventoryField.Name))
                 .ForMember(dest => dest.FieldType, opt => opt.MapFrom(src => src.InventoryField.FieldType)).ReverseMap();
         }
-
-
     }
 }

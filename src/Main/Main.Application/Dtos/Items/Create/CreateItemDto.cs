@@ -18,7 +18,7 @@ namespace Main.Application.Dtos.Items.Create
     public class ItemFormViewModel
     {
         public bool IsEditMode { get; set; }
-        public InventoryDto Inventory { get; set; }
+        public InventoryTableDto Inventory { get; set; }
 
         // Для создания
         public CreateItemDto CreateItem { get; set; }

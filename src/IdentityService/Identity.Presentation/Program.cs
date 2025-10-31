@@ -1,5 +1,4 @@
-﻿using Hangfire;
-using Hangfire.Dashboard;
+﻿using Identity.Application.Configuration;
 using Identity.Application.DTO;
 using Identity.Domain.Entity;
 using Identity.Infrastructure.DataAccess.Data;
@@ -19,21 +18,21 @@ namespace Identity.Presentation
             var builder = WebApplication.CreateBuilder(args);
 
             var configuration = builder.Configuration;
+            builder.Services.Configure<UrlSettings>(builder.Configuration.GetSection("Urls"));
             var emailSettings = new EmailSettings();
             configuration.GetSection("EmailSettings").Bind(emailSettings);
             builder.Services.AddSingleton(emailSettings);
             builder.Services.Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
             builder.Services.AddRazorPages();
-            builder.Services.AddCustomCors();
+            builder.Services.AddCustomCors(configuration);
             builder.Services.AddDatabaseConfiguration(configuration);
             builder.Services.AddControllerConfiguration();
             builder.Services.AddSwaggerConfiguration();
-            builder.Services.AddIdentityConfiguration();
+            builder.Services.AddIdentityConfiguration(configuration);
             //builder.Services.AddConfigureJwt(configuration);
             builder.Services.AddApplicationServices(configuration);
             builder.Services.AddAuthenticationConfiguration(configuration);
             builder.Services.AddEmailConfiguration(configuration);
-            builder.Services.AddHangfireConfiguration(configuration);
             builder.Services.AddValidators();
 
             var app = builder.Build();
@@ -62,13 +61,7 @@ namespace Identity.Presentation
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseHangfireDashboard("/hangfire", new DashboardOptions
-            {
-                Authorization = new[] { new HangfireAuthFilter() },
-                DashboardTitle = "Hangfire Dashboard",
-                IgnoreAntiforgeryToken = true
-            });
-
+           
             app.UseEndpoints(endpoints =>
             {
                 // ✅ Убедитесь, что есть MapControllerRoute
@@ -83,9 +76,6 @@ namespace Identity.Presentation
 
             using (var scope = app.Services.CreateScope())
             {
-                var hangfireInitializer = scope.ServiceProvider.GetRequiredService<HangfireDbInitializer>();
-                await hangfireInitializer.EnsureDatabaseCreatedAsync();
-
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -97,11 +87,4 @@ namespace Identity.Presentation
         }
     }
 
-    public class HangfireAuthFilter : IDashboardAuthorizationFilter
-    {
-        public bool Authorize(DashboardContext context)
-        {
-            return true;
-        }
-    }
 }

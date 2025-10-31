@@ -1,8 +1,7 @@
 ﻿using Duende.IdentityServer;
 using Duende.IdentityServer.Models;
 using FluentValidation;
-using Hangfire;
-using Hangfire.SqlServer;
+using Identity.Application.Configuration;
 using Identity.Application.Dto;
 using Identity.Application.DTO;
 using Identity.Application.Interfaces;
@@ -19,6 +18,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Configuration;
 using System.Text;
 using System.Text.Json.Serialization;
 using Secret = Duende.IdentityServer.Models.Secret;
@@ -92,8 +92,10 @@ namespace Identity.Presentation.Extention
             return services;
         }
 
-        public static IServiceCollection AddIdentityConfiguration(this IServiceCollection services)
+        public static IServiceCollection AddIdentityConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
+            var urlSettings = configuration.GetSection("Urls").Get<UrlSettings>();
+
             services.AddIdentity<ApplicationUser, IdentityRole>(o =>
             {
                 o.Password.RequireNonAlphanumeric = false;
@@ -134,9 +136,9 @@ namespace Identity.Presentation.Extention
         ClientSecrets = { new Secret("your-secret".Sha256()) },
         AllowedGrantTypes = GrantTypes.Code,
 
-        RedirectUris = { "https://localhost:7004/signin-oidc" },
-        PostLogoutRedirectUris = { "https://localhost:7004/signout-callback-oidc" },
-        FrontChannelLogoutUri = "https://localhost:7004/signout-oidc",
+        RedirectUris = { $"{urlSettings.Main}/signin-oidc" },
+        PostLogoutRedirectUris = { $"{urlSettings.Main}/signout-callback-oidc" },
+        FrontChannelLogoutUri = $"{urlSettings.Main}/signout-oidc",
 
         AllowedScopes = { "openid", "profile", "email", "api1" },
 
@@ -184,13 +186,15 @@ namespace Identity.Presentation.Extention
             return services;
         }
 
-        public static IServiceCollection AddCustomCors(this IServiceCollection services)
+        public static IServiceCollection AddCustomCors(this IServiceCollection services, IConfiguration configuration)
         {
+            var urlSettings = configuration.GetSection("Urls").Get<UrlSettings>();
+
             services.AddCors(options =>
             {
                 options.AddPolicy(CorsConstants.PolicyName, policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173", "https://localhost:7004", "https://localhost:7052")
+                    policy.WithOrigins(urlSettings.AuthFront, urlSettings.Auth, urlSettings.Main)
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
@@ -249,42 +253,6 @@ namespace Identity.Presentation.Extention
             var services = scope.ServiceProvider;
             var context = services.GetRequiredService<ApplicationDbContext>();
             await context.Database.EnsureCreatedAsync();
-        }
-
-        public static IServiceCollection AddHangfireConfiguration(this IServiceCollection services, IConfiguration configuration)
-        {
-            var hangfireConnection = configuration.GetConnectionString(HangfireConstants.HangfireConnection);
-
-            if (string.IsNullOrEmpty(hangfireConnection))
-            {
-                throw new ArgumentNullException(nameof(hangfireConnection),
-                      "Hangfire connection string is not configured");
-            }
-
-            services.AddSingleton(new HangfireDbInitializer(hangfireConnection));
-
-            services.AddHangfire(config => config
-                .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-                .UseSimpleAssemblyNameTypeSerializer()
-                .UseRecommendedSerializerSettings()
-                .UseSqlServerStorage(hangfireConnection, new SqlServerStorageOptions
-                {
-                    CommandBatchMaxTimeout = HangfireConstants.CommandTimeout,
-                    SlidingInvisibilityTimeout = HangfireConstants.CommandTimeout,
-                    QueuePollInterval = TimeSpan.Zero,
-                    UseRecommendedIsolationLevel = true,
-                    UsePageLocksOnDequeue = true,
-                    DisableGlobalLocks = true,
-                    PrepareSchemaIfNecessary = HangfireConstants.PrepareSchema
-                }));
-
-            services.AddHangfireServer(options =>
-            {
-                options.ServerName = HangfireConstants.HangfireServerName;
-                options.Queues = new[] { DefaultQueue };
-            });
-
-            return services;
         }
 
         public static IServiceCollection AddEmailConfiguration(this IServiceCollection services, IConfiguration configuration)

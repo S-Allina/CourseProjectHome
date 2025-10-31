@@ -28,7 +28,6 @@ namespace Main.Application.Validators
                 .Must(tags => tags == null || tags.Count <= 10).WithMessage("Максимум 10 тегов")
                 .ForEach(tagRule =>
                 {
-                    //tagRule.NotEmpty().WithMessage("Тег не может быть пустым");
                     tagRule.MaximumLength(50).WithMessage("Тег не может превышать 50 символов");
                 });
 
@@ -47,7 +46,6 @@ namespace Main.Application.Validators
             return Uri.TryCreate(url, UriKind.Absolute, out _);
         }
 
-        // ИСПРАВЛЕННЫЙ МЕТОД - принимает List<CreateInventoryFieldDto>
         private bool ValidateFieldLimits(List<CreateInventoryFieldDto> fields)
         {
             if (fields == null || !fields.Any()) return true;

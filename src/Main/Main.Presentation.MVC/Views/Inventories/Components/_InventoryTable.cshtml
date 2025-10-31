@@ -3,7 +3,7 @@
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<SharedResource> Localizer
-@model List<InventoryDto>
+@model List<InventoryTableDto>
 @{
     var tableType = ViewData["TableType"] as string ?? "my";
     var tableId = tableType;
@@ -74,7 +74,7 @@ else
                         </td>
                         <td>@(inventory.CategoryId.ToString() ?? @Localizer["No category"])</td>
                         <td>
-                            <span class="badge bg-secondary">@inventory.Fields.Count</span>
+                            <span class="badge bg-secondary">@inventory.FieldCount</span>
                         </td>
                         <td>
                             @if (inventory.Tags?.Any() == true)
@@ -95,7 +95,7 @@ else
                         </td>
                         <td>@inventory.CreatedAt.ToString("MMM dd, yyyy")</td>
                         <td>@inventory.UpdatedAt.ToString("MMM dd, yyyy")</td>
-                        <td>@inventory.Owner?.LastName @inventory.Owner?.FirstName </td>
+                        <td>@inventory.OwnerName</td>
                         <td>
                             @if (inventory.IsPublic)
                             {

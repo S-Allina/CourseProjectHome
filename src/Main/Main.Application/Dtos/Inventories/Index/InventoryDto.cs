@@ -5,52 +5,35 @@ using Microsoft.AspNetCore.Http;
 
 namespace Main.Application.Dtos.Inventories.Index
 {
-    public record InventoryDto
+    public record InventoryTableDto
     {
         public int Id { get; init; }
         public string Name { get; init; }
         public string Description { get; init; }
-        public string DescriptionHtml => MarkdownHelper.ConvertToHtml(Description);
         public string DescriptionPreview => MarkdownHelper.TruncateWithMarkdown(Description);
         public int? CategoryId { get; init; }
         public string CategoryName { get; init; }
         public string OwnerId { get; init; }
-        public UserDto Owner { get; init; }
+        public string OwnerName { get; init; } // Только имя, а не весь объект
         public string ImageUrl { get; set; }
-        public IFormFile Image { get; init; }
         public bool IsPublic { get; init; }
-        public string CustomIdFormat { get; init; }
-        public int? ItemsCount { get; init; }
-        public byte[] Version { get; set; }
-        public DateTime CreatedAt { get; init; }
-        public DateTime UpdatedAt { get; set; }
-        public List<string> Tags { get; init; } = new();
-        public int? FieldCount { get; init; }
-        public List<InventoryFieldDto> Fields { get; init; } = new();
-        public List<InventoryAccessDto> AccessList { get; set; } = new();
-
-    }
-    public record InventoryListDto
-    {
-        public int Id { get; init; }
-        public string Name { get; init; }
-        public string DescriptionPreview { get; init; }
-        public string CategoryName { get; init; }
-        public string ImageUrl { get; init; }
         public int? ItemsCount { get; init; }
         public DateTime CreatedAt { get; init; }
         public DateTime UpdatedAt { get; init; }
         public List<string> Tags { get; init; } = new();
+        public int? FieldCount { get; init; }
+        public string CustomIdFormat { get; init; }
     }
 
-    // Для детальной страницы - все поля
-    public record InventoryDetailDto : InventoryListDto
+    // Для детальной страницы (наследуем от табличной + добавляем специфичные поля)
+    public record InventoryDetailsDto : InventoryTableDto
     {
-        public string Description { get; init; }
-        public string DescriptionHtml { get; init; }
-        public UserDto Owner { get; init; }
+        public string DescriptionHtml => MarkdownHelper.ConvertToHtml(Description);
+        public IFormFile Image { get; init; }
+        public byte[] Version { get; init; }
         public List<InventoryFieldDto> Fields { get; init; } = new();
         public List<InventoryAccessDto> AccessList { get; init; } = new();
+        // Owner уже есть в базовом классе как OwnerName
     }
     // Statistics DTOs
     public record InventoryStatsDto

@@ -17,13 +17,6 @@ namespace Main.Presentation.MVC.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// 🔍 Главная страница полнотекстового поиска
-        /// </summary>
-       
-        /// <summary>
-        /// ⚡ Быстрый поиск для автодополнения (JSON API)
-        /// </summary>
         [HttpGet("QuickSearch")]
         public async Task<IActionResult> QuickSearch(string term)
         {
@@ -76,9 +69,6 @@ namespace Main.Presentation.MVC.Controllers
             }
         }
 
-        /// <summary>
-        /// Получение деталей пользователей по ID (для отображения в таблице доступа)
-        /// </summary>
         [HttpPost("users-details")]
         public async Task<IActionResult> GetUsersDetails([FromBody] GetUsersDetailsRequest request, CancellationToken cancellationToken = default)
         {

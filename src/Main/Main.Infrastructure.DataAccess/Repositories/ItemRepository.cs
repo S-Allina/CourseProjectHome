@@ -17,7 +17,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
         {
             try
             {
-                // Загружаем существующую сущность с включением FieldValues
                 var existingItem = await _db.Set<Item>()
                     .Include(i => i.FieldValues)
                     .FirstOrDefaultAsync(i => i.Id == item.Id, cancellationToken);
@@ -25,14 +24,11 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 if (existingItem == null)
                     throw new Exception("Item not found");
 
-                // Обновляем скалярные свойства
                 _db.Entry(existingItem).CurrentValues.SetValues(item);
                 existingItem.UpdatedAt = DateTime.UtcNow;
 
-                // Обрабатываем изменения в коллекции FieldValues
                 await UpdateItemFieldValuesOptimizedAsync(existingItem, item.FieldValues, cancellationToken);
 
-                // ✅ ВСЕ изменения сохраняются ОДНИМ запросом
                 await _db.SaveChangesAsync(cancellationToken);
                 return existingItem;
             }
@@ -47,26 +43,23 @@ namespace Main.Infrastructure.DataAccess.Repositories
             var existingFieldValuesDict = existingItem.FieldValues.ToDictionary(f => f.InventoryFieldId);
             var newFieldValuesDict = newFieldValues.ToDictionary(f => f.InventoryFieldId);
 
-            // 1. Удаляем значения полей, которых больше нет - ОДНА операция для всех
             var fieldValuesToRemove = existingItem.FieldValues
                 .Where(existingFieldValue => !newFieldValuesDict.ContainsKey(existingFieldValue.InventoryFieldId))
                 .ToList();
 
             if (fieldValuesToRemove.Any())
             {
-                _db.Set<ItemFieldValue>().RemoveRange(fieldValuesToRemove); // ✅ Bulk remove
+                _db.Set<ItemFieldValue>().RemoveRange(fieldValuesToRemove); 
                 foreach (var fieldValueToRemove in fieldValuesToRemove)
                 {
                     existingItem.FieldValues.Remove(fieldValueToRemove);
                 }
             }
 
-            // 2. Обновляем существующие значения полей
             foreach (var existingFieldValue in existingItem.FieldValues.Where(f => newFieldValuesDict.ContainsKey(f.InventoryFieldId)))
             {
                 if (newFieldValuesDict.TryGetValue(existingFieldValue.InventoryFieldId, out var newFieldValue))
                 {
-                    // Копируем только значения, не затрагивая ключи и метаданные
                     _db.Entry(existingFieldValue).CurrentValues.SetValues(new
                     {
                         newFieldValue.TextValue,
@@ -79,7 +72,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 }
             }
 
-            // 3. Добавляем новые значения полей - ОДНА операция для всех
             var fieldValuesToAdd = newFieldValues
                 .Where(f => !existingFieldValuesDict.ContainsKey(f.InventoryFieldId))
                 .ToList();
@@ -100,7 +92,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
             }
         }
 
-        // Дополнительный метод для обновления с проверкой версии (optimistic concurrency)
         public async Task<Item> UpdateItemWithVersionAsync(Item item, byte[] originalVersion, CancellationToken cancellationToken = default)
         {
             try
@@ -112,11 +103,9 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 if (existingItem == null)
                     throw new Exception("Item not found or version mismatch");
 
-                // Обновляем скалярные свойства
                 _db.Entry(existingItem).CurrentValues.SetValues(item);
                 existingItem.UpdatedAt = DateTime.UtcNow;
 
-                // Обрабатываем изменения в коллекции FieldValues
                 await UpdateItemFieldValuesOptimizedAsync(existingItem, item.FieldValues, cancellationToken);
 
                 await _db.SaveChangesAsync(cancellationToken);
@@ -132,7 +121,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
             }
         }
 
-        // Метод для получения Item с FieldValues
         public async Task<Item> GetByIdWithFieldValuesAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _db.Set<Item>()
@@ -142,7 +130,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
         }
 
-        // Метод для массового обновления Items
         public async Task<int> UpdateItemsAsync(IEnumerable<Item> items, CancellationToken cancellationToken = default)
         {
             var updatedCount = 0;

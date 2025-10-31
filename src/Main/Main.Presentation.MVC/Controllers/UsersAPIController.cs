@@ -21,11 +21,6 @@ namespace Main.Presentation.MVC.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
         {
-            try
-            {
-                _logger.LogInformation("Creating user in Main database: {Email}", request.Email);
-
-                // Проверяем, существует ли уже пользователь
                 var existingUser = await _context.Users.FindAsync(request.Id);
                 if (existingUser != null)
                 {
@@ -33,7 +28,6 @@ namespace Main.Presentation.MVC.Controllers
                     return Ok(new { message = "User already exists" });
                 }
 
-                // Создаем нового пользователя
                 var user = new User
                 {
                     Id = request.Id,
@@ -47,21 +41,11 @@ namespace Main.Presentation.MVC.Controllers
 
                 _logger.LogInformation("User created successfully: {UserId}", request.Id);
                 return Ok(new { message = "User created successfully" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating user: {Email}", request.Email);
-                return StatusCode(500, new { error = "Internal server error" });
-            }
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(string id, [FromBody] UpdateUserRequest request)
         {
-            try
-            {
-                _logger.LogInformation("Updating user in Main database: {UserId}", id);
-
                 var user = await _context.Users.FindAsync(id);
                 if (user == null)
                 {
@@ -76,19 +60,12 @@ namespace Main.Presentation.MVC.Controllers
 
                 _logger.LogInformation("User updated successfully: {UserId}", id);
                 return Ok(new { message = "User updated successfully" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating user: {UserId}", id);
-                return StatusCode(500, new { error = "Internal server error" });
-            }
         }
         [HttpPost("UpdateTheme")]
         public async Task<IActionResult> UpdateTheme([FromBody] ThemeModel model)
         {
             if (User.Identity.IsAuthenticated)
             {
-                // Обновляем claim пользователя
                 var identity = (ClaimsIdentity)User.Identity;
                 var themeClaim = identity.FindFirst("Theme");
 
@@ -99,10 +76,10 @@ namespace Main.Presentation.MVC.Controllers
 
                 identity.AddClaim(new Claim("Theme", "dark"));
             }
-
             return Ok();
         }
     }
+
     public class ThemeModel
     {
         public string Theme { get; set; }

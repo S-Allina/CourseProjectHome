@@ -1,0 +1,14 @@
+﻿@using Main.Application.Interfaces
+@{
+    var alertService = Context.RequestServices.GetService<IAlertService>();
+    var alert = alertService?.GetAlert();
+}
+
+@if (alert != null)
+{
+    <div class="alert alert-@alert.Type alert-dismissible fade show mb-0" role="alert"
+         data-auto-dismiss="5000">
+        <strong>@alert.Title</strong> @alert.Message
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}

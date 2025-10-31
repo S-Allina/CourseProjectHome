@@ -1,179 +1,22 @@
-﻿@using Microsoft.AspNetCore.Mvc.Localization
-@using Microsoft.Extensions.Localization
-@inject IStringLocalizer<SharedResource> Localizer
-@using Microsoft.AspNetCore.Mvc.ViewFeatures
-@inject ITempDataDictionaryFactory TempDataFactory
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-bs-theme="@(User.FindFirst("Theme")?.Value?.ToLower() ?? "light")">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Main.Presentation.MVC</title>
-
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Main.Presentation.MVC.styles.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.10.2/jsoneditor.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <partial name="~/Views/Shared/Layouts/_LayoutHead.cshtml" />
 </head>
 <body>
-    @{
-        var errorMessage = TempData["ErrorAlertMessage"] as string;
-        var alertType = TempData["ErrorAlertType"] as string ?? "danger";
-    }
+    <partial name="~/Views/Shared/Components/Alerts/GlobalAlert.cshtml" />
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-@alertType alert-dismissible fade show mb-0" role="alert" id="globalAlert">
-            <strong>@(alertType == "danger" ? "Ошибка!" : "Внимание!")</strong> @errorMessage
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+    <partial name="~/Views/Shared/Components/Header/Default.cshtml" />
 
-        
-    }
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                    @if(!User.Identity.IsAuthenticated){
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Login"><i class="fas fa-login me-1"></i>@Localizer["Login"]</a>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Logout"><i class="fas fa-logout me-1"></i>@Localizer["Logout"]</a>
-                            </li>
-                        }
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Users" asp-action="Index"><i class="	fas fa-house-user me-1"></i>@Localizer["Profile"]</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Inventories" asp-action="Index"><i class="fas fa-archive me-1"></i>@Localizer["Inventories"]</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Tags" asp-action="Index"><i class="fas fa-tags me-1"></i>@Localizer["Tags"]</a>
-                        </li>
-
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-palette me-1"></i>@Localizer["Theme"]
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="themeDropdown">
-                                <li>
-                                    <a class="dropdown-item theme-selector" href="#" data-theme="light">
-                                        <i class="fas fa-sun me-2"></i>@Localizer["Light"]
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item theme-selector" href="#" data-theme="dark">
-                                        <i class="fas fa-moon me-2"></i>@Localizer["Dark"]
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            <li>
-                                <a class="nav-link" href="http://localhost:5173/theapp/#/theapp/users">
-                                    <i class="fas fa-users-cog me-1"></i>
-                                    @Localizer["Users"]
-                                </a>
-                            </li>
-                        }
-                    </ul>
-                    <div>
-                        @await Html.PartialAsync("_SelectLanguagePartial")
-                    </div>
-                    <div class="d-flex position-relative">
-                        <form class="d-flex me-2" method="get" action="@Url.Action("Index", "Search")" id="globalSearchForm">
-                            <div class="input-group">
-                                <input type="text"
-                                       class="form-control"
-                                       name="q"
-                                       id="globalSearchInput"
-                                       placeholder="@Localizer["Search"]..."
-                                       aria-label="Search"
-                                       value="@Context.Request.Query["q"]">
-                                <button class="btn btn-outline-secondary" type="submit" title="@Localizer["Search"]">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </form>
-
-                        <div id="quickSearchResults" class="position-absolute top-100 start-0 end-0 mt-1" style="display: none; z-index: 1050;">
-                            <div class="card shadow-lg">
-                                <div class="card-body p-2">
-                                    <div id="quickSearchContent">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header>
     <div class="container">
-        <div id="errorModal" class="modal fade" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title">Error</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p id="errorMessage"></p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @* <partial name="Shared/Components/Modals/ErrorModal" /> *@
+
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - Main.Presentation.MVC - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
-   
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.10.2/jsoneditor.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    <script src="~/js/globalSearch.js" asp-append-version="true"></script>
-    <script src="~/js/themeManager.js" asp-append-version="true"></script>
-    <script>
-        // Автоматически скрываем alert через 5 секунд
-        setTimeout(function() {
-            var alert = document.getElementById('globalAlert');
-            if (alert) {
-                var bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            }
-        }, 5000);
-    </script>
+    <partial name="~/Views/Shared/Partials/_Scripts.cshtml" />
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

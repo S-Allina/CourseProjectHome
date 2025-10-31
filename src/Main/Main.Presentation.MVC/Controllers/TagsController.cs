@@ -15,7 +15,6 @@ namespace Main.Presentation.MVC.Controllers
             _inventoryService = inventoryService;
         }
 
-        // Облако тегов
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -23,7 +22,6 @@ namespace Main.Presentation.MVC.Controllers
             return View(tags);
         }
 
-        // Поиск инвентарей по тегу
         [HttpGet]
         public async Task<IActionResult> SearchByTag(string tagName)
         {
@@ -34,7 +32,6 @@ namespace Main.Presentation.MVC.Controllers
 
             var inventories = await _inventoryService.GetInventoriesByTagAsync(tagName);
 
-            // Используем существующую модель поиска
             var searchResult = new GlobalSearchResult
             {
                 SearchTerm = tagName,

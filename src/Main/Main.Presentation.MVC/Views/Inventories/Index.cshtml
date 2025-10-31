@@ -1,5 +1,5 @@
 ﻿@using Main.Application.Dtos.Inventories.Index
-@model IEnumerable<InventoryDto>
+@model IEnumerable<InventoryTableDto>
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<SharedResource> Localizer
@@ -15,35 +15,37 @@
 </p>
 
 <div class="tab-pane fade show active" id="my-inventories" role="tabpanel" aria-labelledby="my-inventories-tab">
-    <partial name="_InventoryTable" model="Model" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "sharedInventoriesTable" } })" />
+    <partial name="~/Views/Inventories/Components/_InventoryTable.cshtml" model="Model" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "sharedInventoriesTable" } })" />
 </div>
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    @Localizer["Confirm Deletion"]
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>@Localizer["Are you sure you want to delete the selected inventories?"]</p>
+                <p class="text-muted small">@Localizer["This action cannot be undone."]</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    @Localizer["Cancel"]
+                </button>
 
+                <form id="deleteSelectedForm" method="post" asp-action="DeleteSelected">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>@Localizer["Delete"]
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 @section Scripts {
-    <script>
-        document.getElementById('deleteSelected').addEventListener('click', function () {
-            const selectedCheckboxes = document.querySelectorAll('.rowCheckbox:checked');
-
-            if (selectedCheckboxes.length === 0) {
-                alert('@Localizer["Please select at least one inventory to delete."]');
-                return;
-            }
-
-            if (confirm('@Localizer["Are you sure you want to delete the selected?"]')) {
-                const form = document.createElement('form');
-                form.method = 'post';
-                form.action = '@Url.Action("Delete")';
-
-                selectedCheckboxes.forEach(checkbox => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'selectedIds';
-                    input.value = checkbox.value;
-                    form.appendChild(input);
-                });
-
-                document.body.appendChild(form);
-                form.submit();
-            }
-        });
-    </script>
+    <script src="~/js/inventory-selection.js" asp-append-version="true"></script>
 }

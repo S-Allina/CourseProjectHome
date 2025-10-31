@@ -2,8 +2,8 @@
 {
     public enum AccessLevel
     {
-        ReadOnly = 1,      // Только просмотр
-        ReadWrite = 2,     // Чтение и запись  
-        Admin = 3          // Полный доступ + управление доступом
+        ReadOnly = 1, 
+        ReadWrite = 2,
+        Admin = 3
     }
 }

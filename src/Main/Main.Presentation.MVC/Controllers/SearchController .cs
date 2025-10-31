@@ -16,9 +16,6 @@ namespace Main.Presentation.MVC.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// 🔍 Главная страница полнотекстового поиска
-        /// </summary>
         [HttpGet("Index")]
         public async Task<IActionResult> Index(string q, CancellationToken cancellationToken)
         {
@@ -31,22 +28,10 @@ namespace Main.Presentation.MVC.Controllers
                 return View(new GlobalSearchResult { SearchTerm = q });
             }
 
-            try
-            {
                 var result = await _searchRepository.GlobalSearchAsync(q, cancellationToken);
                 return View(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during full-text search for term: {SearchTerm}", q);
-                ModelState.AddModelError("", "Произошла ошибка при выполнении поиска");
-                return View(new GlobalSearchResult { SearchTerm = q });
-            }
         }
 
-        /// <summary>
-        /// ⚡ Быстрый поиск для автодополнения (JSON API)
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> QuickSearch(string term)
         {
@@ -55,23 +40,9 @@ namespace Main.Presentation.MVC.Controllers
                 return Json(new { success = true, data = new QuickSearchResult() });
             }
 
-            try
-            {
                 var result = await _searchRepository.QuickSearchAsync(term);
                 return Json(new { success = true, data = result });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during quick search for term: {SearchTerm}", term);
-                return Json(new { success = false, error = "Ошибка поиска" });
-            }
         }
-
-       
-        /// <summary>
-        /// Получение деталей пользователей по ID (для отображения в таблице доступа)
-        /// </summary>
-       
 
         [HttpGet("CheckAvailability")]
         public async Task<IActionResult> CheckAvailability(CancellationToken cancellationToken)
