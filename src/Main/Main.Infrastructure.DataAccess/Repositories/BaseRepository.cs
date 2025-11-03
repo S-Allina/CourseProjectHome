@@ -34,7 +34,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                     }
                 }
             }
-
+            query = query.AsNoTracking();
             if (filter != null)
             {
                 return await query.FirstOrDefaultAsync(filter, cancellationToken);

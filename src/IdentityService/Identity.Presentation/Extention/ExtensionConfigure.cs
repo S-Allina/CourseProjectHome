@@ -9,6 +9,7 @@ using Identity.Application.Validators;
 using Identity.Domain.Entity;
 using Identity.Infrastructure;
 using Identity.Infrastructure.DataAccess.Data;
+using Identity.Infrastructure.DataAccess.Services;
 using Identity.Infrastructure.Services;
 using Identity.Presentation.Constants;
 using Identity.Presentation.Initializer;
@@ -47,7 +48,7 @@ namespace Identity.Presentation.Extention
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                    options.JsonSerializerOptions.IgnoreNullValues = true;
+                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 });
             return services;
         }
@@ -140,17 +141,18 @@ namespace Identity.Presentation.Extention
         PostLogoutRedirectUris = { $"{urlSettings.Main}/signout-callback-oidc" },
         FrontChannelLogoutUri = $"{urlSettings.Main}/signout-oidc",
 
-        AllowedScopes = { "openid", "profile", "email", "api1" },
-
+ AllowedScopes = {
+        "openid", "profile", "email", "api1", "roles",
+        "theme", "language"
+    },
         AllowAccessTokensViaBrowser = true,
-        AlwaysIncludeUserClaimsInIdToken = true, // ✅ ВАЖНО
+        AlwaysIncludeUserClaimsInIdToken = true, 
         RequireConsent = false,
         RequirePkce = true,
         AllowPlainTextPkce = false,
         RequireClientSecret = true,
         UpdateAccessTokenClaimsOnRefresh = true,
         
-        // ✅ ДОБАВЬТЕ ЭТИ НАСТРОЙКИ
         AlwaysSendClientClaims = true,
         ClientClaimsPrefix = "",
         IdentityProviderRestrictions = new List<string>
@@ -163,16 +165,21 @@ namespace Identity.Presentation.Extention
             {
         new IdentityResources.OpenId(),
         new IdentityResources.Profile(),
-        new IdentityResources.Email()
+        new IdentityResources.Email(),
+        new IdentityResource("roles", "User roles", new[] { "role" }),
+        new IdentityResource("theme", "User theme preference", new[] { "theme" }),
+    new IdentityResource("language", "User language preference", new[] { "language" })
             })
             .AddInMemoryApiScopes(new List<ApiScope>
             {
-        new ApiScope("api1", "My API")
+        new ApiScope("api1", "My API"),
+        new ApiScope("api.roles", "User roles for API"),
+        new ApiScope("api.theme", "User theme preference"),
+    new ApiScope("api.language", "User language preference")
             }).AddAspNetIdentity<ApplicationUser>()
-.AddProfileService<CustomProfileService>() // ✅ ДОБАВЬТЕ ЭТУ СТРОКУ
+.AddProfileService<CustomProfileService>() 
 .AddDeveloperSigningCredential();
 
-            // ✅ ОБЯЗАТЕЛЬНО добавьте Signing Credential
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             {
                 identityServerBuilder.AddDeveloperSigningCredential();
@@ -213,9 +220,9 @@ namespace Identity.Presentation.Extention
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddHttpClient<IMainApiClient, MainApiClient>();
+            services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IMainApiClient, MainApiClient>();
             services.AddScoped<IUserService, UserService>();
-            services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IUserRegistrationService, UserRegistrationService>();
             services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
             services.AddScoped<IEmailService, EmailService>();
@@ -228,17 +235,13 @@ namespace Identity.Presentation.Extention
 
         public static IServiceCollection AddAuthenticationConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
-            // ✅ УДАЛИТЕ дублирующую настройку аутентификации
-            // IdentityServer уже обрабатывает аутентификацию
-
-            // Настройка только внешних провайдеров
             services.AddAuthentication()
                 .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
                 {
                     options.ClientId = configuration["Auth:Google:ClientID"];
                     options.ClientSecret = configuration["Auth:Google:ClientSecret"];
-                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme; // ✅ Важно для IdentityServer
-                    options.CallbackPath = "/signin-google"; // ✅ Должен совпадать с Google Console
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                    options.CallbackPath = "/signin-google"; 
                     options.SaveTokens = true;
                     options.Scope.Add("profile");
                     options.Scope.Add("email");
@@ -260,69 +263,7 @@ namespace Identity.Presentation.Extention
             services.AddFluentEmail(
                 configuration[EmailConstants.SenderEmail],
                 configuration[EmailConstants.Sender]);
-            //.AddSmtpSender(new System.Net.Mail.SmtpClient()
-            //{
-            //    Host = configuration[EmailConstants.Host],
-            //    Port = configuration.GetValue<int>(EmailConstants.Port),
-            //    EnableSsl = configuration.GetValue<bool>(EmailConstants.EnableSsl, false),
-            //    DeliveryMethod = SmtpDeliveryMethod.Network,
-            //    UseDefaultCredentials = false,
-            //    Timeout = EmailConstants.SmtpTimeout
-            //});
-
-            return services;
-        }
-
-        public static IServiceCollection AddConfigureJwt(this IServiceCollection services, IConfiguration configuration)
-        {
-            var jwtSettings = configuration.GetSection(SwaggerConstants.JwtSettingsSection).Get<JwtSettings>();
-            if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key))
-            {
-                throw new InvalidOperationException("JWT secret key is not configured.");
-            }
-
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
-            services.AddAuthentication(o =>
-            {
-                o.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                o.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(o =>
-            {
-                o.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings.ValidIssuer,
-                    ValidAudience = jwtSettings.ValidAudience,
-                    IssuerSigningKey = secretKey
-                };
-                o.Events = new JwtBearerEvents
-                {
-                    OnChallenge = context =>
-                    {
-                        context.HandleResponse();
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        context.Response.ContentType = ContentType;
-                        var result = System.Text.Json.JsonSerializer.Serialize(new
-                        {
-                            message = "You are not authorized to access this resource. Please authenticate."
-                        });
-                        return context.Response.WriteAsync(result);
-                    },
-                    OnMessageReceived = context =>
-                    {
-                        var token = context.Request.Cookies[AccessTokenCookieName];
-                        if (!string.IsNullOrEmpty(token))
-                        {
-                            context.Token = token;
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
-            });
-
+          
             return services;
         }
     }

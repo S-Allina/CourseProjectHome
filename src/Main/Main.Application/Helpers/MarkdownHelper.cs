@@ -20,7 +20,6 @@ namespace Main.Application.Helpers
             if (string.IsNullOrEmpty(markdown))
                 return string.Empty;
 
-            // Удаляем Markdown разметку для превью
             var plainText = Markdown.ToPlainText(markdown, _pipeline);
 
             if (plainText.Length <= maxLength)

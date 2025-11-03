@@ -82,21 +82,12 @@ namespace Main.Infrastructure.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("EditedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("InventoryId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("IsEdited")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ParentMessageId")
-                        .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -109,8 +100,6 @@ namespace Main.Infrastructure.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("InventoryId");
-
-                    b.HasIndex("ParentMessageId");
 
                     b.ToTable("ChatMessages");
                 });
@@ -476,18 +465,12 @@ namespace Main.Infrastructure.DataAccess.Migrations
             modelBuilder.Entity("Main.Domain.entities.common.ChatMessage", b =>
                 {
                     b.HasOne("Main.Domain.entities.inventory.Inventory", "Inventory")
-                        .WithMany()
+                        .WithMany("ChatMessages")
                         .HasForeignKey("InventoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Main.Domain.entities.common.ChatMessage", "ParentMessage")
-                        .WithMany("Replies")
-                        .HasForeignKey("ParentMessageId");
-
                     b.Navigation("Inventory");
-
-                    b.Navigation("ParentMessage");
                 });
 
             modelBuilder.Entity("Main.Domain.entities.inventory.Inventory", b =>
@@ -501,7 +484,15 @@ namespace Main.Infrastructure.DataAccess.Migrations
                         .WithMany("Inventories")
                         .HasForeignKey("CategoryId1");
 
+                    b.HasOne("Main.Domain.entities.common.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Category");
+
+                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("Main.Domain.entities.inventory.InventoryAccess", b =>
@@ -599,11 +590,6 @@ namespace Main.Infrastructure.DataAccess.Migrations
                     b.Navigation("Item");
                 });
 
-            modelBuilder.Entity("Main.Domain.entities.common.ChatMessage", b =>
-                {
-                    b.Navigation("Replies");
-                });
-
             modelBuilder.Entity("Main.Domain.entities.common.Tag", b =>
                 {
                     b.Navigation("InventoryTags");
@@ -628,6 +614,8 @@ namespace Main.Infrastructure.DataAccess.Migrations
             modelBuilder.Entity("Main.Domain.entities.inventory.Inventory", b =>
                 {
                     b.Navigation("AccessList");
+
+                    b.Navigation("ChatMessages");
 
                     b.Navigation("Comments");
 

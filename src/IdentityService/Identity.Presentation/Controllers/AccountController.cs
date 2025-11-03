@@ -26,7 +26,6 @@ namespace Identity.Presentation.Controllers
         [HttpGet]
         public IActionResult Login(string returnUrl)
         {
-            // Перенаправляем на React фронтенд для логина
             var decodedReturnUrl = HttpUtility.UrlDecode(returnUrl);
             var reactLoginUrl = $"{_urlSettings.AuthFront}/theapp/#/theapp/login?returnUrl={Uri.EscapeDataString(decodedReturnUrl)}";
             return Redirect(reactLoginUrl);
@@ -51,7 +50,6 @@ namespace Identity.Presentation.Controllers
                 }
             }
 
-            // Если логин не удался, возвращаем на React с ошибкой
             var reactErrorUrl = $"{_urlSettings.AuthFront}/login?error=invalid_credentials&returnUrl={Uri.EscapeDataString(model.ReturnUrl)}";
             return Redirect(reactErrorUrl);
         }

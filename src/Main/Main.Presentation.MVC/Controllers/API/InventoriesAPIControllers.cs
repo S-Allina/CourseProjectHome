@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace Main.Presentation.MVC.Controllers
+namespace Main.Presentation.MVC.Controllers.API
 {
     [ApiController]
     public class InventoryController : ControllerBase

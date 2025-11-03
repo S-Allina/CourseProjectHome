@@ -1,4 +1,5 @@
-﻿using Main.Domain.entities.common;
+﻿using Main.Application.Dtos.Common;
+using Main.Domain.entities.common;
 using Main.Domain.Enums.Users;
 using System;
 using System.Collections.Generic;
@@ -10,9 +11,10 @@ namespace Main.Application.Interfaces
 {
     public interface IUsersService
     {
-        public string GetCurrentUserId();
-        public string GetCurrentUserRole();
-        public Theme GetThemeCurentUser();
+        string GetCurrentUserId();
+        string GetCurrentUserRole();
         Task<UserDto> GetCurrentUser();
+        bool CheckBlock(string[] ids);
+        Task<string> CreateUser(CreateUserRequest request);
     }
 }

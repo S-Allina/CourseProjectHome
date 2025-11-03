@@ -14,19 +14,17 @@ namespace Identity.Infrastructure.Services
 {
     public class UserService : IUserService
     {
-        private readonly ICurrentUserService _currentUserService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
-        private readonly ILogger<UserService> _logger;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IRoleService _roleService;
+        private readonly IMainApiClient _mainApiClient;
 
-        public UserService(ICurrentUserService currentUserService, UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<UserService> logger, IHttpContextAccessor httpContextAccessor)
+        public UserService(UserManager<ApplicationUser> userManager, IMapper mapper, IMainApiClient mainApiClient, IRoleService roleService)
         {
-            _currentUserService = currentUserService;
             _userManager = userManager;
             _mapper = mapper;
-            _logger = logger;
-            _httpContextAccessor = httpContextAccessor;
+            _roleService = roleService;
+            _mainApiClient = mainApiClient;
         }
 
         public async Task<ResponseDto> DeleteUnconfirmedUsersAsync(CancellationToken cancellationToken)
@@ -36,33 +34,26 @@ namespace Identity.Infrastructure.Services
             return await DeleteUsersAsync(users, cancellationToken);
         }
 
-        public async Task<CurrentUserDto> GetCurrentUserAsync(CancellationToken cancellationToken = default)
-        {
-            var id = GetUserId();
-            return await GetByIdAsync(id, cancellationToken);
-        }
-
-        public string? GetUserId()
-        {
-            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            return userId;
-        }
-
         public async Task<ResponseDto> DeleteSomeUsersAsync(IEnumerable<string> userIds, CancellationToken cancellationToken)
         {
             if (userIds == null) return await GetAllAsync(cancellationToken);
-
             return await DeleteUsersAsync(userIds, cancellationToken);
         }
 
         public async Task<ResponseDto> GetAllAsync(CancellationToken cancellationToken)
         {
             var users = await _userManager.Users.AsNoTracking().ToListAsync(cancellationToken);
-
-            return new ResponseDto { Result = _mapper.Map<IEnumerable<CurrentUserDto>>(users) };
+            return await _roleService.GetAllAsync(users, cancellationToken); ;
         }
 
         public async Task<ResponseDto> BlockUser(IEnumerable<string> userIds, CancellationToken cancellationToken)
+        {
+            var result = await UpdateUsersStatusAsync(userIds, user => Statuses.Blocked, cancellationToken);
+            await _mainApiClient.NotifyBlockedUsers(userIds.ToArray());
+            return result;  
+        }
+
+        public async Task<ResponseDto> RoleChange(IEnumerable<string> userIds, CancellationToken cancellationToken)
         {
             return await UpdateUsersStatusAsync(userIds, user => Statuses.Blocked, cancellationToken);
         }
@@ -80,14 +71,36 @@ namespace Identity.Infrastructure.Services
             if (userIds?.Any() != true)
                 return await GetAllAsync(cancellationToken);
 
-            var usersToUpdate = await _userManager.Users.Where(u => userIds.Contains(u.Id)).ToListAsync(cancellationToken);
+            var usersWithNewStatus = await _userManager.Users.Where(u => userIds.Contains(u.Id)).Select(u => new { UserId = u.Id, NewStatus = statusSelector(u) }).ToListAsync(cancellationToken);
 
-            foreach (var user in usersToUpdate)
+            if (!usersWithNewStatus.Any())
+                return await GetAllAsync(cancellationToken);
+
+            var statusGroups = usersWithNewStatus.GroupBy(x => x.NewStatus);
+
+            foreach (var group in statusGroups)
             {
-                user.Status = statusSelector(user);
+                var userIdsInGroup = group.Select(x => x.UserId).ToList();
 
-                await _userManager.UpdateAsync(user);
+                await _userManager.Users.Where(u => userIdsInGroup.Contains(u.Id)).ExecuteUpdateAsync(
+                        setter => setter.SetProperty(u => u.Status, group.Key),
+                        cancellationToken
+                    );
             }
+            return await GetAllAsync(cancellationToken);
+        }
+
+        public async Task<ResponseDto> UpdateUsersRoleAsync(IEnumerable<string> userIds, Roles role, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (userIds?.Any() != true)
+                return await GetAllAsync(cancellationToken);
+
+            var currentRole = role == Roles.User ? Roles.Admin.ToString() : Roles.User.ToString();
+            var targetRole = role == Roles.User ? Roles.User.ToString() : Roles.Admin.ToString();
+
+            await _roleService.UpdateUsersRoleAsync(userIds, currentRole, targetRole, cancellationToken);
 
             return await GetAllAsync(cancellationToken);
         }
@@ -105,49 +118,17 @@ namespace Identity.Infrastructure.Services
 
         public async Task<CurrentUserDto> GetByIdAsync(string id, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Getting user by id");
-
-            var user = await GetUserByIdAsync(id.ToString());
-
-            _logger.LogInformation("User found");
+            var user = await GetUserByIdAsync(id);
 
             return _mapper.Map<CurrentUserDto>(user);
         }
-
-        //public async Task<IEnumerable<CurrentUserDto>> GetAllAsync()
-        //{
-        //    _logger.LogInformation("Getting users");
-
-        //    var users = await _userManager.Users.ToListAsync();
-
-        //    _logger.LogInformation("User found");
-
-        //    var result = _mapper.Map<IEnumerable<CurrentUserDto>>(users);
-
-        //    return result;
-        //}
-
-        public async Task<CurrentUserDto> GetCurrentUserAsync()
-        {
-            var userId = _currentUserService.GetUserId();
-
-            var user = await GetUserByIdAsync(userId);
-
-            _logger.LogInformation("User found");
-
-            return _mapper.Map<CurrentUserDto>(user);
-        }
-
 
         private async Task<ApplicationUser> GetUserByIdAsync(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
 
             if (user == null)
-            {
-                _logger.LogInformation("User not found");
                 throw new Exception("User not found");
-            }
 
             return user;
         }

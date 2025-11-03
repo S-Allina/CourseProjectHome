@@ -6,7 +6,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
 {
     public class ItemRepository : BaseRepository<Item>, IItemRepository
     {
-        private readonly ApplicationDbContext _db;
+        private readonly new ApplicationDbContext _db;
 
         public ItemRepository(ApplicationDbContext db) : base(db)
         {
@@ -15,8 +15,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
         public async Task<Item> UpdateItemAsync(Item item, CancellationToken cancellationToken = default)
         {
-            try
-            {
                 var existingItem = await _db.Set<Item>()
                     .Include(i => i.FieldValues)
                     .FirstOrDefaultAsync(i => i.Id == item.Id, cancellationToken);
@@ -31,11 +29,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
                 await _db.SaveChangesAsync(cancellationToken);
                 return existingItem;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         private async Task UpdateItemFieldValuesOptimizedAsync(Item existingItem, ICollection<ItemFieldValue> newFieldValues, CancellationToken cancellationToken)
@@ -84,7 +77,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                     fieldValueToAdd.CreatedAt = DateTime.UtcNow;
                     fieldValueToAdd.UpdatedAt = DateTime.UtcNow;
                 }
-                await _db.Set<ItemFieldValue>().AddRangeAsync(fieldValuesToAdd, cancellationToken); // ✅ Bulk add
+                await _db.Set<ItemFieldValue>().AddRangeAsync(fieldValuesToAdd, cancellationToken); 
                 foreach (var fieldValueToAdd in fieldValuesToAdd)
                 {
                     existingItem.FieldValues.Add(fieldValueToAdd);
@@ -114,10 +107,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
             catch (DbUpdateConcurrencyException)
             {
                 throw new DbUpdateConcurrencyException("Item was modified by another user. Please refresh and try again.");
-            }
-            catch (Exception)
-            {
-                throw;
             }
         }
 

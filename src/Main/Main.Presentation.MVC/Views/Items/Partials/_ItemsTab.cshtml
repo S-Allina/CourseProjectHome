@@ -1,6 +1,9 @@
 ﻿@using Main.Application.Dtos.Inventories.Index
 @using Main.Application.Dtos.Items.Index
 @using Main.Domain.enums.inventory
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 @model IEnumerable<ItemDto>
 @{
     var inventory = ViewBag.SelectedInventory as InventoryDetailsDto;
@@ -11,12 +14,11 @@
     <div class="d-flex justify-content-between align-items-center mb-4 mt-1">
             
             <a href="@Url.Action("Create", new { inventoryId = inventory.Id })" class="btn btn-success">
-                <i class="fas fa-plus me-1"></i>Add New Item
+                <i class="fas fa-plus me-1"></i>@Localizer["Add New Item"]
             </a>
-        <button type="button" id="deleteSelected" class="btn btn-danger "> <i class=" fas fa-trash me-1"></i>Delete Selected</button>
+        <button type="button" id="deleteSelected" class="btn btn-danger "> <i class=" fas fa-trash me-1"></i>@Localizer["Delete Selected"]</button>
     </div>
 
-    <!-- Таблица товаров -->
     @if (Model?.Any() == true)
     {
         <div class="card">
@@ -25,24 +27,23 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <link href="d:\itandition\courseproject\src\main\main.presentation.mvc\views\items\_itemstab.cshtml.css" rel="stylesheet" />
                     <table class="table mb-0" id="itemsTable">
                         <thead>
                             <tr>
-                                <th>Select</th>
-                                <th>Custom ID</th>
+                                <th>@Localizer["Select"]</th>
+                                <th>@Localizer["Custom ID"]</th>
                                 @foreach (var field in inventory.Fields.Where(f => f.IsVisibleInTable).OrderBy(f => f.OrderIndex))
                                 {
                                     <th>@field.Name</th>
                                 }
-                                <th>Created By</th>
-                                <th>Created At</th>
+                                <th>@Localizer["Created By"]</th>
+                                <th>@Localizer["Created At"]</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var item in Model)
                             {
-                                <tr data-item-id="@item.Id" class="clickable-row">
+                                <tr data-item-id="@item.Id" class="clickable-row-item" style="cursor:pointer">
                                     <td>
                                         <input type="checkbox" name="selectedIds" value="@item.Id" class="rowCheckbox" />
                                     </td>
@@ -53,7 +54,7 @@
                                         <td>
                                             @if (fieldValue != null)
                                             {
-                                                @await Html.PartialAsync("_FieldValueDisplay", (field.FieldType, fieldValue))
+                                                @await Html.PartialAsync("~/Views/Inventories/Components/_FieldValueDisplay.cshtml", (field.FieldType, fieldValue))
                                             }
                                             else
                                             {
@@ -77,9 +78,9 @@
             <div class="card-body text-center py-5">
                 <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
                 <h4>No items found</h4>
-                <p class="text-muted">This inventory doesn't have any items yet.</p>
-                <a href="@Url.Action("Create", new { inventoryId = inventory.Id })" class="btn btn-success btn-lg">
-                    <i class="fas fa-plus me-2"></i>Add First Item
+                <p class="text-muted">@Localizer["This inventory doesn't have any items yet"]</p>
+                <a href="@Url.Action("Create", "Items", new { inventoryId = inventory.Id })" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>@Localizer["Add First Item"]
                 </a>
             </div>
         </div>
@@ -88,9 +89,9 @@
 else
 {
     <div class="alert alert-warning">
-        <h4><i class="fas fa-exclamation-triangle me-2"></i>Inventory not found</h4>
+        <h4><i class="fas fa-exclamation-triangle me-2"></i>@Localizer["Inventory not found"]</h4>
         <p>The selected inventory doesn't exist or you don't have access to it.</p>
-        <a href="@Url.Action("Index", "Inventories")" class="btn btn-primary">Back to Inventories</a>
+        <a href="@Url.Action("Index", "Inventories")" class="btn btn-primary">@Localizer["Back to Inventories"]</a>
     </div>
 }
 

@@ -56,15 +56,13 @@ namespace Identity.Presentation
                 Secure = CookieSecurePolicy.Always
             });
 
-            // ✅ ПРАВИЛЬНЫЙ порядок middleware для IdentityServer
-            app.UseIdentityServer(); // ← ДОБАВЬТЕ ЭТУ СТРОЧКУ
+            app.UseIdentityServer();
             app.UseAuthentication();
             app.UseAuthorization();
 
-           
+            app.UseMiddleware<UserStatusMiddleware>();
             app.UseEndpoints(endpoints =>
             {
-                // ✅ Убедитесь, что есть MapControllerRoute
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");

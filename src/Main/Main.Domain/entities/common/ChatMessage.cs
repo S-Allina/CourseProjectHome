@@ -18,11 +18,5 @@ namespace Main.Domain.entities.common
         public string Message { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public bool IsEdited { get; set; }
-        public DateTime? EditedAt { get; set; }
-
-        public int? ParentMessageId { get; set; }
-        public ChatMessage? ParentMessage { get; set; }
-        public ICollection<ChatMessage> Replies { get; set; } = new List<ChatMessage>();
     }
 }

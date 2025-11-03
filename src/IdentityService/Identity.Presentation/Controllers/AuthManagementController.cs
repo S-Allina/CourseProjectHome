@@ -39,11 +39,12 @@ namespace Identity.Presentation.Controllers
             {
                 var user = await _userManager.GetUserAsync(User);
                 var identity = (ClaimsIdentity)User.Identity;
-                var themeClaim = identity.FindFirst("Theme");
+                var theme = User.FindFirst("theme")?.Value ??
+                                   User.FindFirst("Theme")?.Value ?? "dark"; 
                 return Ok(new
                 {
                     isAuthenticated = true,
-                    theme=themeClaim
+                    theme
                 });
             }
 
@@ -75,8 +76,6 @@ namespace Identity.Presentation.Controllers
 
             if (isValidPassword)
             {
-                // ✅ SignInManager автоматически создаст правильные claims включая sub
-                // Дополнительный sign-in чтобы убедиться что cookie создана
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 response.Result = user;
                 response.ReturnUrl = request.ReturnUrl;
@@ -115,28 +114,6 @@ namespace Identity.Presentation.Controllers
 
         //    return Ok(user);
         //}
-
-        [HttpPost("refresh-token")]
-        [Authorize]
-        public async Task<ResponseDto> RefreshToken([FromBody] RefreshTokenRequestDto request)
-        {
-            response.Result = await _authService.RefreshTokenAsync(request);
-
-            return response;
-        }
-
-        [HttpPost("revoke-refresh-token")]
-        [Authorize]
-        public async Task<IActionResult> RevokeRefreshToken([FromBody] RevokeTokenRequestDto request)
-        {
-            var response = await _authService.RevokeRefreshTokenAsync(request);
-
-            if (response != null && response.Message == "Refresh token revoked successfully")
-            {
-                return Ok(response);
-            }
-            return BadRequest(response);
-        }
 
         [HttpGet("verify-email")]
         [AllowAnonymous]

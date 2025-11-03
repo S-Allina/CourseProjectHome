@@ -21,120 +21,51 @@
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-6">
+    <div class="col mb-4">
+        <div class="col-md-12 mb-3">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-clock me-2"></i>@Localizer["Recent Inventories"]
+                        <i class="fas fa-clock me-2"></i>@Localizer["Recent"] @Localizer["Inventories"]
                     </h5>
                 </div>
                 <div class="card-body">
                     @if (Model.RecentInventories.Any())
                     {
                         <div class="table-responsive">
-                            <table class="table table-sm table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>@Localizer["Name"]</th>
-                                        <th>@Localizer["Description"]</th>
-                                        <th>@Localizer["Owner"]</th>
-                                        <th>@Localizer["Created"]</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var inventory in Model.RecentInventories)
-                                    {
-                                        <tr>
-                                            <td>
-                                                @if (!string.IsNullOrEmpty(inventory.ImageUrl))
-                                                {
-                                                    <img src="@inventory.ImageUrl" alt="@inventory.Name"
-                                                         class="rounded me-2" style="width: auto; height: 30px; object-fit: cover;">
-                                                }
-                                                <a asp-action="Index" asp-controller="Items" asp-route-inventoryId="@inventory.Id">
-
-                                                    @inventory.Name
-                                                </a>
-                                            </td>
-                                            <td>
-                                                @if (string.IsNullOrEmpty(inventory.Description))
-                                                {
-                                                    <span class="text-muted">@Localizer["No description"]</span>
-                                                }
-                                                else
-                                                {
-                                                    <span title="@inventory.Description">@inventory.DescriptionPreview</span>
-                                                }
-                                            </td>
-                                            <td>@inventory.OwnerName</td>
-                                            <td>@inventory.CreatedAt.ToString("dd.MM.yyyy")</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
+                            <partial name="~/Views/Inventories/Components/_InventoryTable.cshtml" model="Model.RecentInventories" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "sharedInventoriesTable" } })" />
                         </div>
                     }
                     else
                     {
                         <div class="text-center text-muted py-3">
                             <i class="fas fa-inbox fa-2x mb-2"></i>
-                            <p>@Localizer["No recent inventories"]</p>
+                            <p>@Localizer["No inventories found"]</p>
                         </div>
                     }
                 </div>
             </div>
         </div>
 
-        <!-- Таблица популярных инвентарей -->
-        <div class="col-md-6">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-line me-2"></i>@Localizer["Popular Inventories"]
+                        <i class="fas fa-chart-line me-2"></i>@Localizer["Popular"] @Localizer["Inventories"]
                     </h5>
                 </div>
                 <div class="card-body">
                     @if (Model.PopularInventories.Any())
                     {
                         <div class="table-responsive">
-                            <table class="table table-sm table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>@Localizer["Name"]</th>
-                                        <th>@Localizer["Items Count"]</th>
-                                        <th>@Localizer["Owner"]</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var inventory in Model.PopularInventories)
-                                    {
-                                        <tr>
-                                            <td>
-                                                @if (!string.IsNullOrEmpty(inventory.ImageUrl))
-                                                {
-                                                    <img src="@inventory.ImageUrl" alt="@inventory.Name"
-                                                         class="rounded me-2" style="width: auto; height: 30px; object-fit: cover;">
-                                                }
-                                                <a asp-action="Index" asp-controller="Items" asp-route-inventoryId="@inventory.Id">
-                                                    @inventory.Name
-                                                </a>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-primary">@inventory.ItemsCount</span>
-                                            </td>
-                                            <td>@inventory.OwnerName</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
+                            <partial name="~/Views/Inventories/Components/_InventoryTable.cshtml" model="Model.PopularInventories" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "sharedInventoriesTable" } })" />
                         </div>
                     }
                     else
                     {
                         <div class="text-center text-muted py-3">
                             <i class="fas fa-chart-line fa-2x mb-2"></i>
-                            <p>@Localizer["No popular inventories"]</p>
+                            <p>@Localizer["No inventories found"]</p>
                         </div>
                     }
                 </div>

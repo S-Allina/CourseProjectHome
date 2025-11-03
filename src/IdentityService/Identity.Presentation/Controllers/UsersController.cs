@@ -1,4 +1,6 @@
-﻿using Identity.Application.Interfaces;
+﻿using Identity.Application.DTO;
+using Identity.Application.Interfaces;
+using Identity.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Users.Application.Dto;
@@ -15,20 +17,18 @@ namespace Identity.Presentation.Controllers
             _userService = userService;
         }
 
-        [HttpGet("me")]
-        [Authorize]
-        public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)
-        {
-            var response = await _userService.GetCurrentUserAsync(cancellationToken);
-
-            return Ok(response);
-        }
-
         [HttpPatch("block")]
         [Authorize]
         public async Task<ResponseDto> Block([FromBody] string[] userIds, CancellationToken cancellationToken)
         {
             return await _userService.BlockUser(userIds, cancellationToken);
+        }
+
+        [HttpPatch("role")]
+        [Authorize]
+        public async Task<ResponseDto> RoleChange([FromBody] ChangeRoleRequest request, CancellationToken cancellationToken)
+        {
+            return await _userService.UpdateUsersRoleAsync(request.UserIds, request.Role, cancellationToken);
         }
 
         [HttpPatch("unblock")]

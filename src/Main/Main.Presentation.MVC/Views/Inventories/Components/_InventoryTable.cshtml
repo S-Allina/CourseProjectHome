@@ -6,7 +6,7 @@
 @model List<InventoryTableDto>
 @{
     var tableType = ViewData["TableType"] as string ?? "my";
-    var tableId = tableType;
+    var tableId = $"{tableType}InventoriesTable"; 
 }
 
 @if (!Model.Any())
@@ -30,19 +30,21 @@
 else
 {
     <div class="table-responsive">
-        <table id="@tableId" class="table-striped table-hover w-100">
+        <table id="@tableId" class="table table-striped table-hover w-100">
             <thead>
                 <tr>
-                    <th>@Localizer["Select"]</th>
+                    <th width="30px">
+                        <input type="checkbox" id="selectAll@(tableType)" class="form-check-input" />
+                    </th>
                     <th>@Localizer["Name"]</th>
                     <th>@Localizer["Description"]</th>
                     <th>@Localizer["Category"]</th>
-                    <th>@Localizer["Fields"]</th>
-                    <th>@Localizer["Tags"]</th>
-                    <th>@Localizer["Created"]</th>
-                    <th>@Localizer["Updated"]</th>
+                    <th width="80px">@Localizer["Fields"]</th>
+                    <th width="150px">@Localizer["Tags"]</th>
+                    <th width="120px">@Localizer["Created"]</th>
+                    <th width="120px">@Localizer["Updated"]</th>
                     <th>@Localizer["Owner"]</th>
-                    <th>@Localizer["Status"]</th>
+                    <th width="100px">@Localizer["Status"]</th>
                 </tr>
             </thead>
             <tbody>
@@ -50,7 +52,7 @@ else
                 {
                     <tr class="clickable-row" data-inventory-id="@inventory.Id" style="cursor: pointer;">
                         <td>
-                            <input type="checkbox" name="selectedIds" value="@inventory.Id" class="rowCheckbox" />
+                            <input type="checkbox" name="selectedIds" value="@inventory.Id" class="form-check-input rowCheckbox" onclick="event.stopPropagation()" />
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
@@ -62,18 +64,18 @@ else
                                     <strong>@inventory.Name</strong>
                                     @if (!inventory.IsPublic)
                                     {
-                                        <i class="fas fa-lock text-warning ms-1" title=@Localizer["Private"]></i>
+                                        <i class="fas fa-lock text-warning ms-1" title="@Localizer["Private"]"></i>
                                     }
                                 </div>
                             </div>
                         </td>
                         <td>
                             <span class="text-truncate d-inline-block" style="max-width: 200px;" title="@inventory.Description">
-                                @inventory.Description
+                                @Html.Raw(inventory.DescriptionHtml)
                             </span>
                         </td>
-                        <td>@(inventory.CategoryId.ToString() ?? @Localizer["No category"])</td>
-                        <td>
+                        <td>@(inventory.CategoryName ?? @Localizer["No category"])</td>
+                        <td class="text-center">
                             <span class="badge bg-secondary">@inventory.FieldCount</span>
                         </td>
                         <td>
@@ -81,11 +83,11 @@ else
                             {
                                 foreach (var tag in inventory.Tags.Take(2))
                                 {
-                                    <span class="badge me-1">@tag</span>
+                                    <span class="badge bg-light text-dark me-1 mb-1">@tag</span>
                                 }
                                 @if (inventory.Tags.Count > 2)
                                 {
-                                    <span class="badge">+@(inventory.Tags.Count - 2)</span>
+                                    <span class="badge bg-light text-dark">+@(inventory.Tags.Count - 2)</span>
                                 }
                             }
                             else
@@ -93,8 +95,12 @@ else
                                 <span class="text-muted">@Localizer["No tags"]</span>
                             }
                         </td>
-                        <td>@inventory.CreatedAt.ToString("MMM dd, yyyy")</td>
-                        <td>@inventory.UpdatedAt.ToString("MMM dd, yyyy")</td>
+                        <td data-order="@inventory.CreatedAt.ToString("yyyy-MM-dd")">
+                            @inventory.CreatedAt.ToString("MMM dd, yyyy")
+                        </td>
+                        <td data-order="@inventory.UpdatedAt.ToString("yyyy-MM-dd")">
+                            @inventory.UpdatedAt.ToString("MMM dd, yyyy")
+                        </td>
                         <td>@inventory.OwnerName</td>
                         <td>
                             @if (inventory.IsPublic)
@@ -111,36 +117,4 @@ else
             </tbody>
         </table>
     </div>
-    <script>
-        // Обработка двойного клика по строке таблицы
-        document.addEventListener('DOMContentLoaded', function() {
-            const tableRows = document.querySelectorAll('.clickable-row');
-
-            tableRows.forEach(row => {
-                row.addEventListener('dblclick', function(e) {
-                    if (e.target.type === 'checkbox' || e.target.classList.contains('rowCheckbox')) {
-                        return;
-                    }
-                    const inventoryId = this.getAttribute('data-inventory-id');
-                    window.location.href = '@Url.Action("Index", "Items")' + '?inventoryId=' + inventoryId;
-                });
-
-                const checkbox = row.querySelector('.rowCheckbox');
-                if (checkbox) {
-                    checkbox.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                    });
-                }
-            });
-
-            // Предотвращаем выделение текста при двойном клике
-            tableRows.forEach(row => {
-                row.addEventListener('mousedown', function(e) {
-                    if (e.detail > 1 && e.target.type !== 'checkbox' && !e.target.classList.contains('rowCheckbox')) {
-                        e.preventDefault();
-                    }
-                });
-            });
-        });
-    </script>
 }

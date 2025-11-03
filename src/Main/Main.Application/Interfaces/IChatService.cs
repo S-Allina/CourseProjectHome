@@ -1,4 +1,4 @@
-﻿using Main.Application.Dtos.Common.Index;
+﻿using Main.Application.Dtos.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;

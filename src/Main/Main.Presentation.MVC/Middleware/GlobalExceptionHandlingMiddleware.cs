@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.ViewFeatures;
+﻿using Main.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -61,7 +62,7 @@ namespace Main.Presentation.MVC.Middleware
                 case DbUpdateConcurrencyException dbUpdateConcurrencyException:
                     message = "Конфликт данных: " + dbUpdateConcurrencyException.Message;
                     alertType = "warning";
-                    _logger.LogWarning(exception, "DbUpdateConcurrencyException: {Message}", message);
+                    _logger.LogWarning(exception, "DbUpdateConcurrencyException: {Message}", message); 
                     break;
 
                 case InvalidOperationException invalidOperationException:
@@ -82,21 +83,16 @@ namespace Main.Presentation.MVC.Middleware
 
         private async Task HandleException(HttpContext context, string message, string alertType)
         {
-            // Получаем TempData
             var tempDataFactory = context.RequestServices.GetRequiredService<ITempDataDictionaryFactory>();
             var tempData = tempDataFactory.GetTempData(context);
 
-            // Сохраняем ошибку
             tempData["ErrorAlertMessage"] = message;
             tempData["ErrorAlertType"] = alertType;
             tempData.Save();
 
-            // Редирект на предыдущую страницу
             var referer = context.Request.Headers["Referer"].ToString();
             var redirectUrl = !string.IsNullOrEmpty(referer) ? referer : "/";
-
             context.Response.Redirect(redirectUrl);
-            await Task.CompletedTask;
         }
     }
 }

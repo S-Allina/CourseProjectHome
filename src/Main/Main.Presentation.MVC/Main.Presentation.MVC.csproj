@@ -41,4 +41,8 @@
     <ProjectReference Include="..\Main.Infrustructure\Main.Infrustructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\js\inventory-form\" />
+  </ItemGroup>
+
 </Project>

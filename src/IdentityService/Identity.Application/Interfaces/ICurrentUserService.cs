@@ -1,7 +1,10 @@
-﻿namespace Identity.Application.Interfaces
+﻿using Identity.Application.Dto;
+
+namespace Identity.Application.Interfaces
 {
     public interface ICurrentUserService
     {
-        public string? GetUserId();
+        string? GetUserId();
+        Task<CurrentUserDto> GetCurrentUserAsync();
     }
 }

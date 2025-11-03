@@ -12,15 +12,6 @@ namespace Identity.Domain.Entity
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public Statuses Status { get; set; } = Statuses.Unverify;
 
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        public Theme Theme { get; set; } = Theme.Light;
-
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        public Language Language { get; set; } = Language.English;
-
-        public string? RefreshToken { get; set; }
-        public DateTime? RefreshTokenExpiryTime { get; set; }
-
         public DateTime CreateAt { get; set; }
         public DateTime? UpdateAt { get; set; }
     }

@@ -3,6 +3,7 @@ using Main.Application.Dtos.Inventories.Create;
 using Main.Application.Dtos.Inventories.Index;
 using Main.Domain.entities.inventory;
 using Main.Domain.enums.Users;
+using Main.Presentation.MVC.ViewModel;
 
 namespace Main.Application.Interfaces
 {
@@ -19,9 +20,9 @@ namespace Main.Application.Interfaces
         Task<List<InventorySearchResult>> GetInventoriesByTagAsync(string tagName);
         Task<IEnumerable<InventoryTableDto>> GetUserInventoriesAsync(CancellationToken cancellationToken = default);
         Task<IEnumerable<InventoryTableDto>> GetSharedInventoriesAsync(CancellationToken cancellationToken = default);
-        
-            Task<IEnumerable<InventoryTableDto>> GetRecentInventoriesAsync(int count, CancellationToken cancellationToken);
-            Task<IEnumerable<InventoryTableDto>> GetPopularInventoriesAsync(int count, CancellationToken cancellationToken);
-
+        Task<IEnumerable<InventoryTableDto>> GetRecentInventoriesAsync(int count, CancellationToken cancellationToken);
+        Task<IEnumerable<InventoryTableDto>> GetPopularInventoriesAsync(int count, CancellationToken cancellationToken);
+        Task<InventoryFormViewModel> GetCreateViewModelAsync();
+        Task<InventoryFormViewModel> GetEditViewModelAsync(int id);
     }
 }

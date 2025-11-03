@@ -3,14 +3,17 @@ using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Dtos.Items.Create;
 using Main.Application.Dtos.Items.Index;
 using Main.Application.Interfaces;
+using Main.Application.Interfaces.ImgBBStorage;
 using Main.Domain.entities.inventory;
 using Main.Domain.entities.item;
 using Main.Domain.enums.inventory;
 using Main.Domain.enums.Users;
 using Main.Domain.InterfacesRepository;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Internal;
 using System.Security.Claims;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Main.Application.Services
 {
@@ -18,24 +21,21 @@ namespace Main.Application.Services
     {
         private readonly IItemRepository _itemRepository;
         private readonly IInventoryService _inventoryService;
-        private readonly ICustomIdService _customIdService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IImgBBStorageService _imgBBStorageService;
         private readonly IUsersService _usersService;
         private readonly IMapper _mapper;
 
         public ItemService(
+            IImgBBStorageService imgBBStorageService,
             IItemRepository itemRepository,
             IInventoryService inventoryService,
             IInventoryFieldRepository inventoryFieldRepository,
-            ICustomIdService customIdService,
-            IHttpContextAccessor httpContextAccessor,
             IUsersService usersService,
             IMapper mapper)
         {
             _itemRepository = itemRepository;
             _inventoryService = inventoryService;
-            _customIdService = customIdService;
-            _httpContextAccessor = httpContextAccessor;
+            _imgBBStorageService = imgBBStorageService;
             _usersService = usersService;
             _mapper = mapper;
         }
@@ -55,12 +55,13 @@ namespace Main.Application.Services
                 CustomId = createDto.CustomId,
                 CreatedById = userId,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
+                CreatedBy = null
             };
 
             var fieldSchema1 = _mapper.Map<List<InventoryField>>(fieldSchema);
 
-            await AddFieldValuesAsync(item, createDto.FieldValues, fieldSchema1, cancellationToken);
+            AddFieldValuesAsync(item, createDto.FieldValues, fieldSchema1, cancellationToken);
 
             var createdItem = await _itemRepository.CreateAsync(item, cancellationToken);
             return _mapper.Map<ItemDto>(createdItem);
@@ -74,7 +75,7 @@ namespace Main.Application.Services
             return inventory.InventoryId;
         }
 
-        private void ValidateAndConvertFieldValues(List<CreateItemFieldValueDto> fieldValues, List<InventoryFieldDto> fieldSchema)
+        private async Task ValidateAndConvertFieldValues(List<CreateItemFieldValueDto> fieldValues, List<InventoryFieldDto> fieldSchema)
         {
             var result = new Dictionary<int, object>();
             foreach (var fieldValue in fieldValues)
@@ -88,7 +89,7 @@ namespace Main.Application.Services
                     FieldType.Text => fieldValue.TextValue,
                     FieldType.MultilineText => fieldValue.MultilineTextValue,
                     FieldType.Number => fieldValue.NumberValue,
-                    FieldType.File => fieldValue.FileUrl,
+                    FieldType.File => await _imgBBStorageService.UploadFileAsync(fieldValue.File),
                     FieldType.Boolean => fieldValue.BooleanValue,
                     _ => null
                 };
@@ -100,7 +101,7 @@ namespace Main.Application.Services
             }
         }
 
-        private async Task AddFieldValuesAsync(Item item, List<CreateItemFieldValueDto> fieldValues, List<InventoryField> fieldSchema, CancellationToken cancellationToken)
+        private void AddFieldValuesAsync(Item item, List<CreateItemFieldValueDto> fieldValues, List<InventoryField> fieldSchema, CancellationToken cancellationToken)
         {
             foreach (var fieldValue in fieldValues)
             {
@@ -188,7 +189,9 @@ namespace Main.Application.Services
         private async Task<bool> CheckAccess(int inventoryId, AccessLevel accessLevel, CancellationToken cancellationToken)
         {
             var t = _usersService.GetCurrentUserRole();
-            return await _inventoryService.HasWriteAccessAsync(inventoryId, accessLevel, cancellationToken) || _usersService.GetCurrentUserRole() == "Admin";
+            var res = await _inventoryService.HasWriteAccessAsync(inventoryId, accessLevel, cancellationToken) || t == "Admin";
+
+            return res;
         }
     }
 }

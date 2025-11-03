@@ -1,5 +1,6 @@
 ﻿@using Main.Application.Dtos.Inventories.Index
-@model InventoryFormDto
+@model InventoryFormViewModel
+@using Main.Presentation.MVC.ViewModel
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<SharedResource> Localizer
@@ -19,7 +20,7 @@
 
                     <div class="form-group mb-3">
                         <label asp-for="CategoryId" class="form-label">@Localizer["Category"]</label>
-                        <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select">
+                        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
                             <option value="">-- @Localizer["Select"] @Localizer["Category"] --</option>
                         </select>
                         <span asp-validation-for="CategoryId" class="text-danger"></span>

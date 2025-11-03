@@ -9,7 +9,9 @@ using Main.Domain.entities.common;
 using Main.Domain.entities.inventory;
 using Main.Domain.enums.Users;
 using Main.Domain.InterfacesRepository;
+using Main.Presentation.MVC.ViewModel;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 
 namespace Main.Application.Services
@@ -51,7 +53,7 @@ namespace Main.Application.Services
         public async Task<IEnumerable<InventoryTableDto>> GetUserInventoriesAsync(CancellationToken cancellationToken = default)
         {
             var userId = _usersService.GetCurrentUserId();
-            var inventories = await _inventoryRepository.GetAllAsync(i => i.OwnerId == userId, cancellationToken, "Owner", "Category");
+            var inventories = await _inventoryRepository.GetAllAsync(i => i.OwnerId == userId, cancellationToken, "Owner", "Category", "Fields");
             return _mapper.Map<IEnumerable<InventoryTableDto>>(inventories);
         }
 
@@ -59,7 +61,7 @@ namespace Main.Application.Services
         {
             var userId = _usersService.GetCurrentUserId();
 
-            var inventories = await _inventoryRepository.GetAllAsync(i => i.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= 2), cancellationToken, "Owner", "Category");
+            var inventories = await _inventoryRepository.GetAllAsync(i => i.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= 2), cancellationToken, "Owner", "Category", "Fields");
             return _mapper.Map<IEnumerable<InventoryTableDto>>(inventories);
         }
 
@@ -121,7 +123,72 @@ namespace Main.Application.Services
 
                 return resultDto;
         }
+        public async Task<InventoryFormViewModel> GetCreateViewModelAsync()
+        {
+            var categories = await _categoryRepository.GetAllAsync();
 
+            var viewModel = new InventoryFormViewModel
+            {
+                Categories = categories.Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = c.Name
+                }).ToList(),
+
+                // Инициализация пустых коллекций
+                Tags = new List<string>(),
+                AccessList = new List<InventoryAccessDto>(),
+                Fields = new List<CreateInventoryFieldDto>()
+            };
+
+            return viewModel;
+        }
+
+        public async Task<InventoryFormViewModel> GetEditViewModelAsync(int id)
+        {
+            var inventory = await _inventoryRepository.GetFirstAsync(
+                i => i.Id == id,
+                cancellationToken: default,
+                "Fields", "AccessList", "Category", "Tags");
+
+            if (inventory == null)
+                throw new ArgumentException($"Inventory with id {id} not found");
+
+            var categories = await _categoryRepository.GetAllAsync();
+
+            // Сначала маппим в InventoryFormDto, затем создаем ViewModel
+            var formDto = _mapper.Map<InventoryFormDto>(inventory);
+
+            var viewModel = new InventoryFormViewModel
+            {
+                // Копируем все свойства из DTO
+                Id = formDto.Id,
+                Name = formDto.Name,
+                Description = formDto.Description,
+                CategoryId = formDto.CategoryId,
+                CategoryName = formDto.CategoryName,
+                ImageUrl = formDto.ImageUrl,
+                Image = formDto.Image,
+                IsPublic = formDto.IsPublic,
+                CustomIdFormat = formDto.CustomIdFormat,
+                OwnerId = formDto.OwnerId,
+                CreatedAt = formDto.CreatedAt,
+                Version = formDto.Version,
+                Tags = formDto.Tags,
+                AccessList = formDto.AccessList,
+                Fields = formDto.Fields,
+
+                // Заполняем специфичные для ViewModel свойства
+                Categories = categories.Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = c.Name,
+                    Selected = c.Id == inventory.CategoryId
+                }).ToList()
+            };
+
+            return viewModel;
+        }
         public async Task<bool> HasWriteAccessAsync(int inventoryId, AccessLevel accessLevel, CancellationToken cancellationToken = default)
         {
             var inventory = await _inventoryRepository.GetFirstAsync(i => i.Id == inventoryId, cancellationToken, "AccessList");

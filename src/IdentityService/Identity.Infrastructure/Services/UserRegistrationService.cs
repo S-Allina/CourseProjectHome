@@ -114,11 +114,8 @@ namespace Identity.Infrastructure.Services
                 throw new Exception($"Failed to create user: {errors}");
             }
 
-            // 🔄 Синхронизация с Main API (fire-and-forget)
             _ = Task.Run(async () =>
             {
-                try
-                {
                     var success = await _mainApiClient.CreateUserAsync(
                         newUser.Id,
                         newUser.FirstName,
@@ -130,11 +127,6 @@ namespace Identity.Infrastructure.Services
                     {
                         _logger.LogWarning("Failed to sync user with Main API: {UserId}", newUser.Id);
                     }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error in background user sync: {UserId}", newUser.Id);
-                }
             });
             return newUser;
         }

@@ -1,50 +1,46 @@
-﻿@using Main.Application.Dtos
-@using Main.Application.Dtos.Inventories.Index
-@using Main.Domain.enums.inventory
-@model Main.Application.Dtos.Inventories.Index.InventoryFormDto
-@using Microsoft.AspNetCore.Mvc.Localization
+﻿@using Main.Application.Dtos.Inventories.Index
+@using Main.Presentation.MVC.ViewModel
 @using Microsoft.Extensions.Localization
+@model InventoryFormViewModel
 @inject IStringLocalizer<SharedResource> Localizer
+
 @{
     ViewData["Title"] = Model.PageTitle;
 }
 
 <h1>@Model.PageTitle</h1>
 <hr />
+
 <div class="row">
     <div class="col-md-12">
         <div id="autoSaveIndicator" class="alert alert-info d-none">
-            <div class="d-flex align-items-center">
-                <div class="spinner-border spinner-border-sm me-2" role="status">
-                    <span class="visually-hidden">@Localizer["Loading"]</span>
-                </div>
-                <span id="autoSaveMessage">@Localizer["Auto-saving"]</span>
-            </div>
         </div>
-        <form asp-action="@Model.FormAction" id="inventoryForm" data-is-edit="@Model.IsEditMode.ToString().ToLower()" enctype="multipart/form-data">
+        
+        <form asp-action="@Model.FormAction" id="inventoryForm" 
+              data-is-edit="@Model.IsEditMode.ToString().ToLower()" 
+              enctype="multipart/form-data">
+              
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
             <input type="hidden" id="version" name="Version" value="@Model.Version" />
-            <input type="hidden" id="lastSavedVersion" value="@Model.Version" />
-            <input type="hidden" id="isDirty" value="false" />
 
             @if (Model.IsEditMode)
             {
                 <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="OwnerId" value="@Model.OwnerId"/>
-                <input type="hidden" asp-for="CreatedAt"/>
+                <input type="hidden" asp-for="OwnerId" />
             }
 
-            <partial name="_InventoryTabs" />
-
+            <!-- Табы -->
+            <partial name="~/Views/Inventories/Partials/_InventoryTabs.cshtml" />
+            
             <div class="tab-content" id="inventoryTabsContent">
-                <partial name="_BasicInfoTab" model="Model" />
-                <partial name="_CustomIdTab" model="Model" />
-                <partial name="_FieldsTab" model="Model" />
-                <partial name="_TagsTab" model="Model" />
-                <partial name="_AccessTab" model="Model" />
+                <partial name="~/Views/Inventories/Partials/_BasicInfoTab.cshtml" model="Model" />
+                <partial name="~/Views/Inventories/Partials/_CustomIdTab.cshtml" model="Model" />
+                <partial name="~/Views/Inventories/Partials/_FieldsTab.cshtml" model="Model" />
+                <partial name="~/Views/Inventories/Partials/_TagsTab.cshtml" model="Model" />
+                <partial name="~/Views/Inventories/Partials/_AccessTab.cshtml" model="Model" />
             </div>
 
+            <!-- Кнопки действий -->
             <div class="mt-4">
                 <button type="submit" class="btn btn-primary">@Model.SubmitButtonText</button>
                 <a asp-action="Index" class="btn btn-outline-secondary">@Localizer["Back"]</a>
@@ -52,7 +48,6 @@
         </form>
     </div>
 </div>
-
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     @* <script type="module" src="~/js/inventory-form.js"></script> *@
@@ -318,16 +313,114 @@
         let componentCount = 0;
         let components = [];
 
-        // ===== ACCESS MANAGEMENT =====
+               // ===== ACCESS MANAGEMENT =====
         let accessManager = {
             users: [],
             currentAccessList: @Html.Raw(Json.Serialize(Model.AccessList ?? new List<InventoryAccessDto>())),
+            dataTable: null,
 
             init: function() {
                 this.setupUserSearch();
-                this.setupSorting();
-                this.loadUserDetails();
+                this.initializeDataTable();
                 this.setupRemoveAccess();
+            },
+
+            initializeDataTable: function() {
+                this.dataTable = $('#accessListTable').DataTable({
+                    pageLength: 10,
+                    responsive: true,
+                    order: [[2, 'desc']], // Сортировка по дате создания по умолчанию
+                    columnDefs: [
+                        {
+                            orderable: false,
+                            targets: [3] // Отключаем сортировку для действий
+                        },
+                        {
+                            width: "100px",
+                            targets: [3] // Фиксируем ширину колонки действий
+                        }
+                    ],
+                    language: {
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        search: "Search:",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        },
+                        emptyTable: "@Localizer["No users have access to this inventory yet"]."
+                    },
+                    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>',
+                    data: [], // Изначально пустые данные
+                    columns: [
+                        {
+                            data: 'userInfo',
+                            render: function(data, type, row) {
+                                return `
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            <span class="text-white">${(row.userEmail || 'U').charAt(0).toUpperCase()}</span>
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold user-name">${row.userName || '@Localizer["Loading"]...'}</div>
+                                            <small class="text-muted user-email">${row.userEmail || '@Localizer["Loading"]...'}</small>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        },
+                        {
+                            data: 'accessLevel',
+                            render: function(data, type, row) {
+                                const badgeClass = accessManager.getAccessLevelBadgeClass(row.accessLevel);
+                                const accessText = accessManager.getAccessLevelText(row.accessLevel);
+                                return `<span class="badge ${badgeClass}">${accessText}</span>`;
+                            }
+                        },
+                        {
+                            data: 'grantedAt',
+                            render: function(data, type, row) {
+                                return new Date(row.grantedAt).toLocaleString();
+                            }
+                        },
+                        {
+                            data: 'userId',
+                            render: function(data, type, row) {
+                                return `
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger remove-access"
+                                            data-user-id="${row.userId}"
+                                            title="@Localizer["Remove Access"]">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                `;
+                            }
+                        }
+                    ]
+                });
+
+                // Загружаем начальные данные
+                this.loadInitialData();
+            },
+
+            loadInitialData: function() {
+                // Преобразуем currentAccessList в формат для DataTables
+                const tableData = this.currentAccessList.map(access => ({
+                    userId: access.userId,
+                    userName: access.userName || '',
+                    userEmail: access.userEmail || '',
+                    accessLevel: access.accessLevel,
+                    grantedAt: access.grantedAt,
+                    userInfo: '' // Будет заполнено через render
+                }));
+
+                // Добавляем данные в таблицу
+                this.dataTable.clear().rows.add(tableData).draw();
+
+                // Загружаем детали пользователей
+                this.loadUserDetails();
             },
 
             setupUserSearch: function() {
@@ -360,95 +453,71 @@
                 });
             },
 
-               async searchUsers(query) {
-            try {
-                const response = await fetch(`/Search/search-users?query=${encodeURIComponent(query)}&limit=10`);
-                if (response.ok) {
-                    const users = await response.json();
-                    this.displaySearchResults(users);
-                } else {
-                    console.error('Search failed with status:', response.status);
+            async searchUsers(query) {
+                try {
+                    const response = await fetch(`/Search/search-users?query=${encodeURIComponent(query)}&limit=10`);
+                    if (response.ok) {
+                        const users = await response.json();
+                        this.displaySearchResults(users);
+                    } else {
+                        console.error('Search failed with status:', response.status);
+                        this.hideSearchResults();
+                    }
+                } catch (error) {
+                    console.error('Search failed:', error);
                     this.hideSearchResults();
                 }
-            } catch (error) {
-                console.error('Search failed:', error);
-                this.hideSearchResults();
-            }
-        },
+            },
 
-        async loadUserDetails() {
-            const userIds = this.currentAccessList.map(access => access.userId);
+            displaySearchResults(users) {
+                const resultsContainer = document.getElementById('userSearchResults');
+                if (!resultsContainer) return;
 
-            if (userIds.length === 0) return;
-
-            try {
-                const response = await fetch('/Search/users-details', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': this.getAntiForgeryToken()
-                    },
-                    body: JSON.stringify({ userIds: userIds })
-                });
-
-                if (response.ok) {
-                    const usersDetails = await response.json();
-                    this.updateUserDetailsInTable(usersDetails);
+                if (users.length === 0) {
+                    resultsContainer.innerHTML = '<div class="dropdown-item text-muted">@Localizer["No users found"]</div>';
+                    resultsContainer.style.display = 'block';
+                    return;
                 }
-            } catch (error) {
-                console.error('Failed to load user details:', error);
-            }
-        },
 
-                   displaySearchResults(users) {
-            const resultsContainer = document.getElementById('userSearchResults');
-            if (!resultsContainer) return;
+                let html = '';
+                users.forEach(user => {
+                    const isAlreadyAdded = this.currentAccessList.some(access => access.userId === user.id);
 
-            if (users.length === 0) {
-                resultsContainer.innerHTML = '<div class="dropdown-item text-muted">No users found</div>';
-                resultsContainer.style.display = 'block';
-                return;
-            }
-
-            let html = '';
-            users.forEach(user => {
-                const isAlreadyAdded = this.currentAccessList.some(access => access.userId === user.id);
-
-                html += `
-                    <div class="dropdown-item d-flex justify-content-between align-items-center ${isAlreadyAdded ? 'text-muted' : ''}"
-                         data-user-id="${user.id}"
-                         data-user-email="${user.email}"
-                         data-user-name="${user.firstName} ${user.lastName}">
-                        <div>
-                            <div class="fw-semibold">${user.firstName} ${user.lastName}</div>
-                            <small class="text-muted">${user.email}</small>
+                    html += `
+                        <div class="dropdown-item d-flex justify-content-between align-items-center ${isAlreadyAdded ? 'text-muted' : ''}"
+                             data-user-id="${user.id}"
+                             data-user-email="${user.email}"
+                             data-user-name="${user.firstName} ${user.lastName}">
+                            <div>
+                                <div class="fw-semibold">${user.firstName} ${user.lastName}</div>
+                                <small class="text-muted">${user.email}</small>
+                            </div>
+                            ${isAlreadyAdded ?
+                                '<span class="badge bg-secondary">@Localizer["Already added"]</span>' :
+                                `<button type="button" class="btn btn-sm btn-outline-primary add-user-btn">@Localizer["Add"]</button>`
+                            }
                         </div>
-                        ${isAlreadyAdded ?
-                            '<span class="badge bg-secondary">Already added</span>' :
-                            `<button type="button" class="btn btn-sm btn-outline-primary add-user-btn">@Localizer["Add"]</button>`
-                        }
-                    </div>
-                `;
-            });
-
-            resultsContainer.innerHTML = html;
-            resultsContainer.style.display = 'block';
-
-            resultsContainer.querySelectorAll('.add-user-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const item = btn.closest('.dropdown-item');
-                    this.addUserToAccessList(
-                        item.dataset.userId,
-                        item.dataset.userName,
-                        item.dataset.userEmail
-                    );
-                    this.hideSearchResults();
-                    document.getElementById('userSearchInput').value = '';
+                    `;
                 });
-            });
-        },
+
+                resultsContainer.innerHTML = html;
+                resultsContainer.style.display = 'block';
+
+                resultsContainer.querySelectorAll('.add-user-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const item = btn.closest('.dropdown-item');
+                        this.addUserToAccessList(
+                            item.dataset.userId,
+                            item.dataset.userName,
+                            item.dataset.userEmail
+                        );
+                        this.hideSearchResults();
+                        document.getElementById('userSearchInput').value = '';
+                    });
+                });
+            },
 
             hideSearchResults() {
                 const resultsContainer = document.getElementById('userSearchResults');
@@ -466,13 +535,25 @@
                 const accessLevel = parseInt(document.getElementById('accessLevelSelect').value);
                 const grantedAt = new Date().toISOString();
 
-                this.currentAccessList.push({
+                const newAccess = {
                     userId: userId,
+                    userName: userName,
+                    userEmail: userEmail,
                     accessLevel: accessLevel,
                     grantedAt: grantedAt
-                });
+                };
 
-                this.updateAccessListUI();
+                this.currentAccessList.push(newAccess);
+
+                // Добавляем новую строку в DataTable
+                this.dataTable.row.add({
+                    userId: userId,
+                    userName: userName,
+                    userEmail: userEmail,
+                    accessLevel: accessLevel,
+                    grantedAt: grantedAt,
+                    userInfo: ''
+                }).draw();
 
                 this.updateHiddenAccessFields();
 
@@ -484,8 +565,20 @@
             },
 
             removeUserFromAccessList(userId) {
+                // Удаляем из текущего списка
                 this.currentAccessList = this.currentAccessList.filter(access => access.userId !== userId);
-                this.updateAccessListUI();
+
+                // Удаляем строку из DataTable
+                this.dataTable.rows().every(function() {
+                    const rowData = this.data();
+                    if (rowData.userId === userId) {
+                        this.remove();
+                        return false;
+                    }
+                    return true;
+                });
+
+                this.dataTable.draw();
                 this.updateHiddenAccessFields();
 
                 if (autoSaveManager.isEditMode) {
@@ -493,75 +586,14 @@
                 }
             },
 
-            updateAccessListUI() {
-                const tbody = document.getElementById('accessListBody');
-                if (!tbody) return;
-
-                const sortedList = this.getSortedAccessList();
-
-                if (sortedList.length === 0) {
-                    tbody.innerHTML = `
-                        <tr id="noAccessMessage">
-                            <td colspan="4" class="text-center text-muted py-4">
-                                @Localizer["No users have access to this inventory yet"].
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-
-                let html = '';
-                sortedList.forEach(access => {
-                    html += `
-                        <tr data-user-id="${access.userId}">
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                        <span class="text-white">${access.userEmail?.charAt(0)?.toUpperCase() || 'U'}</span>
-                                    </div>
-                                           <div>
-            <div class="fw-semibold user-name">${access.userName || '@Localizer["Loading"]...'}</div>
-            <small class="text-muted user-email">${access.userEmail || '@Localizer["Loading"]...'}</small>
-        </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge ${this.getAccessLevelBadgeClass(access.accessLevel)}">
-                                    ${this.getAccessLevelText(access.accessLevel)}
-                                </span>
-                            </td>
-                            <td class="granted-date">${new Date(access.grantedAt).toLocaleString()}</td>
-                            <td>
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-danger remove-access"
-                                        data-user-id="${access.userId}"
-                                        title="Remove Access">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
+            setupRemoveAccess() {
+                // Используем делегирование событий для динамически добавляемых кнопок
+                $('#accessListTable').on('click', '.remove-access', (e) => {
+                    const userId = $(e.target).closest('button').data('user-id');
+                    if (confirm('@Localizer["Are you sure you want to remove access for this user?"]')) {
+                        this.removeUserFromAccessList(userId);
+                    }
                 });
-
-                tbody.innerHTML = html;
-                this.setupRemoveAccess();
-                this.loadUserDetails();
-            },
-
-            updateHiddenAccessFields() {
-                const container = document.getElementById('accessListData');
-                if (!container) return;
-
-                let html = '';
-                this.currentAccessList.forEach((access, index) => {
-                    html += `
-                        <input type="hidden" name="AccessList[${index}].UserId" value="${access.userId}" />
-                        <input type="hidden" name="AccessList[${index}].AccessLevel" value="${access.accessLevel}" />
-                        <input type="hidden" name="AccessList[${index}].GrantedAt" value="${access.grantedAt}" />
-                    `;
-                });
-
-                container.innerHTML = html;
             },
 
             async loadUserDetails() {
@@ -589,80 +621,36 @@
             },
 
             updateUserDetailsInTable(usersDetails) {
-                usersDetails.forEach(user => {
-                    const row = document.querySelector(`tr[data-user-id="${user.id}"]`);
-                    if (row) {
-                        const nameElement = row.querySelector('.user-name');
-                        const emailElement = row.querySelector('.user-email');
+                this.dataTable.rows().every(function() {
+                    const rowData = this.data();
+                    const userDetail = usersDetails.find(user => user.id === rowData.userId);
 
-                        if (nameElement) nameElement.textContent = `${user.firstName} ${user.lastName}`;
-                        if (emailElement) emailElement.textContent = user.email;
-                    }
-                });
-            },
-
-            setupRemoveAccess() {
-                document.querySelectorAll('.remove-access').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const userId = e.target.closest('button').dataset.userId;
-                        if (confirm('@Localizer["Are you sure you want to remove access for this user?"]')) {
-                            this.removeUserFromAccessList(userId);
-                        }
-                    });
-                });
-            },
-
-            setupSorting() {
-                const sortBy = document.getElementById('sortAccessList');
-                const sortOrder = document.getElementById('sortAccessOrder');
-
-                if (sortBy && sortOrder) {
-                    const updateSort = () => {
-                        this.updateAccessListUI();
-                    };
-
-                    sortBy.addEventListener('change', updateSort);
-                    sortOrder.addEventListener('change', updateSort);
-                }
-            },
-
-            getSortedAccessList() {
-                const sortBy = document.getElementById('sortAccessList')?.value || 'name';
-                const sortOrder = document.getElementById('sortAccessOrder')?.value || 'asc';
-
-                return [...this.currentAccessList].sort((a, b) => {
-                    let aValue, bValue;
-
-                    switch (sortBy) {
-                        case 'name':
-                            aValue = a.userName?.toLowerCase() || '';
-                            bValue = b.userName?.toLowerCase() || '';
-                            break;
-                        case 'email':
-                            aValue = a.userEmail?.toLowerCase() || '';
-                            bValue = b.userEmail?.toLowerCase() || '';
-                            break;
-                        case 'accessLevel':
-                            aValue = a.accessLevel;
-                            bValue = b.accessLevel;
-                            break;
-                        case 'grantedAt':
-                            aValue = new Date(a.grantedAt);
-                            bValue = new Date(b.grantedAt);
-                            break;
-                        default:
-                            aValue = a.userName?.toLowerCase() || '';
-                            bValue = b.userName?.toLowerCase() || '';
+                    if (userDetail) {
+                        rowData.userName = `${userDetail.firstName} ${userDetail.lastName}`;
+                        rowData.userEmail = userDetail.email;
+                        this.data(rowData);
                     }
 
-                    if (sortOrder === 'desc') {
-                        [aValue, bValue] = [bValue, aValue];
-                    }
-
-                    if (aValue < bValue) return -1;
-                    if (aValue > bValue) return 1;
-                    return 0;
+                    return true;
                 });
+
+                this.dataTable.draw();
+            },
+
+            updateHiddenAccessFields() {
+                const container = document.getElementById('accessListData');
+                if (!container) return;
+
+                let html = '';
+                this.currentAccessList.forEach((access, index) => {
+                    html += `
+                        <input type="hidden" name="AccessList[${index}].UserId" value="${access.userId}" />
+                        <input type="hidden" name="AccessList[${index}].AccessLevel" value="${access.accessLevel}" />
+                        <input type="hidden" name="AccessList[${index}].GrantedAt" value="${access.grantedAt}" />
+                    `;
+                });
+
+                container.innerHTML = html;
             },
 
             getAccessLevelBadgeClass(accessLevel) {
@@ -676,15 +664,14 @@
 
             getAccessLevelText(accessLevel) {
                 switch (accessLevel) {
-                    case 1: return 'Read Only';
-                    case 2: return 'Read & Write';
-                    case 3: return 'Admin';
-                    default: return 'Unknown';
+                    case 1: return '@Localizer["Read Only"]';
+                    case 2: return '@Localizer["Read & Write"]';
+                    case 3: return '@Localizer["Admin"]';
+                    default: return '@Localizer["Unknown"]';
                 }
             },
 
             showToast(message, type = 'info') {
-                // Простая реализация toast уведомления
                 const toast = document.createElement('div');
                 toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
                 toast.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
@@ -744,10 +731,10 @@
 
             @if (Model.Tags != null && Model.Tags.Any())
             {
-                        foreach (var tag in Model.Tags)
-                        {
-                                    <text>addTag('@tag');</text>
-                        }
+                            foreach (var tag in Model.Tags)
+                            {
+                                            <text>addTag('@tag');</text>
+                            }
             }
         });
 
@@ -1156,29 +1143,29 @@
         function initializeFieldsFromModel() {
             @if (Model.Fields != null && Model.Fields.Any())
             {
-                        foreach (var field in Model.Fields)
-                        {
-                                    <text>
-                                    addField({
-                                        id: @field.Id,
-                                        name: '@Html.Raw((field.Name ?? ""))',
-                                        fieldType: '@((int)field.FieldType)',
-                                        orderIndex: @field.OrderIndex,
-                                        description: '@Html.Raw((field.Description ?? ""))',
-                                        isVisibleInTable: @field.IsVisibleInTable.ToString().ToLower(),
-                                        isRequired: @field.IsRequired.ToString().ToLower()
-                                    });
-                                    </text>
-                        }
+                            foreach (var field in Model.Fields)
+                            {
+                                            <text>
+                                            addField({
+                                                id: @field.Id,
+                                                name: '@Html.Raw((field.Name ?? ""))',
+                                                fieldType: '@((int)field.FieldType)',
+                                                orderIndex: @field.OrderIndex,
+                                                description: '@Html.Raw((field.Description ?? ""))',
+                                                isVisibleInTable: @field.IsVisibleInTable.ToString().ToLower(),
+                                                isRequired: @field.IsRequired.ToString().ToLower()
+                                            });
+                                            </text>
+                            }
             }
             else
             {
-                        <text>
-                        // Добавляем первое поле автоматически только при создании
-                        if (!@Model.IsEditMode.ToString().ToLower()) {
-                            addField();
-                        }
-                        </text>
+                            <text>
+                            // Добавляем первое поле автоматически только при создании
+                            if (!@Model.IsEditMode.ToString().ToLower()) {
+                                addField();
+                            }
+                            </text>
             }
         }
 

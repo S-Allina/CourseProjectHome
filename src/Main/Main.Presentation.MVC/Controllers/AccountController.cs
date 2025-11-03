@@ -8,12 +8,6 @@ namespace Main.Presentation.MVC.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly SignInManager<User> _signInManager;
-
-        public AccountController()
-        {
-
-        }
         public ActionResult Login(string returnUrl = "/")
         {
             if (!User.Identity.IsAuthenticated)

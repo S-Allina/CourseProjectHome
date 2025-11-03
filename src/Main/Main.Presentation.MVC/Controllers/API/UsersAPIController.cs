@@ -1,0 +1,69 @@
+﻿using Main.Application.Dtos.Common;
+using Main.Application.Interfaces;
+using Main.Domain.entities.common;
+using Main.Infrastructure.DataAccess;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+
+namespace Main.Presentation.MVC.Controllers.API
+{
+    [ApiController]
+    [Route("api/users")]
+    public class UsersAPIController : ControllerBase
+    {
+        private readonly IUsersService _usersService;
+        public UsersAPIController(IUsersService usersService)
+        {
+            _usersService = usersService;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
+        {
+                var message = await _usersService.CreateUser(request);
+                return Ok(new { message });
+        }
+
+        [HttpPost("blocked-users")]
+        public IActionResult NotifyBlockedUsers([FromBody] string[] blockedUserIds)
+        {
+            var isBlock = _usersService.CheckBlock(blockedUserIds);
+            if (!isBlock) return Ok();
+
+            return RedirectToAction("Logout", "Account");
+        }
+
+        [HttpPost("UpdateTheme")]
+        public async Task<IActionResult> UpdateTheme([FromBody] ThemeModel model)
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                Response.Cookies.Append("user_theme", model.Theme, new CookieOptions
+                {
+                    Expires = DateTimeOffset.Now.AddYears(1),
+                    HttpOnly = false,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax
+                });
+
+                var identity = (ClaimsIdentity)User.Identity;
+                var themeClaim = identity.FindFirst("theme");
+
+                if (themeClaim != null)
+                    identity.RemoveClaim(themeClaim);
+
+                identity.AddClaim(new Claim("theme", model.Theme));
+                await HttpContext.SignInAsync(User);
+
+                return Ok(new { success = true, theme = model.Theme });
+            }
+            return BadRequest();
+        }
+    }
+
+    public class ThemeModel
+    {
+        public string Theme { get; set; }
+    }
+}

@@ -2,32 +2,33 @@
 @using Main.Application.Dtos.Items.Index
 @using Main.Domain.enums.inventory
 @using System.Security.Claims
-
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 @model IEnumerable<Main.Application.Dtos.Items.Index.ItemDto>
 @{
     ViewData["Title"] = "Items";
     var inventory = ViewBag.SelectedInventory as InventoryTableDto;
 }
 
-<!-- Верхняя панель с кнопками -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2>@inventory?.Name</h2>
         @if (!string.IsNullOrEmpty(inventory?.Description))
         {
             <div class="text-muted mb-0 inventory-description-full">
-             @inventory.DescriptionPreview
+             @Html.Raw(inventory.DescriptionHtml)
             </div>
         }
         else
         {
-            <p class="text-muted mb-0">No description</p>
+            <p class="text-muted mb-0">@Localizer["No description"]</p>
         }
     </div>
     <div class="btn-group">
         <a href="@Url.Action("Edit", "Inventories", new { id = inventory?.Id })"
            class="btn btn-outline-primary">
-            <i class="fas fa-cog me-1"></i>Settings
+            <i class="fas fa-cog me-1"></i>@Localizer["Settings"]
         </a>
     </div>
 </div>
@@ -35,17 +36,17 @@
 <ul class="nav nav-tabs" id="myTab" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="items-tab" data-bs-toggle="tab" data-bs-target="#items" type="button" role="tab" aria-controls="items" aria-selected="true">
-            <i class="fas fa-boxes me-1"></i>Items
+            <i class="fas fa-boxes me-1"></i>@Localizer["Items"]
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="statistics-tab" data-bs-toggle="tab" data-bs-target="#statistics" type="button" role="tab" aria-controls="statistics" aria-selected="false">
-            <i class="fas fa-chart-bar me-1"></i>Statistics
+            <i class="fas fa-chart-bar me-1"></i>@Localizer["Statistics"]
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab" aria-controls="chat" aria-selected="false">
-            <i class="fas fa-comments me-1"></i>Chat
+            <i class="fas fa-comments me-1"></i>@Localizer["Chat"]
             <span class="badge bg-primary ms-1" id="onlineCount">0</span>
         </button>
     </li>
@@ -53,7 +54,7 @@
 
 <div class="tab-content" id="myTabContent">
     <div class="tab-pane fade show active" id="items" role="tabpanel" aria-labelledby="items-tab">
-        <partial name="_ItemsTab" model="Model" />
+        <partial name="~/Views/Items/Partials/_ItemsTab.cshtml" model="Model" />
     </div>
 
     <div class="tab-pane fade" id="statistics" role="tabpanel" aria-labelledby="statistics-tab">
@@ -62,19 +63,19 @@
     </div>
 
     <div class="tab-pane fade" id="chat" role="tabpanel" aria-labelledby="chat-tab">
-        <partial name="_ChatTab" />
+        <partial name="~/Views/Inventories/Partials/_ChatTab.cshtml" />
     </div>
 </div>
 
 <a href="@Url.Action("Index", "Inventories")" class="btn btn-outline-secondary mt-3">
-    <i class="fas fa-arrow-left me-1"></i>Back to Inventories
+    <i class="fas fa-arrow-left me-1"></i>@Localizer["Back to Inventories"]
 </a>
 
 <div class="modal fade" id="itemDetailsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Item Details</h5>
+                <h5 class="modal-title">@Localizer["Item Details"]</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="itemDetailsContent">
@@ -100,20 +101,17 @@
             const statsContainer = document.getElementById('stats-container');
             if (!statsContainer) return;
 
-            // Показываем загрузку
             statsContainer.innerHTML = `
                 <div class="text-center py-4">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">@Localizer["Loading"]...</span>
                     </div>
-                    <p class="mt-2">Loading statistics...</p>
                 </div>
             `;
 
             try {
                 console.log('Loading statistics for inventory:', inventoryId);
 
-                // Загружаем Partial View через контроллер
                 const response = await fetch(`/Inventories/StatsPartial?inventoryId=${inventoryId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -122,54 +120,41 @@
                 const html = await response.text();
                 statsContainer.innerHTML = html;
 
-                // Инициализируем диаграммы после загрузки контента
                 initializeCharts();
 
             } catch (error) {
                 console.error('Error loading statistics:', error);
                 statsContainer.innerHTML = `
                     <div class="alert alert-danger">
-                        <h5>Error loading statistics</h5>
+                        <h5>@Localizer["Error loading statistics"]</h5>
                         <p class="mb-0">${error.message}</p>
                     </div>
                 `;
             }
         }
 
-        // Функция для инициализации всех диаграмм
         function initializeCharts() {
-            console.log('Initializing charts...');
 
-            // Инициализируем диаграммы для числовых полей
             document.querySelectorAll('[id^="numericChart-"]').forEach(canvas => {
-                try {
                     const fieldId = canvas.id.replace('numericChart-', '');
                     const minValue = parseFloat(canvas.dataset.min) || 0;
                     const avgValue = parseFloat(canvas.dataset.avg) || 0;
                     const maxValue = parseFloat(canvas.dataset.max) || 0;
                     const fieldName = canvas.dataset.name || 'Field';
 
-                    console.log(`Creating numeric chart for field ${fieldId}:`, { minValue, avgValue, maxValue });
                     createNumericChart(fieldId, minValue, avgValue, maxValue, fieldName);
-                } catch (error) {
-                    console.error('Error creating numeric chart:', error);
-                }
+                
             });
                     document.querySelectorAll('[id^="booleanChart-"]').forEach(canvas => {
-            try {
                 const fieldId = canvas.id.replace('booleanChart-', '');
                 const fieldName = canvas.dataset.name || 'Field';
 
-                // Безопасный парсинг JSON
                 let labels = [];
                 let data = [];
 
-                try {
                     labels = JSON.parse(canvas.dataset.labels || '[]');
                     data = JSON.parse(canvas.dataset.data || '[]');
-                } catch (jsonError) {
-                    console.error('JSON parsing error:', jsonError);
-                }
+             
 
                 console.log(`Creating boolean chart for field ${fieldId}:`, { labels, data });
 
@@ -186,26 +171,17 @@
                         container.appendChild(message);
                     }
                 }
-            } catch (error) {
-                console.error('Error creating boolean chart:', error);
-            }
         });
-            // Инициализируем диаграммы для текстовых полей
             document.querySelectorAll('[id^="textChart-"]').forEach(canvas => {
-                try {
+
                     const fieldId = canvas.id.replace('textChart-', '');
                     const fieldName = canvas.dataset.name || 'Field';
 
-                    // Безопасный парсинг JSON
                     let labels = [];
                     let data = [];
 
-                    try {
                         labels = JSON.parse(canvas.dataset.labels || '[]');
                         data = JSON.parse(canvas.dataset.data || '[]');
-                    } catch (jsonError) {
-                        console.error('JSON parsing error:', jsonError);
-                    }
 
                     console.log(`Creating text chart for field ${fieldId}:`, { labels, data });
 
@@ -222,9 +198,6 @@
                             container.appendChild(message);
                         }
                     }
-                } catch (error) {
-                    console.error('Error creating text chart:', error);
-                }
             });
         }
 
@@ -239,8 +212,8 @@
                     datasets: [{
                         data: data,
                         backgroundColor: [
-                            '#1cc88a',  // Зеленый для True
-                            '#e74a3b'   // Красный для False
+                            '#1cc88a',  
+                            '#e74a3b'   
                         ],
                         borderWidth: 1
                     }]
@@ -271,7 +244,6 @@
             });
         }
 
-        // Функция для создания диаграмм числовых полей
         function createNumericChart(fieldId, minValue, avgValue, maxValue, fieldName) {
             const ctx = document.getElementById('numericChart-' + fieldId);
             if (!ctx) return;
@@ -316,7 +288,6 @@
             });
         }
 
-        // Функция для создания круговых диаграмм текстовых полей
         function createTextChart(fieldId, labels, data, fieldName) {
             const ctx = document.getElementById('textChart-' + fieldId);
             if (!ctx) return;
@@ -349,7 +320,6 @@
             });
         }
 
-        // Инициализация вкладки статистики
         document.addEventListener('DOMContentLoaded', function() {
             const statisticsTab = document.getElementById('statistics-tab');
             if (statisticsTab) {
@@ -359,7 +329,6 @@
                 });
             }
 
-            // Если уже на вкладке статистики, загружаем сразу
             if (document.getElementById('statistics')?.classList.contains('active')) {
                 console.log('Already on statistics tab, loading...');
                 loadStatisticsTab();
@@ -368,23 +337,6 @@
     </script>
 
     <script>
-        // Функции для работы с предметами
-        function showItemDetails(itemId) {
-            fetch(`@Url.Action("GetItemDetails", "Items")/${itemId}`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('itemDetailsContent').innerHTML = html;
-                    new bootstrap.Modal(document.getElementById('itemDetailsModal')).show();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('itemDetailsContent').innerHTML =
-                        '<div class="text-danger">Error loading item details</div>';
-                });
-        }
-
-    
-        // Удаление выбранных элементов
         const deleteSelectedBtn = document.getElementById('deleteSelected');
         if (deleteSelectedBtn) {
             deleteSelectedBtn.addEventListener('click', function () {
@@ -413,28 +365,21 @@
             });
         }
 
-        // Обработка двойного клика по строке таблицы
         document.addEventListener('DOMContentLoaded', function() {
-            const tableRows = document.querySelectorAll('.clickable-row');
+            const tableRows = document.querySelectorAll('.clickable-row-item');
 
-            tableRows.forEach(row => {
-                row.addEventListener('dblclick', function(e) {
-                    if (e.target.type === 'checkbox') {
-                        return;
-                    }
-                    const itemId = this.getAttribute('data-item-id');
-                    if (itemId) {
-                        window.location.href = '@Url.Action("Details", "Items")' + '?id=' + itemId;
-                    }
-                });
-
-                // Предотвращаем выделение текста при двойном клике
-                row.addEventListener('mousedown', function(e) {
-                    if (e.detail > 1 && e.target.type !== 'checkbox') {
-                        e.preventDefault();
-                    }
-                });
+                 tableRows.forEach(row => {
+            row.addEventListener('dblclick', function(e) {
+                if (e.target.type === 'checkbox') {
+                    return;
+                }
+                const itemId = this.getAttribute('data-item-id');
+                if (itemId) {
+                    console.log('Navigating to item details:', itemId);
+                    window.location.href = '/Items/Details/' + itemId;
+                }
             });
+        });
         });
     </script>
 
@@ -444,14 +389,12 @@
         let connection = null;
         let inventoryId = 1;
 
-        // Ждем полной загрузки DOM
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing chat...');
             initializeChat();
         });
 
         function initializeChat() {
-            // Получаем inventoryId
             const inventoryIdElement = document.getElementById('inventoryId');
             if (!inventoryIdElement) {
                 console.error('Inventory ID element not found');
@@ -461,10 +404,8 @@
             inventoryId = parseInt(inventoryIdElement.value);
             console.log('Initializing chat for inventory:', inventoryId);
 
-            // Инициализируем подключение
             initializeSignalR();
 
-            // Добавляем обработчики событий
             const sendButton = document.getElementById('sendButton');
             const messageForm = document.getElementById('messageForm');
 
@@ -479,7 +420,6 @@
                 });
             }
 
-            // Обработчик Enter для текстового поля
             const messageInput = document.getElementById('messageInput');
             if (messageInput) {
                 messageInput.addEventListener('keydown', function(e) {
@@ -500,14 +440,11 @@
                 .configureLogging(signalR.LogLevel.Information)
                 .build();
 
-            // Обработчики сообщений от сервера
                    connection.on("ReceiveMessage", (message) => {
             console.log('Received message object:', message);
 
             if (typeof message === 'string') {
-                // Простое строковое сообщение (системное)
             } else if (typeof message === 'object') {
-                // Объект сообщения из БД
                 addMessageObject(message);
             } else {
                 console.warn('Unknown message format:', message);
@@ -519,7 +456,6 @@
             displayMessageHistory(messages);
         });
 
-        // Обработчики состояния подключения
         connection.onreconnecting((error) => {
             console.log('Connection reconnecting...', error);
             updateStatus('Reconnecting...');
@@ -536,7 +472,6 @@
             updateStatus('Disconnected');
         });
 
-            // Запускаем подключение
             startConnection();
         }
 
@@ -548,14 +483,12 @@
                 updateStatus('Connected');
                 addMessage('System', 'Connection started successfully');
 
-                // Присоединяемся к группе после подключения
                 await joinGroup();
             } catch (err) {
                 console.error('SignalR connection failed:', err);
                 updateStatus('Connection failed');
                 addMessage('System', 'Connection failed: ' + err.message);
 
-                // Пытаемся переподключиться через 5 секунд
                 setTimeout(() => startConnection(), 5000);
             }
         }
@@ -576,13 +509,11 @@
         }
 
         async function sendMessage() {
-            // Проверяем подключение
             if (!connection || connection.state !== 'Connected') {
                 alert('Not connected to chat. Please wait...');
                 return;
             }
 
-            // Получаем сообщение
             const messageInput = document.getElementById('messageInput');
             if (!messageInput) {
                 console.error('Message input not found');
@@ -598,20 +529,14 @@
             console.log('Sending message:', { inventoryId, message });
 
             try {
-                // Очищаем поле ввода сразу
                 messageInput.value = '';
 
-                // Показываем наше сообщение локально
-                // addMessage('You', message);
-
-                // Отправляем на сервер
                 await connection.invoke("SendMessage", inventoryId, message);
                 console.log('Message sent successfully');
 
             } catch (err) {
                 console.error('Error sending message:', err);
 
-                // Возвращаем сообщение в поле ввода при ошибке
                 messageInput.value = message;
 
                 let errorMessage = 'Send message error: ';
@@ -631,7 +556,6 @@
                 return;
             }
 
-            // Скрываем индикатор загрузки если он есть
             const loadingIndicator = document.getElementById('loadingMessages');
             if (loadingIndicator) {
                 loadingIndicator.style.display = 'none';
@@ -640,7 +564,6 @@
             const messageElement = document.createElement('div');
             messageElement.className = 'chat-message';
 
-            // Проверяем, текущий ли это пользователь
             const currentUserId = document.getElementById('currentUserId')?.value;
             const isCurrentUser = message.userId === currentUserId;
 
@@ -654,7 +577,7 @@
                     <span class="message-time">${message.formattedTime}</span>
                     ${message.isEdited ? '<span class="edited-badge">edited</span>' : ''}
                 </div>
-                <div class="message-text">${message.message}</div>
+                <div class="message-text">${message.MessageHtml}</div>
             `;
 
             messagesDiv.appendChild(messageElement);
@@ -668,7 +591,6 @@
                 return;
             }
 
-            // Скрываем индикатор загрузки если он есть
             const loadingIndicator = document.getElementById('loadingMessages');
             if (loadingIndicator) {
                 loadingIndicator.style.display = 'none';
@@ -677,7 +599,6 @@
             const messageElement = document.createElement('div');
             messageElement.className = 'chat-message';
 
-            // Если это системное сообщение
             if (user === 'System') {
                 messageElement.classList.add('system-message');
                 messageElement.innerHTML = `<em>${user}: ${escapeHtml(message)}</em>`;
@@ -725,12 +646,10 @@
                 return;
             }
 
-            // Обновляем текст и цвет статуса
             const statusText = statusElement.querySelector('.status-text');
             if (statusText) {
                 statusText.textContent = status;
             } else {
-                // Если нет элемента с текстом, обновляем весь контент
                 if (status === 'Connected') {
                     statusElement.innerHTML = '<i class="fas fa-circle me-1"></i><span class="status-text">Connected</span>';
                     statusElement.className = 'badge bg-success';

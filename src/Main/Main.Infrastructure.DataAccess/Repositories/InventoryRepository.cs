@@ -1,4 +1,5 @@
 ﻿using Main.Domain.entities.inventory;
+using Main.Domain.enums.Users;
 using Main.Domain.InterfacesRepository;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,7 +7,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
 {
     public class InventoryRepository : BaseRepository<Inventory>, IInventoryRepository
     {
-        private readonly ApplicationDbContext _db;
+        private readonly new ApplicationDbContext _db;
         public InventoryRepository(ApplicationDbContext db) : base(db)
         {
             _db = db;
@@ -36,6 +37,17 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 .Where(i => EF.Functions.FreeText(i.Name, searchTerm) ||
                            EF.Functions.FreeText(i.Description, searchTerm))
                 .ToListAsync(cancellationToken);
+        }
+
+        public async Task<bool> HasUserAccessAsync(int inventoryId, string userId, AccessLevel accessLevel, CancellationToken cancellationToken = default)
+        {
+            return await dbSet
+                .AsNoTracking()
+                .AnyAsync(i => i.Id == inventoryId &&
+                              (i.OwnerId == userId ||
+                               i.IsPublic ||
+                               i.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= (int)accessLevel)),
+                          cancellationToken);
         }
 
         public async Task<Inventory> UpdateInventoryAsync(Inventory inventory, CancellationToken cancellationToken = default)

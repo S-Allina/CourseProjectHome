@@ -12,5 +12,16 @@ namespace Identity.Application.Dto
         public bool EmailConfirmed { get; set; } = false;
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public Statuses? Status { get; set; } = Statuses.Unverify;
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public Theme Theme { get; set; } = Theme.Light;
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public Language Language { get; set; } = Language.English;
+
+        public DateTime CreateAt { get; set; }
+        public DateTime? UpdateAt { get; set; }
+        public string Role { get; set; } = "User";
+
     }
 }

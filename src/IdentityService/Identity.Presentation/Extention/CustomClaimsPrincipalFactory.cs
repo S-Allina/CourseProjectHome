@@ -25,13 +25,28 @@ namespace Identity.Presentation.Extention
             if (user != null)
             {
                 var claims = new List<Claim>
-            {
-                new Claim("Status", user.Status.ToString()),
-                new Claim("Theme", user.Theme.ToString()),
-                new Claim("Language", user.Language.ToString())
-            };
+        {
+            new Claim("sub", user.Id),
+            new Claim("name", user.UserName),
+            new Claim("email", user.Email ?? ""),
+            new Claim("Status", user.Status.ToString())
+        };
 
-                context.IssuedClaims.AddRange(claims);
+                // Добавляем роли
+                var roles = await _userManager.GetRolesAsync(user);
+                foreach (var role in roles)
+                {
+                    claims.Add(new Claim("role", role));
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
+
+                // Фильтруем по запрошенным claim types, если они указаны
+                if (context.RequestedClaimTypes != null && context.RequestedClaimTypes.Any())
+                {
+                    claims = claims.Where(c => context.RequestedClaimTypes.Contains(c.Type)).ToList();
+                }
+
+                context.IssuedClaims = claims;
             }
         }
 

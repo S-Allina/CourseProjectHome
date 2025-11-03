@@ -12,7 +12,7 @@
 {
     <div class="alert alert-info mb-4">
         <i class="fas fa-tag me-2"></i>
-        <strong>Поиск по тегу:</strong> "@Model.SearchTerm"
+        <strong>@Localizer["Search"] @Localizer["Tags"]:</strong> "@Model.SearchTerm"
         <a href="@Url.Action("Index", "Tags")" class="btn btn-outline-info btn-sm ms-3">
             <i class="fas fa-arrow-left me-1"></i>@Localizer["Back to cloud tags"]
         </a>

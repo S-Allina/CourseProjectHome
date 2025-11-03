@@ -1,308 +1,247 @@
-﻿export class CustomIdBuilder {
-    constructor() {
-        this.components = [];
-        this.componentCount = 0;
-        this.init();
-    }
+﻿document.addEventListener('DOMContentLoaded', function () {
+    accessManager.init();
+    const formatComponents = document.getElementById('formatComponents');
 
-    init() {
-        console.log('CustomIdBuilder initialized');
-        this.initDragAndDrop();
-        this.bindEvents();
-        this.addSampleComponents();
-    }
+    if (formatComponents) {
+        Sortable.create(formatComponents, {
+            animation: 150,
+            ghostClass: 'bg-warning',
+            onEnd: function (evt) {
+                updateComponentsOrder();
+                generatePreview();
 
-    initDragAndDrop() {
-        const formatComponents = document.getElementById('formatComponents');
-        console.log('formatComponents found:', formatComponents);
-
-        if (formatComponents) {
-            Sortable.create(formatComponents, {
-                animation: 150,
-                ghostClass: 'bg-warning',
-                onEnd: (evt) => {
-                    this.updateComponentsOrder();
-                    this.generatePreview();
+                if (autoSaveManager.isEditMode) {
+                    autoSaveManager.handleChange();
                 }
-            });
-        }
+            }
+        });
 
-        this.initializeDragToRemove();
+        initializeDragToRemove();
     }
 
-    initializeDragToRemove() {
-        const formatBuilder = document.getElementById('formatBuilder');
-        console.log('formatBuilder found:', formatBuilder);
+    autoSaveManager.init();
 
+    addComponent('fixed-text');
+    addComponent('sequence');
+    generatePreview();
+
+    initializeFieldsFromModel();
+
+    function initializeDragToRemove() {
+        const formatBuilder = document.getElementById('formatBuilder');
         if (!formatBuilder) return;
 
-        formatBuilder.addEventListener('dragover', (e) => {
+        formatBuilder.addEventListener('dragover', function (e) {
             e.preventDefault();
-            formatBuilder.classList.add('border-danger');
+            this.classList.add('border-danger');
         });
 
-        formatBuilder.addEventListener('dragleave', (e) => {
-            formatBuilder.classList.remove('border-danger');
+        formatBuilder.addEventListener('dragleave', function (e) {
+            this.classList.remove('border-danger');
         });
 
-        formatBuilder.addEventListener('drop', (e) => {
+        formatBuilder.addEventListener('drop', function (e) {
             e.preventDefault();
-            formatBuilder.classList.remove('border-danger');
+            this.classList.remove('border-danger');
 
             const componentId = e.dataTransfer.getData('text/plain');
-            this.removeComponent(componentId);
+            removeComponent(componentId);
         });
     }
 
-    bindEvents() {
-        // Кнопки добавления компонентов
-        const componentButtons = document.getElementById('componentButtons');
-        console.log('componentButtons found:', componentButtons);
+    function addComponent(type) {
+        componentCount++;
+        const componentId = `component-${componentCount}`;
 
-        if (componentButtons) {
-            componentButtons.addEventListener('click', (e) => {
-                console.log('Button clicked:', e.target);
-                const button = e.target.closest('button');
-                if (button) {
-                    const type = button.dataset.componentType;
-                    console.log('Adding component:', type);
-                    this.addComponent(type);
-                }
-            });
-        } else {
-            console.error('componentButtons element not found!');
+        let componentHtml = '';
+        let defaultValue = '';
+
+        switch (type) {
+            case 'fixed-text':
+                componentHtml = `
+                        <div class="component-item badge bg-primary p-2" draggable="true" data-type="fixed-text" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>@Localizer["Text"]</span>
+                            <input type="text" class="form-control form-control-sm d-inline-block w-auto ms-1"
+                                   placeholder="Enter text" value='@Localizer["ITEM"]'
+                                   onchange="updateComponent('${componentId}', this.value)" />
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                defaultValue = 'ITEM';
+                break;
+
+            case 'random-20bit':
+                componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-20bit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>20-bit @Localizer["Random"]</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                defaultValue = '{R20}';
+                break;
+
+            case 'random-32bit':
+                componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-32bit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>32-bit @Localizer["Random"]</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                defaultValue = '{R32}';
+                break;
+
+            case 'random-6digit':
+                componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-6digit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>6-digit @Localizer["Random"]</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                defaultValue = '{R6D}';
+                break;
+
+            case 'random-9digit':
+                componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-9digit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>9-digit @Localizer["Random"]</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                defaultValue = '{R9D}';
+                break;
+
+            case 'guid':
+                componentHtml = `
+                        <div class="component-item badge bg-info p-2" draggable="true" data-type="guid" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>@Localizer["GUID"]</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                defaultValue = '{GUID}';
+                break;
+
+            case 'datetime':
+                componentHtml = `
+                        <div class="component-item badge bg-warning text-dark p-2" draggable="true" data-type="datetime" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>@Localizer["Date/Time"]</span>
+                            <select class="form-select form-select-sm d-inline-block w-auto ms-1" onchange="updateComponent('${componentId}', this.value)">
+                                <option value="{YYYYMMDD}">YYYYMMDD</option>
+                                <option value="{YYMMDD}">YYMMDD</option>
+                                <option value="{YYYY-MM-DD}">YYYY-MM-DD</option>
+                                <option value="{DDMMYYYY}">DDMMYYYY</option>
+                            </select>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                defaultValue = '{YYYYMMDD}';
+                break;
+
+            case 'sequence':
+                componentHtml = `
+                        <div class="component-item badge bg-danger p-2" draggable="true" data-type="sequence" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>@Localizer["sequence"]</span>
+                            <input type="number" class="form-control form-control-sm d-inline-block w-auto ms-1"
+                                   value="6" min="1" max="10"
+                                   onchange="updateComponent('${componentId}', '{SEQ:' + this.value + '}')" />
+                            <span class="ms-1">digits</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                defaultValue = '{SEQ:6}';
+                break;
         }
 
-        // Кнопка обновления preview
-        const refreshPreview = document.getElementById('refreshPreview');
-        console.log('refreshPreview found:', refreshPreview);
-
-        if (refreshPreview) {
-            refreshPreview.addEventListener('click', () => {
-                this.generatePreview();
-            });
-        }
-    }
-
-    addComponent(type) {
-        console.log('Adding component of type:', type);
-        this.componentCount++;
-        const componentId = `component-${this.componentCount}`;
-
-        const componentConfig = this.getComponentConfig(type, componentId);
-
-        // Добавляем компонент в UI
         const noComponentsMessage = document.getElementById('noComponentsMessage');
         const formatComponents = document.getElementById('formatComponents');
 
-        console.log('noComponentsMessage:', noComponentsMessage);
-        console.log('formatComponents:', formatComponents);
-
-        if (noComponentsMessage) noComponentsMessage.style.display = 'none';
+        if (noComponentsMessage) {
+            noComponentsMessage.style.display = 'none';
+        }
         if (formatComponents) {
-            formatComponents.insertAdjacentHTML('beforeend', componentConfig.html);
-            console.log('Component added to DOM');
-        } else {
-            console.error('formatComponents not found!');
+            formatComponents.insertAdjacentHTML('beforeend', componentHtml);
         }
 
-        // Добавляем в массив компонентов
-        this.components.push({
+        components.push({
             id: componentId,
             type: type,
-            value: componentConfig.defaultValue
+            value: defaultValue
         });
 
-        this.initializeComponentEvents(componentId);
-        this.generatePreview();
-    }
-
-    getComponentConfig(type, componentId) {
-        const configs = {
-            'fixed-text': {
-                html: `
-                    <div class="component-item badge bg-primary p-2" draggable="true" data-type="fixed-text" id="${componentId}">
-                        <i class="fas fa-grip-vertical me-1"></i>
-                        <span>Fixed Text</span>
-                        <input type="text" class="form-control form-control-sm d-inline-block w-auto ms-1"
-                               placeholder="Enter text" value="ITEM" />
-                        <button type="button" class="btn-close btn-close-white ms-1"></button>
-                    </div>
-                `,
-                defaultValue: 'ITEM'
-            },
-            'random-20bit': {
-                html: `
-                    <div class="component-item badge bg-success p-2" draggable="true" data-type="random-20bit" id="${componentId}">
-                        <i class="fas fa-grip-vertical me-1"></i>
-                        <span>20-bit Random</span>
-                        <button type="button" class="btn-close btn-close-white ms-1"></button>
-                    </div>
-                `,
-                defaultValue: '{R20}'
-            },
-            'random-32bit': {
-                html: `
-                    <div class="component-item badge bg-success p-2" draggable="true" data-type="random-32bit" id="${componentId}">
-                        <i class="fas fa-grip-vertical me-1"></i>
-                        <span>32-bit Random</span>
-                        <button type="button" class="btn-close btn-close-white ms-1"></button>
-                    </div>
-                `,
-                defaultValue: '{R32}'
-            },
-            'random-6digit': {
-                html: `
-                    <div class="component-item badge bg-success p-2" draggable="true" data-type="random-6digit" id="${componentId}">
-                        <i class="fas fa-grip-vertical me-1"></i>
-                        <span>6-digit Random</span>
-                        <button type="button" class="btn-close btn-close-white ms-1"></button>
-                    </div>
-                `,
-                defaultValue: '{R6D}'
-            },
-            'random-9digit': {
-                html: `
-                    <div class="component-item badge bg-success p-2" draggable="true" data-type="random-9digit" id="${componentId}">
-                        <i class="fas fa-grip-vertical me-1"></i>
-                        <span>9-digit Random</span>
-                        <button type="button" class="btn-close btn-close-white ms-1"></button>
-                    </div>
-                `,
-                defaultValue: '{R9D}'
-            },
-            'guid': {
-                html: `
-                    <div class="component-item badge bg-info p-2" draggable="true" data-type="guid" id="${componentId}">
-                        <i class="fas fa-grip-vertical me-1"></i>
-                        <span>GUID</span>
-                        <button type="button" class="btn-close btn-close-white ms-1"></button>
-                    </div>
-                `,
-                defaultValue: '{GUID}'
-            },
-            'datetime': {
-                html: `
-                    <div class="component-item badge bg-warning text-dark p-2" draggable="true" data-type="datetime" id="${componentId}">
-                        <i class="fas fa-grip-vertical me-1"></i>
-                        <span>Date/Time</span>
-                        <select class="form-select form-select-sm d-inline-block w-auto ms-1">
-                            <option value="{YYYYMMDD}">YYYYMMDD</option>
-                            <option value="{YYMMDD}">YYMMDD</option>
-                            <option value="{YYYY-MM-DD}">YYYY-MM-DD</option>
-                            <option value="{DDMMYYYY}">DDMMYYYY</option>
-                            <option value="{UNIX}">Unix Timestamp</option>
-                        </select>
-                        <button type="button" class="btn-close btn-close-white ms-1"></button>
-                    </div>
-                `,
-                defaultValue: '{YYYYMMDD}'
-            },
-            'sequence': {
-                html: `
-                    <div class="component-item badge bg-danger p-2" draggable="true" data-type="sequence" id="${componentId}">
-                        <i class="fas fa-grip-vertical me-1"></i>
-                        <span>Sequence</span>
-                        <input type="number" class="form-control form-control-sm d-inline-block w-auto ms-1"
-                               value="6" min="1" max="10" />
-                        <span class="ms-1">digits</span>
-                        <button type="button" class="btn-close btn-close-white ms-1"></button>
-                    </div>
-                `,
-                defaultValue: '{SEQ:6}'
-            }
-        };
-
-        return configs[type] || configs['fixed-text'];
-    }
-
-    initializeComponentEvents(componentId) {
         const componentElement = document.getElementById(componentId);
-        if (!componentElement) return;
-
-        // Drag events
-        componentElement.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', componentId);
-        });
-
-        // Remove button
-        const removeButton = componentElement.querySelector('.btn-close');
-        if (removeButton) {
-            removeButton.addEventListener('click', () => {
-                this.removeComponent(componentId);
+        if (componentElement) {
+            componentElement.addEventListener('dragstart', function (e) {
+                e.dataTransfer.setData('text/plain', componentId);
             });
         }
 
-        // Input/select change events
-        const input = componentElement.querySelector('input[type="text"]');
-        const select = componentElement.querySelector('select');
-        const numberInput = componentElement.querySelector('input[type="number"]');
+        generatePreview();
 
-        if (input) {
-            input.addEventListener('change', (e) => {
-                this.updateComponent(componentId, e.target.value);
-            });
-        }
-
-        if (select) {
-            select.addEventListener('change', (e) => {
-                this.updateComponent(componentId, e.target.value);
-            });
-        }
-
-        if (numberInput) {
-            numberInput.addEventListener('change', (e) => {
-                this.updateComponent(componentId, `{SEQ:${e.target.value}}`);
-            });
+        if (autoSaveManager.isEditMode) {
+            autoSaveManager.handleChange();
         }
     }
 
-    removeComponent(componentId) {
-        // Remove from UI
+    function removeComponent(componentId) {
         const componentElement = document.getElementById(componentId);
         if (componentElement) {
             componentElement.remove();
         }
 
-        // Remove from components array
-        this.components = this.components.filter(c => c.id !== componentId);
+        components = components.filter(c => c.id !== componentId);
 
-        // Show message if no components left
-        const noComponentsMessage = document.getElementById('noComponentsMessage');
-        if (this.components.length === 0 && noComponentsMessage) {
-            noComponentsMessage.style.display = 'block';
+        if (components.length === 0) {
+            const noComponentsMessage = document.getElementById('noComponentsMessage');
+            if (noComponentsMessage) {
+                noComponentsMessage.style.display = 'block';
+            }
         }
 
-        this.generatePreview();
+        generatePreview();
+
+        if (autoSaveManager.isEditMode) {
+            autoSaveManager.handleChange();
+        }
     }
 
-    updateComponent(componentId, value) {
-        const component = this.components.find(c => c.id === componentId);
+    function updateComponent(componentId, value) {
+        const component = components.find(c => c.id === componentId);
         if (component) {
             component.value = value;
-            this.generatePreview();
+            generatePreview();
+
+            if (autoSaveManager.isEditMode) {
+                autoSaveManager.handleChange();
+            }
         }
     }
 
-    updateComponentsOrder() {
+    function updateComponentsOrder() {
         const componentElements = document.querySelectorAll('.component-item');
         const newComponents = [];
 
         componentElements.forEach(element => {
             const componentId = element.id;
-            const existingComponent = this.components.find(c => c.id === componentId);
+            const existingComponent = components.find(c => c.id === componentId);
             if (existingComponent) {
                 newComponents.push(existingComponent);
             }
         });
 
-        this.components = newComponents;
+        components = newComponents;
     }
 
-    generatePreview() {
+    function generatePreview() {
         let preview = '';
 
-        this.components.forEach(component => {
+        components.forEach(component => {
             switch (component.type) {
                 case 'fixed-text':
                     preview += component.value || 'TEXT';
@@ -320,7 +259,7 @@
                     preview += Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
                     break;
                 case 'guid':
-                    preview += 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+                    preview += 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
                         const r = Math.random() * 16 | 0;
                         const v = c == 'x' ? r : (r & 0x3 | 0x8);
                         return v.toString(16);
@@ -360,80 +299,10 @@
             previewElement.value = preview;
         }
 
-        this.updateHiddenField();
-    }
-
-    updateHiddenField() {
-        const formatString = this.components.map(c => c.value).join('');
-        const hiddenField = document.getElementById('hiddenCustomIdFormat');
-        if (hiddenField) {
-            hiddenField.value = formatString;
+        const formatString = components.map(c => c.value).join('');
+        const hiddenFormatElement = document.getElementById('hiddenCustomIdFormat');
+        if (hiddenFormatElement) {
+            hiddenFormatElement.value = formatString;
         }
     }
-
-    addSampleComponents() {
-        this.addComponent('fixed-text');
-        this.addComponent('sequence');
-        this.generatePreview();
-    }
-
-    // Метод для загрузки существующего формата (для редактирования)
-    loadExistingFormat(format) {
-        if (!format) return;
-
-        // Очищаем текущие компоненты
-        this.components = [];
-        this.componentCount = 0;
-
-        const formatComponents = document.getElementById('formatComponents');
-        if (formatComponents) {
-            formatComponents.innerHTML = '<div class="text-muted text-center w-100 py-3" id="noComponentsMessage">No components added. Start by adding components from the panel on the right.</div>';
-        }
-
-        // Простой парсинг формата - можно улучшить при необходимости
-        const regex = /(\{[^}]+\}|[^{]+)/g;
-        const matches = format.match(regex);
-
-        if (matches) {
-            matches.forEach(match => {
-                if (match.startsWith('{') && match.endsWith('}')) {
-                    const cleanMatch = match.slice(1, -1).toLowerCase();
-                    if (cleanMatch.startsWith('seq:')) {
-                        this.addComponent('sequence');
-                    } else if (cleanMatch === 'r20') {
-                        this.addComponent('random-20bit');
-                    } else if (cleanMatch === 'r32') {
-                        this.addComponent('random-32bit');
-                    } else if (cleanMatch === 'r6d') {
-                        this.addComponent('random-6digit');
-                    } else if (cleanMatch === 'r9d') {
-                        this.addComponent('random-9digit');
-                    } else if (cleanMatch === 'guid') {
-                        this.addComponent('guid');
-                    } else if (['yyyymmdd', 'yymmdd', 'yyyy-mm-dd', 'ddmmyyyy', 'unix'].includes(cleanMatch)) {
-                        this.addComponent('datetime');
-                    } else {
-                        this.addComponent('fixed-text');
-                    }
-                } else {
-                    // Текст вне скобок
-                    const component = this.components.find(c => c.type === 'fixed-text');
-                    if (component) {
-                        component.value = match;
-                    } else {
-                        this.addComponent('fixed-text');
-                        const newComponent = this.components[this.components.length - 1];
-                        newComponent.value = match;
-                    }
-                }
-            });
-        }
-
-        this.generatePreview();
-    }
-
-    // Получить текущий формат
-    getCurrentFormat() {
-        return this.components.map(c => c.value).join('');
-    }
-}
+})

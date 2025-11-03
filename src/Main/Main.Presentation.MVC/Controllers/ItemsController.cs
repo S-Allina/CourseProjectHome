@@ -5,6 +5,7 @@ using Main.Application.Interfaces;
 using Main.Domain.entities.inventory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Main.Presentation.MVC.Controllers
 {
@@ -21,33 +22,18 @@ namespace Main.Presentation.MVC.Controllers
             _customIdService = customIdService;
         }
 
-        [HttpGet("{inventoryId}")]
+        [HttpGet]
         public async Task<IActionResult> Index(int? inventoryId, CancellationToken cancellationToken)
         {
-            if (inventoryId.HasValue)
-            {
                 var items = await _itemService.GetByInventoryAsync(inventoryId.Value, cancellationToken);
                 var inventory = await _inventoryService.GetById(inventoryId.Value, cancellationToken);
 
                 ViewBag.SelectedInventory = inventory;
                 return View(items.ToList());
-            }
-
-            var inventories = await _inventoryService.GetAll(cancellationToken);
-            return View(inventories);
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetInventoryItems(int inventoryId, CancellationToken cancellationToken)
-        {
-            var items = await _itemService.GetByInventoryAsync(inventoryId, cancellationToken);
-            var inventory = await _inventoryService.GetById(inventoryId, cancellationToken);
-
-            return Json(new { Items = items, Inventory = inventory });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Details([FromQuery] int id)
+        public async Task<IActionResult> Details(int id) 
         {
             var item = await _itemService.GetByIdAsync(id);
             if (item == null)
@@ -58,6 +44,7 @@ namespace Main.Presentation.MVC.Controllers
             return View(item);
         }
 
+        [HttpGet]
         [Authorize]
         public async Task<IActionResult> Create(int inventoryId, CancellationToken cancellationToken)
         {
@@ -116,7 +103,7 @@ namespace Main.Presentation.MVC.Controllers
             {
                 return NotFound();
             }
-
+             
             var createDto = new CreateItemDto
             {
                 Id= item.Id,

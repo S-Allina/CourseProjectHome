@@ -9,6 +9,6 @@ namespace Identity.Application.Interfaces
     public interface IMainApiClient
     {
         Task<bool> CreateUserAsync(string userId, string firstName, string lastName, string email);
-        Task<bool> UpdateUserAsync(string userId, string firstName, string lastName, string email);
+        Task<bool> NotifyBlockedUsers(string[] blockedUserIds);
     }
 }

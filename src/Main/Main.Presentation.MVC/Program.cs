@@ -13,6 +13,7 @@ using Main.Infrastructure.DataAccess.Repositories;
 using Main.Infrastructure.ImgBBStorage;
 using Main.Presentation.MVC.Constans;
 using Main.Presentation.MVC.Middleware;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Localization;
@@ -76,7 +77,11 @@ namespace Main.Presentation.MVC
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
                 options.Scope.Add("api1");
-
+                options.Scope.Add("roles");
+                options.Scope.Add("theme");
+                options.Scope.Add("language");
+                options.ClaimActions.MapUniqueJsonKey("theme", "theme");
+                options.ClaimActions.MapUniqueJsonKey("language", "language");
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     NameClaimType = "name",
@@ -144,6 +149,10 @@ namespace Main.Presentation.MVC
             builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
+
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IUsersService, UsersService>();
+            builder.Services.AddScoped<IAlertService, AlertService>();
             builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
             builder.Services.AddScoped<IInventoryFieldRepository, InventoryFieldRepository>();
             builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -151,8 +160,6 @@ namespace Main.Presentation.MVC
             builder.Services.AddScoped<IUrlService, UrlService>();
             builder.Services.AddScoped<IInventoryService, InventoryService>();
             builder.Services.AddScoped<ITagService, TagService>();
-            builder.Services.AddScoped<IUserRepository,  UserRepository>();
-            builder.Services.AddScoped<IUsersService, UsersService>();
             builder.Services.AddScoped<IInventoryStatsService, InventoryStatsService>();
             builder.Services.AddScoped<IImgBBStorageService, ImgBBStorageService>();
             builder.Services.AddScoped<IChatRepository, ChatRepository>();

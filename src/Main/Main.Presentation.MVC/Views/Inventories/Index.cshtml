@@ -10,12 +10,12 @@
 <h1>@Localizer["Inventories"]</h1>
 
 <p>
-    <a asp-action="Create" class="btn btn-success">@Localizer["Create New"] @Localizer["Inventory"]</a>
+    <a asp-action="Create" asp-controller="Inventories" class="btn btn-success">@Localizer["Create New"] @Localizer["Inventory"]</a>
     <button type="button" id="deleteSelected" class="btn btn-danger">@Localizer["Delete"]</button>
 </p>
 
 <div class="tab-pane fade show active" id="my-inventories" role="tabpanel" aria-labelledby="my-inventories-tab">
-    <partial name="~/Views/Inventories/Components/_InventoryTable.cshtml" model="Model" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "sharedInventoriesTable" } })" />
+    <partial name="~/Views/Inventories/Components/_InventoryTable.cshtml" model="Model" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "my" } })" />
 </div>
 <div class="modal fade" id="deleteConfirmationModal" tabindex="-1">
     <div class="modal-dialog">

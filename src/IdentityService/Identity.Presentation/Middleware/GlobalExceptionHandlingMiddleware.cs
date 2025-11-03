@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Net;
 using System.Text.Json;
 
 namespace Identity.Presentation.Middleware
@@ -34,8 +35,6 @@ namespace Identity.Presentation.Middleware
 
             switch (exception)
             {
-
-
                 case ArgumentException argumentException:
                     status = HttpStatusCode.BadRequest;
                     message = argumentException.Message;
@@ -55,6 +54,13 @@ namespace Identity.Presentation.Middleware
                     message = unauthorizedAccessException.Message;
 
                     _logger.LogWarning(exception, "UnauthorizedAccessException: {Message}", message);
+                    break;
+
+                case DbUpdateConcurrencyException dbUpdateConcurrencyException:
+                    status = HttpStatusCode.Unauthorized;
+                    message = dbUpdateConcurrencyException.Message;
+
+                    _logger.LogWarning(exception, "DbUpdateConcurrencyException: {Message}", message);
                     break;
 
                 default:

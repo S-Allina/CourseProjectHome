@@ -10,11 +10,11 @@ namespace Main.Application.Dtos.Inventories.Index
         public int Id { get; init; }
         public string Name { get; init; }
         public string Description { get; init; }
-        public string DescriptionPreview => MarkdownHelper.TruncateWithMarkdown(Description);
+        public string DescriptionHtml => MarkdownHelper.ConvertToHtml(Description);
         public int? CategoryId { get; init; }
         public string CategoryName { get; init; }
         public string OwnerId { get; init; }
-        public string OwnerName { get; init; } // Только имя, а не весь объект
+        public string OwnerName { get; init; } 
         public string ImageUrl { get; set; }
         public bool IsPublic { get; init; }
         public int? ItemsCount { get; init; }
@@ -25,7 +25,6 @@ namespace Main.Application.Dtos.Inventories.Index
         public string CustomIdFormat { get; init; }
     }
 
-    // Для детальной страницы (наследуем от табличной + добавляем специфичные поля)
     public record InventoryDetailsDto : InventoryTableDto
     {
         public string DescriptionHtml => MarkdownHelper.ConvertToHtml(Description);
@@ -33,9 +32,7 @@ namespace Main.Application.Dtos.Inventories.Index
         public byte[] Version { get; init; }
         public List<InventoryFieldDto> Fields { get; init; } = new();
         public List<InventoryAccessDto> AccessList { get; init; } = new();
-        // Owner уже есть в базовом классе как OwnerName
     }
-    // Statistics DTOs
     public record InventoryStatsDto
     {
         public int TotalItems { get; init; }
@@ -51,16 +48,13 @@ namespace Main.Application.Dtos.Inventories.Index
         public string FieldName { get; init; }
         public FieldType FieldType { get; init; }
 
-        // Для числовых полей
         public double? MinValue { get; set; }
         public double? MaxValue { get; set; }
         public double? AverageValue { get; set; }
 
-        // Для текстовых полей
         public Dictionary<string, int> ValueCounts { get; set; } = new();
         public int? UniqueValuesCount { get; set; }
 
-        // Для всех полей
         public int? EmptyValuesCount { get; init; }
         public int? NonEmptyValuesCount { get; init; }
     }

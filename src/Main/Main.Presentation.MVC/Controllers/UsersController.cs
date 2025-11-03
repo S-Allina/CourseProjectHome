@@ -1,6 +1,7 @@
 ﻿using Main.Application.Interfaces;
 using Main.Domain.entities.common;
 using Main.Infrastructure.DataAccess;
+using Main.Presentation.MVC.Controllers.API;
 using Main.Presentation.MVC.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -22,23 +23,16 @@ namespace Main.Presentation.MVC.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
-            try
-            {
-                var userInventoriesTask = await _inventoryService.GetUserInventoriesAsync(cancellationToken);
-                var sharedInventoriesTask = await _inventoryService.GetSharedInventoriesAsync(cancellationToken);
+            var userInventoriesTask = await _inventoryService.GetUserInventoriesAsync(cancellationToken);
+            var sharedInventoriesTask = await _inventoryService.GetSharedInventoriesAsync(cancellationToken);
 
-                var model = new HomeViewModel
-                {
-                    UserInventories = userInventoriesTask.ToList(),
-                    SharedInventories = sharedInventoriesTask.ToList()
-                };
-
-                return View(model);
-            }
-            catch (Exception ex)
+            var model = new HomeViewModel
             {
-                return View(new HomeViewModel());
-            }
+                UserInventories = userInventoriesTask.ToList(),
+                SharedInventories = sharedInventoriesTask.ToList()
+            };
+
+            return View(model);
         }
     }
 }

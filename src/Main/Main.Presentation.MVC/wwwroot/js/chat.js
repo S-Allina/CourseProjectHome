@@ -60,18 +60,38 @@
     }
 
     async startConnection() {
+        // Если соединение уже запускается или активно, не пытаемся переподключиться
+        if (this.connection.state === signalR.HubConnectionState.Connecting ||
+            this.connection.state === signalR.HubConnectionState.Connected) {
+            console.log('Connection already in progress or established');
+            return;
+        }
+
         try {
             await this.connection.start();
             console.log('SignalR Connected');
             this.isConnected = true;
 
             // Присоединяемся к группе инвентаря
-            await this.connection.invoke("JoinInventoryGroup", this.inventoryId);
+            try {
+                await this.connection.invoke("JoinInventoryGroup", this.inventoryId);
+                console.log('Successfully joined inventory group:', this.inventoryId);
+            } catch (joinError) {
+                console.error('Error joining inventory group:', joinError);
+                // Не прерываем соединение из-за ошибки присоединения к группе
+            }
 
             this.updateConnectionStatus(true);
         } catch (err) {
             console.error('SignalR Connection Error: ', err);
             this.updateConnectionStatus(false);
+
+            // Останавливаем соединение перед повторной попыткой
+            try {
+                await this.connection.stop();
+            } catch (stopError) {
+                console.log('Error stopping connection:', stopError);
+            }
 
             // Пытаемся переподключиться через 5 секунд
             setTimeout(() => this.startConnection(), 5000);
@@ -256,7 +276,7 @@
         } catch (err) {
             console.error('Error loading message history: ', err);
         } finally {
-            document.getElementById('loadingMessages').style.display = 'none';
+            //document.getElementById('loadingMessages').style.display = 'none';
         }
     }
 
@@ -384,6 +404,8 @@
     }
 
     formatMessage(text) {
+        if (!text) return ''; // Защита от undefined/null
+
         // Простая поддержка markdown
         return text
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **bold**

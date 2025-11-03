@@ -5,7 +5,6 @@
 }
 
 <div class="container-fluid py-4">
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-1">Item Details</h1>
@@ -22,9 +21,7 @@
     </div>
 
     <div class="row">
-        <!-- Main Information -->
         <div class="col-lg-8">
-            <!-- Field Values Card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white py-3">
                     <h5 class="card-title mb-0">
@@ -124,9 +121,7 @@
             </div>
         </div>
 
-        <!-- Sidebar with Metadata -->
         <div class="col-lg-4">
-            <!-- Item Information Card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white py-3">
                     <h5 class="card-title mb-0">
@@ -149,7 +144,6 @@
                 </div>
             </div>
 
-            <!-- Timeline Card -->
             <div class="card shadow-sm">
                 <div class="card-header bg-white py-3">
                     <h5 class="card-title mb-0">
@@ -190,7 +184,6 @@
                 </div>
             </div>
 
-            <!-- Quick Actions Card -->
             <div class="card shadow-sm mt-4">
                 <div class="card-header bg-white py-3">
                     <h5 class="card-title mb-0">
@@ -215,7 +208,6 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -319,8 +311,6 @@
             const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
             modal.show();
         }
-
-        // Add copy functionality for Custom ID
         document.addEventListener('DOMContentLoaded', function() {
             const customIdElement = document.querySelector('.info-item:first-child p');
             if (customIdElement) {
@@ -330,7 +320,6 @@
                 customIdElement.addEventListener('click', function() {
                     const text = this.textContent;
                     navigator.clipboard.writeText(text).then(() => {
-                        // Show temporary feedback
                         const originalText = this.textContent;
                         this.textContent = 'Copied!';
                         setTimeout(() => {

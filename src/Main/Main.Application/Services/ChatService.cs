@@ -1,6 +1,8 @@
-﻿using Main.Application.Dtos.Common.Index;
+﻿using AutoMapper;
+using Main.Application.Dtos.Common;
 using Main.Application.Interfaces;
 using Main.Domain.entities.common;
+using Main.Domain.entities.inventory;
 using Main.Domain.InterfacesRepository;
 using System;
 using System.Collections.Generic;
@@ -14,28 +16,33 @@ namespace Main.Application.Services
     {
         private readonly IChatRepository _chatRepository;
         private readonly IUsersService _usersService;
-        public ChatService(IChatRepository chatRepository, IUsersService usersService)
+        private readonly IMapper _mapper;
+
+        public ChatService(IChatRepository chatRepository, IUsersService usersService, IMapper mapper)
         {
             _chatRepository = chatRepository;
             _usersService = usersService;
+            _mapper = mapper;
         }
-
+        
         public async Task<ChatMessageDto> SaveMessageAsync(SendMessageDto messageDto)
         {
             var user = await _usersService.GetCurrentUser();
+            if (user == null) 
+                throw new UnauthorizedAccessException("Чтобы отправить сообщение нужно авторизоваться.");
+
             var message = new ChatMessage
             {
                 InventoryId = messageDto.InventoryId,
                 UserId = user.Id,
                 UserName=user.LastName + " " + user.FirstName,
                 Message = messageDto.Message,
-                ParentMessageId = messageDto.ParentMessageId,
                 CreatedAt = DateTime.UtcNow
             };
 
             await _chatRepository.CreateAsync(message);
 
-            return MapToDto(message);
+            return _mapper.Map<ChatMessageDto>(message);
         }
 
         public async Task<List<ChatMessageDto>> GetMessageHistoryAsync(int inventoryId, int skip = 0, int take = 50)
@@ -49,21 +56,7 @@ namespace Main.Application.Services
                 .OrderBy(m => m.CreatedAt)
                 .ToList();
 
-            return messages.Select(MapToDto).ToList();
-        }
-
-        private ChatMessageDto MapToDto(ChatMessage message)
-        {
-            return new ChatMessageDto
-            {
-                Id = message.Id,
-                InventoryId = message.InventoryId,
-                UserId = message.UserId,
-                UserName = message.UserName,
-                Message = message.Message,
-                CreatedAt = message.CreatedAt,
-                IsEdited = message.IsEdited
-            };
+            return messages.Select(_mapper.Map<ChatMessageDto>).ToList();
         }
     }
 }

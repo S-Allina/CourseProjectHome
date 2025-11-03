@@ -81,7 +81,7 @@ namespace Main.Application.Services
                 {
                     var boolValues = fieldValues
                         .Where(fv => fv.BooleanValue.HasValue)
-                        .Select(fv => fv.BooleanValue.Value.ToString())
+                        .Select(fv => fv?.BooleanValue.Value.ToString())
                         .ToList();
 
                     stats.ValueCounts = boolValues

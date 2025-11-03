@@ -22,13 +22,7 @@ namespace Identity.Application.Dto
 
         public DateTime CreateAt { get; set; }
         public DateTime? UpdateAt { get; set; }
-
+        public string Role { get; set; } = "User";
         public string Email { get; set; }
-        public string PhoneNumber { get; set; }
-
-        public string? AccessToken { get; set; }
-
-        public string? RefreshToken { get; set; }
-        public DateTime? RefreshTokenExpiryTime { get; set; }
     }
 }

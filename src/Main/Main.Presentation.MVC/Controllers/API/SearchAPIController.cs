@@ -2,7 +2,7 @@
 using Main.Domain.InterfacesRepository;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Main.Presentation.MVC.Controllers
+namespace Main.Presentation.MVC.Controllers.API
 {
     [ApiController]
     [Route("Search")]

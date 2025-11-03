@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Main.Application.Helpers;
 
-namespace Main.Application.Dtos.Common.Index
+namespace Main.Application.Dtos.Common
 {
     public class ChatMessageDto
     {
@@ -14,17 +15,17 @@ namespace Main.Application.Dtos.Common.Index
         public string UserId { get; set; }
         public string UserName { get; set; }
         public string Message { get; set; }
-        public string? FileUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsEdited { get; set; }
         public string FormattedTime => CreatedAt.ToString("HH:mm");
         public string FormattedDate => CreatedAt.ToString("dd.MM.yyyy");
+        public string MessageHtml => MarkdownHelper.ConvertToHtml(Message);
+
     }
 
     public class SendMessageDto
     {
         public int InventoryId { get; set; }
         public string Message { get; set; }
-        public int? ParentMessageId { get; set; }
     }
 }

@@ -18,6 +18,12 @@
             <a href="@Url.Action("Create", "Inventories")" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>@Localizer["Create New"] @Localizer["Inventory"]
             </a>
+            <form id="deleteSelectedForm" method="post" asp-action="DeleteSelected">
+                @Html.AntiForgeryToken()
+                <button type="submit" id="deleteSelected" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i>@Localizer["Delete"]
+                </button>
+            </form>
         </div>
     </div>
 
@@ -42,16 +48,17 @@
 
     <div class="tab-content" id="inventoryTabsContent">
         <div class="tab-pane fade show active" id="my-inventories" role="tabpanel" aria-labelledby="my-inventories-tab">
-            <partial name="_InventoryTable" model="Model.UserInventories" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "myInventoriesTable" } })" />
+            <partial name="~/Views/Inventories/Components/_InventoryTable.cshtml" model="Model.UserInventories" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "myInventoriesTable" } })" />
         </div>
 
         <div class="tab-pane fade" id="shared-inventories" role="tabpanel" aria-labelledby="shared-inventories-tab">
-            <partial name="_InventoryTable" model="Model.SharedInventories" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "sharedInventoriesTable" } })" />
+            <partial name="~/Views/Inventories/Components/_InventoryTable.cshtml" model="Model.SharedInventories" view-data="@(new ViewDataDictionary(ViewData) { { "TableType", "sharedInventoriesTable" } })" />
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <script src="~/js/inventory-selection.js" asp-append-version="true"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const activeTab = localStorage.getItem('activeInventoryTab') || 'my-inventories-tab';

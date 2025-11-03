@@ -17,30 +17,23 @@ namespace Identity.Infrastructure.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly ITokenService _tokenService;
         private readonly ICurrentUserService _currentUserService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
-        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<UserService> _logger;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IValidator<ResetPasswordDto> _validator;
         private const string purpose = "ResetPassword";
         private const string separator = ", ";
 
-        public AuthService(ITokenService tokenService, IEmailService emailService, ICurrentUserService currentUserService,
-            UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<UserService> logger, SignInManager<ApplicationUser> signInManager,
-            IHttpContextAccessor httpContextAccessor, IValidator<ResetPasswordDto> validator)
+        public AuthService(IEmailService emailService, ICurrentUserService currentUserService,
+            UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<UserService> logger, IValidator<ResetPasswordDto> validator)
         {
             _emailService = emailService;
             _currentUserService = currentUserService;
             _userManager = userManager;
             _mapper = mapper;
-            _tokenService = tokenService;
             _logger = logger;
-            _signInManager = signInManager;
-            _httpContextAccessor = httpContextAccessor;
             _validator = validator;
         }
 
@@ -52,14 +45,8 @@ namespace Identity.Infrastructure.Services
 
             await CheckLockoutAsync(user);
 
-            var (accessToken, refreshToken) = await GenerateTokensAsync(user);
-
-            await UpdateUserRefreshTokenAsync(user, refreshToken);
-
             var userResponse = _mapper.Map<CurrentUserDto>(user);
 
-            userResponse.AccessToken = accessToken;
-            userResponse.RefreshToken = refreshToken;
             userResponse.UpdateAt = DateTime.Now;
 
             return userResponse;
@@ -67,14 +54,8 @@ namespace Identity.Infrastructure.Services
 
         private async Task<CurrentUserDto> LoginWithoutPasswordAsync(ApplicationUser user)
         {
-            var (accessToken, refreshToken) = await GenerateTokensAsync(user);
-
-            await UpdateUserRefreshTokenAsync(user, refreshToken);
-
             var userResponse = _mapper.Map<CurrentUserDto>(user);
 
-            userResponse.AccessToken = accessToken;
-            userResponse.RefreshToken = refreshToken;
             userResponse.UpdateAt = DateTime.Now;
 
             return userResponse;
@@ -140,55 +121,6 @@ namespace Identity.Infrastructure.Services
         //    return currentUser;
         //}
 
-        public async Task<CurrentUserDto> RefreshTokenAsync(RefreshTokenRequestDto request)
-        {
-            _logger.LogInformation("Refresh token");
-            var refreshTokenHash = HashRefreshToken(request.RefreshToken);
-
-            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshTokenHash);
-
-            if (user == null)
-            {
-                _logger.LogError("Invalid refresh token");
-                throw new Exception("Invalid refresh token");
-            }
-
-            ValidateRefreshToken(user);
-
-            var newAccessToken = await _tokenService.GenerateTokenAsync(user);
-            var newRefreshTokenHash = HashRefreshToken(user.RefreshToken);
-
-            _logger.LogInformation("Access token generated successful.");
-            var currentUser = _mapper.Map<CurrentUserDto>(user);
-
-            currentUser.AccessToken = newAccessToken;
-            currentUser.RefreshToken = newRefreshTokenHash;
-            currentUser.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(30);
-
-            return currentUser;
-        }
-
-        public async Task<RevokeTokenResponseDto> RevokeRefreshTokenAsync(RevokeTokenRequestDto request)
-        {
-            _logger.LogInformation("revoking refresh token.");
-
-            var refreshTokenHash = HashRefreshToken(request.Token);
-
-            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshTokenHash);
-
-            if (user == null)
-            {
-                _logger.LogError("Invalid refresh token");
-                throw new Exception("Invalid refresh token");
-            }
-
-            ValidateRefreshToken(user);
-
-            await RevokeRefreshTokenAsync(user);
-
-            return new RevokeTokenResponseDto { Message = "Refresh token revoked successfully." };
-        }
-
         public async Task ForgotPasswordAsync()
         {
             var userId = _currentUserService.GetUserId();
@@ -197,7 +129,7 @@ namespace Identity.Infrastructure.Services
 
             var user = _mapper.Map<ApplicationUser>(userDto);
 
-            var token = await _tokenService.GeneratePasswordResetTokenAsync(user);
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
             await _emailService.SendPasswordResetEmailAsync(user, token);
         }
@@ -239,24 +171,6 @@ namespace Identity.Infrastructure.Services
             }
         }
 
-        private string HashRefreshToken(string refreshToken)
-        {
-            using var sha256 = SHA256.Create();
-
-            var refreshTokenHashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(refreshToken));
-
-            return Convert.ToBase64String(refreshTokenHashBytes);
-        }
-
-        private void ValidateRefreshToken(ApplicationUser user)
-        {
-            if (user.RefreshTokenExpiryTime < DateTime.Now)
-            {
-                _logger.LogError("Refresh token expired.");
-                throw new Exception("Refresh token expired.");
-            }
-        }
-
         private async Task CheckLockoutAsync(ApplicationUser user)
         {
             var isLockedOut = await _userManager.IsLockedOutAsync(user);
@@ -290,48 +204,6 @@ namespace Identity.Infrastructure.Services
             }
 
             return user;
-        }
-
-        private async Task RevokeRefreshTokenAsync(ApplicationUser user)
-        {
-            user.RefreshToken = null;
-            user.RefreshTokenExpiryTime = null;
-
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(separator, result.Errors.Select(e => e.Description));
-
-                _logger.LogError("Failed to update user : {errors}", errors);
-                throw new Exception($"Failed to revoke refresh token: {errors}");
-            }
-        }
-
-        private async Task<(string accessToken, string refreshToken)> GenerateTokensAsync(ApplicationUser user)
-        {
-            var accessToken = await _tokenService.GenerateTokenAsync(user);
-            var refreshToken = _tokenService.GenerateRefreshToken();
-
-            return (accessToken, refreshToken);
-        }
-
-        private async Task UpdateUserRefreshTokenAsync(ApplicationUser user, string refreshToken)
-        {
-            using var sha256 = SHA256.Create();
-            var refreshTokenHash = sha256.ComputeHash(Encoding.UTF8.GetBytes(refreshToken));
-
-            user.RefreshToken = Convert.ToBase64String(refreshTokenHash);
-            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(2);
-
-            var result = await _userManager.UpdateAsync(user);
-
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(separator, result.Errors.Select(e => e.Description));
-
-                _logger.LogError("Failed to update user : {errors}", errors);
-                throw new Exception($"Failed to update user : {errors}");
-            }
         }
     }
 }

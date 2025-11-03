@@ -25,6 +25,7 @@ namespace Main.Domain.entities.inventory
         public ICollection<InventoryAccess> AccessList { get; set; } = new List<InventoryAccess>();
         public ICollection<InventoryTag> Tags { get; set; } = new List<InventoryTag>();
         public ICollection<Item> Items { get; set; } = new List<Item>();
+        public ICollection<ChatMessage> ChatMessages { get; set; } = new List<ChatMessage>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
         public int CurrentSequence { get; set; } = 1;

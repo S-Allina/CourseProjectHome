@@ -4,7 +4,6 @@
 }
 
 <div class="chat-container h-100 d-flex flex-column">
-    <!-- Заголовок чата -->
     <div class="chat-header d-flex justify-content-between align-items-center p-3 border-bottom bg-light">
         <div>
             <h5 class="mb-0">
@@ -21,22 +20,18 @@
         </div>
     </div>
 
-    <!-- Контейнер сообщений -->
     <div class="chat-messages flex-grow-1 p-3" id="chatMessages"
          style="min-height: 400px; max-height: 60vh; overflow-y: auto;">
 
-        <div class="text-center text-muted py-4" id="loadingMessages">
+        <div class="text-center text-muted py-4" id="loadingMessages" style="">
             <div class="spinner-border spinner-border-sm" role="status"></div>
             <span class="ms-2">Loading messages...</span>
         </div>
 
-        <!-- Сообщения будут загружаться здесь -->
     </div>
 
-    <!-- Форма отправки -->
     <div class="chat-input border-top p-3 bg-light">
         <form id="messageForm" class="d-flex gap-2 align-items-start">
-            <!-- Основное поле ввода -->
             <div class="flex-grow-1">
                 <textarea id="messageInput"
                           class="form-control"
@@ -44,11 +39,9 @@
                           rows="2"
                           style="resize: none;"></textarea>
 
-                <!-- Преview файла -->
                 <div id="filePreview" class="mt-2" style="display: none;"></div>
             </div>
 
-            <!-- Кнопки действий -->
             <div class="d-flex flex-column gap-2">
                 <button type="submit" class="btn btn-primary" id="sendButton" title="Send message">
                     <i class="fas fa-paper-plane"></i>
@@ -64,7 +57,6 @@
             </div>
         </form>
 
-        <!-- Информация о форматировании -->
         <div class="mt-2">
             <small class="text-muted">
                 <i class="fas fa-info-circle me-1"></i>
@@ -73,9 +65,6 @@
         </div>
     </div>
 </div>
-
-<!-- Скрытый input для загрузки файлов -->
-<input type="file" id="fileInput" style="display: none;" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt" />
 
 <style>
     .chat-container {

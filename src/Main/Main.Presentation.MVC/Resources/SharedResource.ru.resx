@@ -444,4 +444,34 @@
   <data name="Logout" xml:space="preserve">
     <value>Выход</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>Язык</value>
+  </data>
+  <data name="Statistics" xml:space="preserve">
+    <value>Статистика</value>
+  </data>
+  <data name="Chat" xml:space="preserve">
+    <value>Чат</value>
+  </data>
+  <data name="Item Details" xml:space="preserve">
+    <value>Детали предмета</value>
+  </data>
+  <data name="Error loading statistics" xml:space="preserve">
+    <value>Ошибка загрузки статистики</value>
+  </data>
+  <data name="Recent" xml:space="preserve">
+    <value>Последние</value>
+  </data>
+  <data name="Popular" xml:space="preserve">
+    <value>Популярные</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>Профиль</value>
+  </data>
+  <data name="Delete Selected" xml:space="preserve">
+    <value>Удалить выбранные</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Настройки</value>
+  </data>
 </root>
