@@ -243,4 +243,108 @@
             });
         });
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const customIdInput = document.getElementById('CustomId');
+            const formatHint = document.querySelector('.form-text.text-muted');
+            const form = document.querySelector('form');
+
+            // Получаем формат из подсказки или скрытого поля
+            function getExpectedFormat() {
+                // Пытаемся извлечь формат из текста подсказки
+                const hintText = formatHint?.textContent || '';
+                const formatMatch = hintText.match(/Format:\s*(.+)/);
+                if (formatMatch) {
+                    return formatMatch[1].trim();
+                }
+
+                // Или используем формат из инвентаря (если доступен)
+                return '@inventory?.CustomIdFormat' || '';
+            }
+
+            // Функция для проверки формата
+            function validateCustomIdFormat(inputValue) {
+                const expectedFormat = getExpectedFormat();
+                if (!expectedFormat) return true; // Если формат не задан, пропускаем проверку
+
+                // Создаем регулярное выражение на основе формата
+                const regexPattern = createRegexFromFormat(expectedFormat);
+                const regex = new RegExp(regexPattern);
+
+                return regex.test(inputValue);
+            }
+
+            // Создаем regex на основе формата
+            function createRegexFromFormat(format) {
+                // Заменяем специальные компоненты на соответствующие regex паттерны
+                return format
+                    .replace(/\{R20\}/g, '\\d{6}') // 20-bit random (6 digits)
+                    .replace(/\{R32\}/g, '\\d{10}') // 32-bit random (10 digits)
+                    .replace(/\{R6D\}/g, '\\d{6}') // 6-digit random
+                    .replace(/\{R9D\}/g, '\\d{9}') // 9-digit random
+                    .replace(/\{GUID\}/g, '[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}') // GUID
+                    .replace(/\{SEQ:\d+\}/g, '\\d+') // Sequence (любое количество цифр)
+                    .replace(/\{YYYYMMDD\}/g, '\\d{8}') // Дата YYYYMMDD
+                    .replace(/\{YYMMDD\}/g, '\\d{6}') // Дата YYMMDD
+                    .replace(/\{YYYY-MM-DD\}/g, '\\d{4}-\\d{2}-\\d{2}') // Дата YYYY-MM-DD
+                    .replace(/\{DDMMYYYY\}/g, '\\d{8}') // Дата DDMMYYYY
+                    .replace(/\{UNIX\}/g, '\\d+') // Unix timestamp
+                    // Экранируем другие символы для regex
+                    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+
+            // Показываем/скрываем ошибку
+            function showFormatError(show, message = '') {
+                let errorElement = document.getElementById('customIdFormatError');
+
+                if (!errorElement && show) {
+                    errorElement = document.createElement('div');
+                    errorElement.id = 'customIdFormatError';
+                    errorElement.className = 'text-danger small mt-1';
+                    customIdInput.parentNode.appendChild(errorElement);
+                }
+
+                if (errorElement) {
+                    if (show) {
+                        errorElement.textContent = message || `Format should match: ${getExpectedFormat()}`;
+                        customIdInput.classList.add('is-invalid');
+                    } else {
+                        errorElement.remove();
+                        customIdInput.classList.remove('is-invalid');
+                    }
+                }
+            }
+
+            // Обработчик ввода
+            customIdInput.addEventListener('input', function() {
+                const value = this.value.trim();
+
+                if (value && !validateCustomIdFormat(value)) {
+                    showFormatError(true, `Invalid format. Expected pattern: ${getExpectedFormat()}`);
+                } else {
+                    showFormatError(false);
+                }
+            });
+
+            // Обработчик отправки формы
+            form.addEventListener('submit', function(e) {
+                const customIdValue = customIdInput.value.trim();
+
+                if (customIdValue && !validateCustomIdFormat(customIdValue)) {
+                    e.preventDefault();
+                    showFormatError(true, `Please correct the Custom ID format. It should match: ${getExpectedFormat()}`);
+                    customIdInput.focus();
+
+                    // Показываем общее сообщение об ошибке
+                    alert('Please correct the Custom ID format before submitting.');
+                }
+            });
+
+            // Показываем текущий формат при загрузке
+            const expectedFormat = getExpectedFormat();
+            if (expectedFormat) {
+                console.log('Expected CustomId format:', expectedFormat);
+            }
+        });
+    </script>
 }

@@ -25,6 +25,13 @@ namespace Main.Presentation.MVC.Controllers.API
                 return Ok(new { message });
         }
 
+        [HttpDelete]
+        public async Task<IActionResult> Delete([FromQuery] string[] ids)
+        {
+            var message = await _usersService.DeleteUsersAsync(ids);
+            return Ok(new { message });
+        }
+
         [HttpPost("blocked-users")]
         public IActionResult NotifyBlockedUsers([FromBody] string[] blockedUserIds)
         {

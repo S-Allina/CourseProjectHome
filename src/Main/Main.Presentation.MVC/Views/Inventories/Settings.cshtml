@@ -1021,12 +1021,10 @@
         let tags = [];
         let fieldCount = 0;
 
-        // Функция для добавления поля с данными
         function addField(fieldData = null) {
             const currentIndex = fieldCount;
             fieldCount++;
 
-            // Значения по умолчанию или из fieldData
             const fieldName = fieldData?.name || '';
             const fieldId = fieldData?.id || 0;
             const fieldType = fieldData?.fieldType || '';

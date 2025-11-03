@@ -113,6 +113,7 @@ namespace Identity.Infrastructure.Services
             var tasks = _userManager.Users.Where(u => userIds.Contains(u.Id)).ExecuteDeleteAsync(cancellationToken);
             await Task.WhenAll(tasks);
 
+            await _mainApiClient.DeleteUserAsync(userIds.ToArray());
             return await GetAllAsync(cancellationToken);
         }
 

@@ -53,6 +53,15 @@ namespace Identity.Infrastructure.Services
             }
         }
 
+        public async Task<bool> DeleteUserAsync(string[] ids)
+        {
+            var idsParam = string.Join("&", ids.Select(id => $"ids={Uri.EscapeDataString(id)}"));
+            var url = $"{_urlSettings.Main}/api/users?{idsParam}";
+
+            var response = await _httpClient.DeleteAsync(url);
+            return response.IsSuccessStatusCode;
+        }
+
         public async Task<bool> NotifyBlockedUsers(string[] blockedUserIds)
         {
             var response = await _httpClient.PostAsJsonAsync(

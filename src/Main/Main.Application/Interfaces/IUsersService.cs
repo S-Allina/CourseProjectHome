@@ -16,5 +16,6 @@ namespace Main.Application.Interfaces
         Task<UserDto> GetCurrentUser();
         bool CheckBlock(string[] ids);
         Task<string> CreateUser(CreateUserRequest request);
+        Task<bool> DeleteUsersAsync(string[] ids);
     }
 }

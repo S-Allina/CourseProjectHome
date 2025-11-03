@@ -57,6 +57,13 @@ namespace Main.Application.Services
             return "User created successfully";
         }
 
+        public async Task<bool> DeleteUsersAsync(string[] ids)
+        {
+            await _userRepository.DeleteAsync(u => ids.Contains(u.Id));
+            
+            return true;
+        }
+
         public string GetCurrentUserRole()
         {
             return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);

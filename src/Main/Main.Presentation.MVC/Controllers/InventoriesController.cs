@@ -36,7 +36,7 @@ namespace Main.Presentation.MVC.Controllers
         public async Task<IActionResult> Create()
         {
             var model = await _inventoryService.GetCreateViewModelAsync();
-            return View(model);
+            return View("Settings", model);
         }
 
         [HttpPost]
@@ -55,7 +55,7 @@ namespace Main.Presentation.MVC.Controllers
             var model = await _inventoryService.GetEditViewModelAsync(id);
             if (model == null) return NotFound();
 
-            return View("Create", model);
+            return View("Settings", model);
         }
 
         [HttpPost]

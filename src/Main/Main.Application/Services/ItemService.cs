@@ -152,7 +152,7 @@ namespace Main.Application.Services
 
         public async Task<ItemDto> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            var item = await _itemRepository.GetFirstAsync(i => i.Id == id, cancellationToken, "FieldValues");
+            var item = await _itemRepository.GetFirstAsync(i => i.Id == id, cancellationToken, "FieldValues.InventoryField");
 
             if (!await CheckAccess(item.InventoryId, AccessLevel.ReadOnly, cancellationToken))
                 throw new UnauthorizedAccessException("Нет прав на просмотр предметов в этом инвентаре");

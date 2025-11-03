@@ -19,8 +19,13 @@ namespace Main.Application.Mapper
             CreateMap<User, UserDto>().ReverseMap();
 
             CreateMap<ItemFieldValue, ItemFieldValueDto>()
-                .ForMember(dest => dest.FieldName, opt => opt.MapFrom(src => src.InventoryField.Name))
-                .ForMember(dest => dest.FieldType, opt => opt.MapFrom(src => src.InventoryField.FieldType)).ReverseMap();
+    .ForMember(dest => dest.FieldType, opt => opt.MapFrom(src => src.InventoryField.FieldType))
+    .ForMember(dest => dest.FieldName, opt => opt.MapFrom(src => src.InventoryField.Name))
+    .ForMember(dest => dest.TextValue, opt => opt.MapFrom(src => src.TextValue))
+    .ForMember(dest => dest.NumberValue, opt => opt.MapFrom(src => src.NumberValue))
+    .ForMember(dest => dest.BooleanValue, opt => opt.MapFrom(src => src.BooleanValue))
+    .ForMember(dest => dest.FileUrl, opt => opt.MapFrom(src => src.FileUrl))
+    .ForMember(dest => dest.MultilineTextValue, opt => opt.MapFrom(src => src.MultilineTextValue));
         }
     }
 }

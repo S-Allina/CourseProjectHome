@@ -474,4 +474,16 @@
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
+  <data name="Back to Inventories" xml:space="preserve">
+    <value>Back to Inventories</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Back to Items" xml:space="preserve">
+    <value>Back to Items</value>
+  </data>
+  <data name="Item Properties" xml:space="preserve">
+    <value>Item Properties</value>
+  </data>
 </root>

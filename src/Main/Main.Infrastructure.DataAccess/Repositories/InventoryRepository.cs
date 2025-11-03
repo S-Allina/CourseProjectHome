@@ -2,6 +2,7 @@
 using Main.Domain.enums.Users;
 using Main.Domain.InterfacesRepository;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace Main.Infrastructure.DataAccess.Repositories
 {
@@ -58,6 +59,9 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
                 if (existingInventory == null)
                     throw new Exception("Inventory not found");
+
+            if (existingInventory.Version != inventory.Version)
+                throw new DbUpdateConcurrencyException("Инвентарь изменён другим пользователем обновите страницу.");
 
                 _db.Entry(existingInventory).CurrentValues.SetValues(inventory);
                 existingInventory.UpdatedAt = DateTime.UtcNow;
