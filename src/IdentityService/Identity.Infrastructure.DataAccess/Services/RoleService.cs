@@ -24,7 +24,10 @@ namespace Identity.Infrastructure.DataAccess.Services
 
         public async Task UpdateUsersRoleAsync(IEnumerable<string> userIds, string removeRole, string addRole, CancellationToken cancellationToken)
         {
-            if (!userIds?.Any() == true) return;
+            if (userIds is null || !userIds.Any())
+                return;
+
+            var userIdsList = userIds.ToList();
 
             await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
@@ -33,21 +36,24 @@ namespace Identity.Infrastructure.DataAccess.Services
                 var roleIds = await _context.Roles
                     .Where(r => r.Name == removeRole || r.Name == addRole)
                     .Select(r => new { r.Name, r.Id })
-                    .ToDictionaryAsync(r => r.Name, r => r.Id, cancellationToken);
+                    .ToDictionaryAsync(r => r.Name!, r => r.Id, cancellationToken);
+
+                if (!roleIds.ContainsKey(removeRole) || !roleIds.ContainsKey(addRole))
+                    throw new InvalidOperationException("One or both roles not found");
 
                 var roleIdToRemove = roleIds[removeRole];
                 var roleIdToAdd = roleIds[addRole];
 
                 var usersWithTargetRole = await _context.UserRoles
-                    .Where(ur => userIds.Contains(ur.UserId) && ur.RoleId == roleIdToAdd)
+                    .Where(ur => userIdsList.Contains(ur.UserId) && ur.RoleId == roleIdToAdd)
                     .Select(ur => ur.UserId)
                     .ToListAsync(cancellationToken);
 
                 if (usersWithTargetRole.Any())
                 {
-                    userIds = userIds.Except(usersWithTargetRole).ToList();
+                    userIdsList = userIdsList.Except(usersWithTargetRole).ToList();
 
-                    if (!userIds.Any())
+                    if (!userIdsList.Any())
                     {
                         await transaction.RollbackAsync(cancellationToken);
                         throw new InvalidOperationException($"Некоторые пользователи уже имеют роль {addRole}");
@@ -55,10 +61,10 @@ namespace Identity.Infrastructure.DataAccess.Services
                 }
 
                 var deletedCount = await _context.UserRoles
-                    .Where(ur => userIds.Contains(ur.UserId) && ur.RoleId == roleIdToRemove)
+                    .Where(ur => userIdsList.Contains(ur.UserId) && ur.RoleId == roleIdToRemove)
                     .ExecuteDeleteAsync(cancellationToken);
 
-                var newUserRoles = userIds.Select(userId => new IdentityUserRole<string>
+                var newUserRoles = userIdsList.Select(userId => new IdentityUserRole<string>
                 {
                     UserId = userId,
                     RoleId = roleIdToAdd
@@ -93,12 +99,12 @@ namespace Identity.Infrastructure.DataAccess.Services
                 Id = user.Id,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                Email = user.Email,
+                Email = user.Email!,
                 EmailConfirmed = user.EmailConfirmed,
                 Status = user.Status,
                 CreateAt = user.CreateAt,
                 UpdateAt = user.UpdateAt,
-                Role = userRoles.FirstOrDefault(ur => ur.UserId == user.Id).Role
+                Role = userRoles.FirstOrDefault(ur => ur.UserId == user.Id)?.Role ?? "No Role"
             }).ToList();
 
             return new ResponseDto { Result = userDtos };

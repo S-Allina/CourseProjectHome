@@ -42,11 +42,11 @@ namespace Main.Presentation.MVC.Controllers.API
         }
 
         [HttpPost("UpdateTheme")]
-        public async Task<IActionResult> UpdateTheme([FromBody] ThemeModel model)
+        public async Task<IActionResult> UpdateTheme([FromBody] string theme)
         {
-            if (User.Identity.IsAuthenticated)
+            if (User?.Identity?.IsAuthenticated==true)
             {
-                Response.Cookies.Append("user_theme", model.Theme, new CookieOptions
+                Response.Cookies.Append("user_theme", theme, new CookieOptions
                 {
                     Expires = DateTimeOffset.Now.AddYears(1),
                     HttpOnly = false,
@@ -60,17 +60,12 @@ namespace Main.Presentation.MVC.Controllers.API
                 if (themeClaim != null)
                     identity.RemoveClaim(themeClaim);
 
-                identity.AddClaim(new Claim("theme", model.Theme));
+                identity.AddClaim(new Claim("theme", theme));
                 await HttpContext.SignInAsync(User);
 
-                return Ok(new { success = true, theme = model.Theme });
+                return Ok(new { success = true, theme });
             }
             return BadRequest();
         }
-    }
-
-    public class ThemeModel
-    {
-        public string Theme { get; set; }
     }
 }

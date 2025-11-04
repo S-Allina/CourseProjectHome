@@ -27,7 +27,7 @@ namespace Main.Application.Services
             _mapper = mapper;
         }
 
-        public string GetCurrentUserId()
+        public string? GetCurrentUserId()
         {
             return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
         }
@@ -64,7 +64,7 @@ namespace Main.Application.Services
             return true;
         }
 
-        public string GetCurrentUserRole()
+        public string? GetCurrentUserRole()
         {
             return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
         }

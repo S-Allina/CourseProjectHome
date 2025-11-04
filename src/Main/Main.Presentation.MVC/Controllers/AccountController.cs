@@ -10,7 +10,7 @@ namespace Main.Presentation.MVC.Controllers
     {
         public ActionResult Login(string returnUrl = "/")
         {
-            if (!User.Identity.IsAuthenticated)
+            if (User?.Identity?.IsAuthenticated==false)
             {
                 return Challenge(
                     new AuthenticationProperties { RedirectUri = returnUrl },

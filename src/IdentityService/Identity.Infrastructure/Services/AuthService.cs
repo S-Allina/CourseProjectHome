@@ -52,15 +52,6 @@ namespace Identity.Infrastructure.Services
             return userResponse;
         }
 
-        private async Task<CurrentUserDto> LoginWithoutPasswordAsync(ApplicationUser user)
-        {
-            var userResponse = _mapper.Map<CurrentUserDto>(user);
-
-            userResponse.UpdateAt = DateTime.Now;
-
-            return userResponse;
-        }
-
         //public async Task<CurrentUserDto> GoogleCallBackAsync(string returnUrl, string remoteError)
         //{
         //    var result = await HttpContext.AuthenticateAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
@@ -195,14 +186,17 @@ namespace Identity.Infrastructure.Services
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
 
+            if (user == null)
+                throw new Exception("User not found.");
+
             var isValidPassword = await _userManager.CheckPasswordAsync(user, request.Password);
 
-            if (user == null || !isValidPassword)
+            if (!isValidPassword)
             {
                 await HandleAuthenticationFailureAsync(user);
                 throw new Exception("Invalid email or password. Please try again.");
             }
-
+            
             return user;
         }
     }

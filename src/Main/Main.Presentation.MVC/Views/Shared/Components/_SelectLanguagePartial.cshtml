@@ -8,8 +8,8 @@
 
 @{
     var requestCulture = Context.Features.Get<IRequestCultureFeature>();
+    var currentCulture = requestCulture?.RequestCulture?.UICulture?.Name ?? "en";
 
-    // Явно создаем список, игнорируя LocOptions
     var cultureItems = new List<SelectListItem>
     {
         new SelectListItem { Value = "en", Text = "English" },
@@ -25,7 +25,7 @@
             <i class="fas fa-language me-1"></i>@Localizer["Language"]
         </span>
         <select name="culture" onchange="this.form.submit();"
-                asp-for="@requestCulture.RequestCulture.UICulture.Name"
+                asp-for="@currentCulture"
                 asp-items="cultureItems"
                 class="form-select" style="width: auto;">
         </select>

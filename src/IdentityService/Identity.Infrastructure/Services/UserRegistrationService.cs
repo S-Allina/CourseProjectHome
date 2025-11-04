@@ -40,7 +40,7 @@ namespace Identity.Infrastructure.Services
             var response = new UserRegistrationResponseDto
             {
                 Id = newUser.Id,
-                Email = newUser.Email,
+                Email = newUser.Email ?? string.Empty,
                 Message = "Ваш профиль создан успешно. Подтвердите пожалуйста почту для окончания регистрации."
             };
 
@@ -62,7 +62,7 @@ namespace Identity.Infrastructure.Services
             var response = new UserRegistrationResponseDto
             {
                 Id = newUser.Id,
-                Email = newUser.Email,
+                Email = newUser.Email!,
                 Message = "Профиль менеджера создан успешно. Подтвердите пожалуйста почту для окончания регистрации."
             };
 
@@ -120,7 +120,7 @@ namespace Identity.Infrastructure.Services
                         newUser.Id,
                         newUser.FirstName,
                         newUser.LastName,
-                        newUser.Email
+                        newUser.Email ?? string.Empty
                     );
 
                     if (!success)

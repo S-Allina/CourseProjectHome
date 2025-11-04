@@ -17,7 +17,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
             this.dbSet = _db.Set<T>();
         }
 
-        public async Task<T> GetFirstAsync(
+        public async Task<T?> GetFirstAsync(
      Expression<Func<T, bool>> filter = null,
      CancellationToken cancellationToken = default,
      params string[] includeProperties) 

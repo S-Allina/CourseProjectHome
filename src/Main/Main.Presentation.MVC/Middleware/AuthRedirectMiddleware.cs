@@ -11,14 +11,19 @@
 
         public async Task InvokeAsync(HttpContext context)
         {
+            if (context is null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
             if (context.Request.Path.StartsWithSegments("/auth") &&
-                !context.User.Identity.IsAuthenticated)
+                context?.User?.Identity?.IsAuthenticated==false)
             {
                 context.Response.Redirect("/auth/login");
                 return;
             }
 
-            await _next(context);
+            await _next(context!);
         }
     }
 }

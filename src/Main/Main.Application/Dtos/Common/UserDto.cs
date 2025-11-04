@@ -6,10 +6,10 @@ namespace Main.Domain.entities.common
 {
     public class UserDto
     {
-        public string Id { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Email { get; set; }
+        public required string Id { get; set; }
+        public required string FirstName { get; set; }
+        public required string LastName { get; set; }
+        public required string Email { get; set; }
         public ICollection<InventoryAccess> InventoryAccesses { get; set; } = new List<InventoryAccess>();
         public ICollection<Item> CreatedItems { get; set; } = new List<Item>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();

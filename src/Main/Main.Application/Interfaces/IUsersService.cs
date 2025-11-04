@@ -11,8 +11,8 @@ namespace Main.Application.Interfaces
 {
     public interface IUsersService
     {
-        string GetCurrentUserId();
-        string GetCurrentUserRole();
+        string? GetCurrentUserId();
+        string? GetCurrentUserRole();
         Task<UserDto> GetCurrentUser();
         bool CheckBlock(string[] ids);
         Task<string> CreateUser(CreateUserRequest request);

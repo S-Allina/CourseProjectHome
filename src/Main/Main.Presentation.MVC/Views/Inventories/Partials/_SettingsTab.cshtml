@@ -182,7 +182,7 @@ else
         });
 
         function loadAccessList() {
-            fetch('@Url.Action("GetAccessList", "Inventories", new { inventoryId = inventory.Id })')
+            fetch('@Url.Action("GetAccessList", "Inventories", new { inventoryId = inventory?.Id })')
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById('accessList').innerHTML = html;
