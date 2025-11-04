@@ -12,7 +12,7 @@ namespace Identity.Presentation.Middleware
         {
             _next = next;
         }
-        private static readonly string[] _allowedPaths = ["/login", "/register", "/reset-password", "/logout"];
+        private static readonly string[] _allowedPaths = ["/login", "/register", "/reset-password", "/logout", "/check-auth"];
 
         public async Task InvokeAsync(HttpContext context, IUserService userService, ICurrentUserService currentUserService)
         {

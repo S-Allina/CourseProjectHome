@@ -16,7 +16,6 @@ namespace Main.Application.Dtos.Common
         public string UserName { get; set; }
         public string Message { get; set; }
         public DateTime CreatedAt { get; set; }
-        public bool IsEdited { get; set; }
         public string FormattedTime => CreatedAt.ToString("HH:mm");
         public string FormattedDate => CreatedAt.ToString("dd.MM.yyyy");
         public string MessageHtml => MarkdownHelper.ConvertToHtml(Message);

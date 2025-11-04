@@ -3,539 +3,280 @@
         this.connection = null;
         this.inventoryId = null;
         this.isConnected = false;
-        this.messages = [];
-        this.currentFile = null;
-        this.isLoadingMore = false; 
     }
 
     initialize() {
-        this.inventoryId = document.getElementById('inventoryId')?.value;
-        if (!this.inventoryId) {
-            console.error('Inventory ID not found');
+        const inventoryIdElement = document.getElementById('inventoryId');
+        if (!inventoryIdElement) {
+            console.error('Inventory ID element not found');
             return;
         }
 
-        this.initializeSignalR();
-        this.initializeEventListeners();
+        this.inventoryId = parseInt(inventoryIdElement.value);
+        console.log('Initializing chat for inventory:', this.inventoryId);
 
-        const chatTab = document.getElementById('chat-tab');
-        if (chatTab && chatTab.classList.contains('active')) {
-            this.loadMessageHistory();
-        }
+        this.initializeSignalR();
+        this.setupEventListeners();
     }
 
+    setupEventListeners() {
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+
+        if (messageForm) {
+            messageForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.sendMessage();
+            });
+        }
+
+        if (sendButton) {
+            sendButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.sendMessage();
+            });
+        }
+
+        if (messageInput) {
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                }
+            });
+
+            messageInput.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+        }
+    }
 
     initializeSignalR() {
         console.log('Initializing SignalR connection...');
 
         this.connection = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
-            .withAutomaticReconnect()
+            .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
             .configureLogging(signalR.LogLevel.Information)
             .build();
 
-        // Добавьте обработчики для отладки
-        this.connection.onreconnecting(() => {
-            console.log('SignalR reconnecting...');
-            this.updateConnectionStatus(false);
-        });
-
-        this.connection.onreconnected(() => {
-            console.log('SignalR reconnected');
-            this.updateConnectionStatus(true);
-        });
-
-        this.connection.onclose(() => {
-            console.log('SignalR connection closed');
-            this.updateConnectionStatus(false);
-        });
-
-        // Остальные обработчики...
         this.connection.on("ReceiveMessage", (message) => {
-            console.log('Received message:', message);
-            this.addMessageToChat(message);
+            console.log('Received message object:', message);
+
+            if (typeof message === 'string') {
+            } else if (typeof message === 'object') {
+                this.addMessageObject(message);
+            } else {
+                console.warn('Unknown message format:', message);
+            }
+        });
+
+        this.connection.on("LoadMessageHistory", (messages) => {
+            console.log('Loading message history:', messages);
+            this.displayMessageHistory(messages);
+        });
+
+        this.connection.onreconnecting((error) => {
+            console.log('Connection reconnecting...', error);
+            this.updateStatus('Reconnecting...');
+        });
+
+        this.connection.onreconnected((connectionId) => {
+            console.log('Connection reconnected:', connectionId);
+            this.updateStatus('Connected');
+            this.joinGroup();
+        });
+
+        this.connection.onclose((error) => {
+            console.log('Connection closed:', error);
+            this.updateStatus('Disconnected');
         });
 
         this.startConnection();
     }
 
     async startConnection() {
-        // Если соединение уже запускается или активно, не пытаемся переподключиться
-        if (this.connection.state === signalR.HubConnectionState.Connecting ||
-            this.connection.state === signalR.HubConnectionState.Connected) {
-            console.log('Connection already in progress or established');
-            return;
-        }
-
         try {
+            console.log('Starting SignalR connection...');
             await this.connection.start();
-            console.log('SignalR Connected');
-            this.isConnected = true;
+            console.log('SignalR connected successfully');
+            this.updateStatus('Connected');
 
-            // Присоединяемся к группе инвентаря
-            try {
-                await this.connection.invoke("JoinInventoryGroup", this.inventoryId);
-                console.log('Successfully joined inventory group:', this.inventoryId);
-            } catch (joinError) {
-                console.error('Error joining inventory group:', joinError);
-                // Не прерываем соединение из-за ошибки присоединения к группе
-            }
-
-            this.updateConnectionStatus(true);
+            await this.joinGroup();
         } catch (err) {
-            console.error('SignalR Connection Error: ', err);
-            this.updateConnectionStatus(false);
+            console.error('SignalR connection failed:', err);
+            this.updateStatus('Connection failed');
+            this.addMessage('System', 'Connection failed: ' + err.message);
 
-            // Останавливаем соединение перед повторной попыткой
-            try {
-                await this.connection.stop();
-            } catch (stopError) {
-                console.log('Error stopping connection:', stopError);
-            }
-
-            // Пытаемся переподключиться через 5 секунд
             setTimeout(() => this.startConnection(), 5000);
         }
     }
 
-    initializeEventListeners() {
-        const messageForm = document.getElementById('messageForm');
-        const messageInput = document.getElementById('messageInput');
-        const attachButton = document.getElementById('attachButton');
-        const fileInput = document.getElementById('fileInput');
-        const chatMessages = document.getElementById('chatMessages');
-        const chatTab = document.getElementById('chat-tab');
-
-        // Проверяем существование элементов перед добавлением обработчиков
-        if (!messageForm || !messageInput || !attachButton || !fileInput || !chatMessages) {
-            console.error('One or more chat elements not found in DOM');
+    async joinGroup() {
+        if (!this.connection || this.connection.state !== 'Connected') {
+            console.log('Cannot join group - not connected');
             return;
         }
 
-        // Обработчик переключения на вкладку чата
-        if (chatTab) {
-            chatTab.addEventListener('shown.bs.tab', () => {
-                console.log('Chat tab activated');
-                this.loadMessageHistory();
-                this.scrollToBottom();
-            });
+        try {
+            console.log('Joining inventory group:', this.inventoryId);
+            await this.connection.invoke("JoinInventoryGroup", this.inventoryId);
+        } catch (err) {
+            console.error('Error joining group:', err);
+            this.addMessage('System', 'Error joining group: ' + err.message);
         }
-
-        // Отправка сообщения
-        messageForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.sendMessage();
-        });
-
-        // Enter для отправки, Shift+Enter для новой строки
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendMessage();
-            }
-        });
-
-        // Прикрепление файла
-        attachButton.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            this.handleFileSelect(e);
-        });
-
-        // Emoji button (если нужно)
-        const emojiButton = document.getElementById('emojiButton');
-        if (emojiButton) {
-            emojiButton.addEventListener('click', () => {
-                this.showEmojiPicker();
-            });
-        }
-
-        // Auto-scroll to bottom when new messages arrive
-        const observer = new MutationObserver(() => {
-            this.scrollToBottom();
-        });
-
-        observer.observe(chatMessages, { childList: true, subtree: true });
-
-        // Load more messages when scrolling to top
-        chatMessages.addEventListener('scroll', () => {
-            if (chatMessages.scrollTop === 0) {
-                this.loadMoreMessages();
-            }
-        });
-
-        // Handle connection state changes
-        this.connection.onreconnecting(() => {
-            this.updateConnectionStatus(false);
-        });
-
-        this.connection.onreconnected(() => {
-            this.updateConnectionStatus(true);
-        });
     }
 
     async sendMessage() {
         const messageInput = document.getElementById('messageInput');
-        const messageText = messageInput.value.trim();
-
-        if (!messageText && !this.currentFile) {
+        if (!messageInput) {
+            console.error('Message input not found');
             return;
         }
 
-        if (!this.isConnected) {
-            alert('Connection lost. Please try again.');
+        const message = messageInput.value.trim();
+        if (!message) {
             return;
         }
+
+        if (!this.connection || this.connection.state !== 'Connected') {
+            this.addMessage('System', 'Not connected to chat. Please wait...');
+            return;
+        }
+
+        console.log('Sending message:', { inventoryId: this.inventoryId, message });
 
         try {
-            const messageDto = {
-                inventoryId: parseInt(this.inventoryId),
-                message: messageText,
-                messageType: this.currentFile ? 1 : 0, // 1 = File, 0 = Text
-                file: this.currentFile
-            };
-
-            await this.connection.invoke("SendMessage", messageDto);
-
-            // Очищаем форму
             messageInput.value = '';
-            this.clearFilePreview();
+            messageInput.style.height = 'auto';
+
+            await this.connection.invoke("SendMessage", this.inventoryId, message);
+            console.log('Message sent successfully');
 
         } catch (err) {
-            console.error('Error sending message: ', err);
-            alert('Error sending message. Please try again.');
+            console.error('Error sending message:', err);
+            messageInput.value = message;
+            this.addMessage('System', 'Failed to send message: ' + err.message);
         }
     }
 
-    handleFileSelect(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // Проверяем размер файла (максимум 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            alert('File size must be less than 10MB');
+    addMessageObject(message) {
+        const messagesDiv = document.getElementById('chatMessages');
+        if (!messagesDiv) {
+            console.error('Chat messages container not found');
             return;
         }
 
-        this.currentFile = file;
-        this.showFilePreview(file);
-    }
+        const loadingIndicator = document.getElementById('loadingMessages');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
 
-    showFilePreview(file) {
-        const filePreview = document.getElementById('filePreview');
-        const messageInput = document.getElementById('messageInput');
+        const messageElement = document.createElement('div');
+        messageElement.className = 'chat-message';
 
-        filePreview.innerHTML = `
-            <div class="d-flex align-items-center justify-content-between p-2 border rounded bg-light">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-file me-2 text-primary"></i>
-                    <span class="small">${file.name} (${this.formatFileSize(file.size)})</span>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="chat.removeFile()">
-                    <i class="fas fa-times"></i>
-                </button>
+        const currentUserId = document.getElementById('currentUserId')?.value;
+        const isCurrentUser = message.userId === currentUserId;
+
+        if (isCurrentUser) {
+            messageElement.classList.add('current-user');
+        }
+
+        messageElement.innerHTML = `
+            <div class="message-header">
+                <strong class="user-name">${this.escapeHtml(message.userName)}</strong>
+                <span class="message-time">${message.formattedTime}</span>
             </div>
+            <div class="message-text">${message.messageHtml}</div>
         `;
-        filePreview.style.display = 'block';
 
-        // Добавляем имя файла в сообщение
-        if (!messageInput.value.includes(file.name)) {
-            messageInput.value = messageInput.value ?
-                `${messageInput.value} [File: ${file.name}]` :
-                `[File: ${file.name}]`;
+        messagesDiv.appendChild(messageElement);
+        this.scrollToBottom();
+    }
+
+    addMessage(user, message) {
+        const messagesDiv = document.getElementById('chatMessages');
+        if (!messagesDiv) {
+            console.error('Chat messages container not found');
+            return;
         }
-    }
 
-    removeFile() {
-        this.currentFile = null;
-        this.clearFilePreview();
-
-        // Убираем упоминание файла из текста
-        const messageInput = document.getElementById('messageInput');
-        messageInput.value = messageInput.value.replace(/\[File: [^\]]+\]/, '').trim();
-    }
-
-    clearFilePreview() {
-        const filePreview = document.getElementById('filePreview');
-        const fileInput = document.getElementById('fileInput');
-
-        filePreview.style.display = 'none';
-        filePreview.innerHTML = '';
-        fileInput.value = '';
-    }
-
-    async loadMessageHistory() {
-        try {
-            const response = await fetch(`/api/chat/messages/${this.inventoryId}?take=50`);
-            if (response.ok) {
-                const messages = await response.json();
-                this.displayMessageHistory(messages);
-            }
-        } catch (err) {
-            console.error('Error loading message history: ', err);
-        } finally {
-            //document.getElementById('loadingMessages').style.display = 'none';
+        const loadingIndicator = document.getElementById('loadingMessages');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
         }
-    }
 
-    async loadMoreMessages() {
-        const chatMessages = document.getElementById('chatMessages');
-        const firstMessage = chatMessages.querySelector('.chat-message');
+        const messageElement = document.createElement('div');
+        messageElement.className = 'chat-message';
 
-        if (!firstMessage || this.isLoadingMore) return;
-
-        this.isLoadingMore = true;
-
-        try {
-            const skip = this.messages.length;
-            const response = await fetch(`/api/chat/messages/${this.inventoryId}?skip=${skip}&take=20`);
-
-            if (response.ok) {
-                const newMessages = await response.json();
-                if (newMessages.length > 0) {
-                    this.prependMessages(newMessages);
-                }
-            }
-        } catch (err) {
-            console.error('Error loading more messages: ', err);
-        } finally {
-            this.isLoadingMore = false;
+        if (user === 'System') {
+        } else {
+            messageElement.innerHTML = `<strong>${this.escapeHtml(user)}:</strong> ${this.escapeHtml(message)}`;
         }
+
+        messagesDiv.appendChild(messageElement);
+        this.scrollToBottom();
     }
 
     displayMessageHistory(messages) {
-        this.messages = messages;
-        const chatMessages = document.getElementById('chatMessages');
+        const messagesDiv = document.getElementById('chatMessages');
+        if (!messagesDiv) {
+            return;
+        }
 
-        chatMessages.innerHTML = messages.map(message =>
-            this.createMessageElement(message)
-        ).join('');
+        const loadingIndicator = document.getElementById('loadingMessages');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+
+        messagesDiv.innerHTML = '';
+
+        if (messages && messages.length > 0) {
+            messages.forEach(message => {
+                this.addMessageObject(message);
+            });
+        } else {
+            messagesDiv.innerHTML = '<div class="text-center text-muted py-4">No messages yet</div>';
+        }
 
         this.scrollToBottom();
     }
 
-    prependMessages(messages) {
-        this.messages = [...messages, ...this.messages];
-        const chatMessages = document.getElementById('chatMessages');
-        const scrollHeightBefore = chatMessages.scrollHeight;
-        const scrollTop = chatMessages.scrollTop;
-
-        const newMessagesHtml = messages.map(message =>
-            this.createMessageElement(message)
-        ).join('');
-
-        chatMessages.insertAdjacentHTML('afterbegin', newMessagesHtml);
-
-        // Сохраняем позицию скролла
-        const newScrollHeight = chatMessages.scrollHeight;
-        chatMessages.scrollTop = scrollTop + (newScrollHeight - scrollHeightBefore);
-    }
-
-    addMessageToChat(message) {
-        this.messages.push(message);
-        const chatMessages = document.getElementById('chatMessages');
-
-        chatMessages.insertAdjacentHTML('beforeend', this.createMessageElement(message));
-
-        // Показываем уведомление если чат не в фокусе
-        if (!this.isChatVisible() && message.userId !== this.getCurrentUserId()) {
-            this.showNotification(message);
-        }
-    }
-
-    createMessageElement(message) {
-        const isCurrentUser = message.userId === this.getCurrentUserId();
-        const messageClass = isCurrentUser ? 'chat-message current-user' : 'chat-message';
-        const time = new Date(message.createdAt).toLocaleTimeString([], {
-            hour: '2-digit', minute: '2-digit'
-        });
-
-        let messageContent = '';
-
-        if (message.messageType === 1) { // File message
-            messageContent = `
-                <div class="file-attachment">
-                    <a href="${message.fileUrl}" target="_blank" class="file-link">
-                        <i class="fas fa-file-download me-1"></i>
-                        ${message.message || 'Download file'}
-                    </a>
-                </div>
-            `;
-        } else if (message.messageType === 2) { // System message
-            return `
-                <div class="system-message text-center text-muted small my-2">
-                    <em>${message.message}</em>
-                </div>
-            `;
-        } else { // Text message
-            // Basic markdown support
-            const formattedMessage = this.formatMessage(message.message);
-            messageContent = `<div class="message-text">${formattedMessage}</div>`;
-        }
-
-        return `
-            <div class="${messageClass}" data-message-id="${message.id}">
-                <div class="message-header">
-                    <strong class="user-name">${message.userName}</strong>
-                    <span class="message-time">${time}</span>
-                    ${message.isEdited ? '<span class="edited-badge">edited</span>' : ''}
-                </div>
-                <div class="message-content">
-                    ${messageContent}
-                </div>
-                ${isCurrentUser ? this.createMessageActions(message.id) : ''}
-            </div>
-        `;
-    }
-
-    createMessageActions(messageId) {
-        return `
-            <div class="message-actions">
-                <button class="btn btn-sm btn-outline-secondary" onclick="chat.editMessage(${messageId})">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="chat.deleteMessage(${messageId})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `;
-    }
-
-    formatMessage(text) {
-        if (!text) return ''; // Защита от undefined/null
-
-        // Простая поддержка markdown
-        return text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **bold**
-            .replace(/\*(.*?)\*/g, '<em>$1</em>') // *italic*
-            .replace(/`(.*?)`/g, '<code>$1</code>') // `code`
-            .replace(/\n/g, '<br>'); // Переносы строк
-    }
-
-    addSystemMessage(text) {
-        const systemMessage = {
-            id: Date.now(),
-            message: text,
-            messageType: 2,
-            createdAt: new Date().toISOString(),
-            userName: 'System'
-        };
-
-        this.addMessageToChat(systemMessage);
-    }
-
-    updateMessage(messageId, newMessage) {
-        const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-        if (messageElement) {
-            const messageText = messageElement.querySelector('.message-text');
-            if (messageText) {
-                messageText.innerHTML = this.formatMessage(newMessage);
-            }
-
-            // Добавляем badge "edited"
-            const editedBadge = messageElement.querySelector('.edited-badge') ||
-                document.createElement('span');
-            editedBadge.className = 'edited-badge';
-            editedBadge.textContent = 'edited';
-
-            if (!messageElement.querySelector('.edited-badge')) {
-                messageElement.querySelector('.message-header').appendChild(editedBadge);
-            }
-        }
-    }
-
-    removeMessage(messageId) {
-        const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-        if (messageElement) {
-            messageElement.remove();
-        }
-    }
-
-    async editMessage(messageId) {
-        const message = this.messages.find(m => m.id === messageId);
-        if (!message) return;
-
-        const newMessage = prompt('Edit your message:', message.message);
-        if (newMessage && newMessage !== message.message) {
-            try {
-                await this.connection.invoke("EditMessage", messageId, newMessage);
-            } catch (err) {
-                console.error('Error editing message: ', err);
-                alert('Error editing message');
-            }
-        }
-    }
-
-    async deleteMessage(messageId) {
-        if (confirm('Are you sure you want to delete this message?')) {
-            try {
-                await this.connection.invoke("DeleteMessage", messageId);
-            } catch (err) {
-                console.error('Error deleting message: ', err);
-                alert('Error deleting message');
-            }
-        }
-    }
-
-    updateOnlineCount(count) {
-        const onlineCount = document.getElementById('onlineCount');
-        if (onlineCount) {
-            onlineCount.textContent = `${count} online`;
-        }
-    }
-
-        updateConnectionStatus(connected) {
-            const statusIndicator = document.getElementById('connectionStatus');
-            if (statusIndicator) {
-                if (connected) {
-                    statusIndicator.className = 'badge bg-success';
-                    statusIndicator.innerHTML = '<i class="fas fa-circle me-1"></i>Connected';
-                } else {
-                    statusIndicator.className = 'badge bg-danger';
-                    statusIndicator.innerHTML = '<i class="fas fa-circle me-1"></i>Connecting...';
-                }
-            }
-        }
-
     scrollToBottom() {
-        const chatMessages = document.getElementById('chatMessages');
-        if (chatMessages) {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        const messagesDiv = document.getElementById('chatMessages');
+        if (messagesDiv) {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
     }
 
-    isChatVisible() {
-        const chatOffcanvas = document.getElementById('chatOffcanvas');
-        return chatOffcanvas && chatOffcanvas.classList.contains('show');
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
-    showNotification(message) {
-        // Проверяем поддержку Notification API
-        if ("Notification" in window && Notification.permission === "granted") {
-            new Notification(`New message from ${message.userName}`, {
-                body: message.messageType === 1 ? 'Sent a file' : message.message,
-                icon: '/favicon.ico'
-            });
+    updateStatus(status) {
+        const statusElement = document.getElementById('connectionStatus');
+        if (!statusElement) {
+            return;
         }
-    }
 
-    getCurrentUserId() {
-        return document.getElementById('currentUserId')?.value || '';
-    }
-
-    formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    requestNotificationPermission() {
-        if ("Notification" in window && Notification.permission === "default") {
-            Notification.requestPermission();
+        const statusText = statusElement.querySelector('.status-text');
+        if (statusText) {
+            statusText.textContent = status;
+        } else {
+            if (status === 'Connected') {
+                statusElement.innerHTML = '<i class="fas fa-circle me-1"></i><span class="status-text">Connected</span>';
+                statusElement.className = 'badge bg-success';
+            } else if (status === 'Reconnecting...') {
+                statusElement.innerHTML = '<i class="fas fa-circle me-1"></i><span class="status-text">Reconnecting...</span>';
+                statusElement.className = 'badge bg-warning';
+            } else {
+                statusElement.innerHTML = '<i class="fas fa-circle me-1"></i><span class="status-text">Disconnected</span>';
+                statusElement.className = 'badge bg-danger';
+            }
         }
     }
 
@@ -547,8 +288,8 @@
 }
 
 let chat;
-
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM loaded, initializing chat...');
     const chatContainer = document.getElementById('chat');
     if (!chatContainer) {
         console.log('Chat container not found on this page');
@@ -557,16 +298,4 @@ document.addEventListener('DOMContentLoaded', function () {
 
     chat = new InventoryChat();
     chat.initialize();
-    chat.requestNotificationPermission();
 });
-window.chat = {
-    removeFile: function () {
-        chat?.removeFile();
-    },
-    editMessage: function (messageId) {
-        chat?.editMessage(messageId);
-    },
-    deleteMessage: function (messageId) {
-        chat?.deleteMessage(messageId);
-    }
-};
