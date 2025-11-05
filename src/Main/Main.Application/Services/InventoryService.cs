@@ -92,11 +92,17 @@ namespace Main.Application.Services
             var inventory = _mapper.Map<Inventory>(createDto);
 
             inventory.OwnerId = _usersService.GetCurrentUserId() ?? string.Empty;
-            if(createDto?.Fields?.Count>0)
+            if (createDto?.Fields?.Count > 0)
+            {
+                inventory.Fields ??= new List<InventoryField>();
                 AddFieldsToInventory(inventory, createDto.Fields);
+            }
 
-            if(createDto?.AccessList?.Count>0)
+            if (createDto?.AccessList?.Count > 0)
+            {
+                inventory.AccessList ??= new List<InventoryAccess>();
                 AddInventoryAccessToInventory(inventory, createDto.AccessList);
+            }
 
             var createdInventory = await _inventoryRepository.CreateAsync(inventory, cancellationToken);
 
@@ -168,32 +174,14 @@ namespace Main.Application.Services
             var categories = await _categoryRepository.GetAllAsync();
 
             var formDto = _mapper.Map<InventoryFormDto>(inventory);
+            var viewModel = _mapper.Map<InventoryFormViewModel>(formDto);
 
-            var viewModel = new InventoryFormViewModel
+            viewModel.Categories = categories.Select(c => new SelectListItem
             {
-                Id = formDto.Id,
-                Name = formDto.Name,
-                Description = formDto.Description,
-                CategoryId = formDto.CategoryId,
-                CategoryName = formDto.CategoryName,
-                ImageUrl = formDto.ImageUrl,
-                Image = formDto.Image,
-                IsPublic = formDto.IsPublic,
-                CustomIdFormat = formDto.CustomIdFormat,
-                OwnerId = formDto.OwnerId,
-                CreatedAt = formDto.CreatedAt,
-                Version = formDto.Version,
-                Tags = formDto.Tags,
-                AccessList = formDto.AccessList,
-                Fields = formDto.Fields,
-
-                Categories = categories.Select(c => new SelectListItem
-                {
-                    Value = c.Id.ToString(),
-                    Text = c.Name,
-                    Selected = c.Id == inventory.CategoryId
-                }).ToList()
-            };
+                Value = c.Id.ToString(),
+                Text = c.Name,
+                Selected = c.Id == inventory.CategoryId
+            }).ToList();
 
             return viewModel;
         }

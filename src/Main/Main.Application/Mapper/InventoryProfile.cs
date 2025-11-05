@@ -58,7 +58,6 @@ namespace Main.Application.Mapper
                 .ForMember(dest => dest.AccessList, opt => opt.MapFrom(src => src.AccessList != null ? src.AccessList : new List<InventoryAccess>()))
                 .ForMember(dest => dest.Version, opt => opt.MapFrom(src => src.Version));
 
-            // Обратный маппинг - ИГНОРИРУЕМ Fields и AccessList, так как они не должны обновляться через этот маппинг
             CreateMap<InventoryDetailsDto, Inventory>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name != null ? src.Name.Trim() : string.Empty))
@@ -69,7 +68,7 @@ namespace Main.Application.Mapper
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ImageUrl))
                 .ForMember(dest => dest.Version, opt => opt.MapFrom(src => src.Version))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
-                // ВАЖНО: Игнорируем все коллекции и navigation properties
+
                 .ForMember(dest => dest.Items, opt => opt.Ignore())
                 .ForMember(dest => dest.ChatMessages, opt => opt.Ignore())
                 .ForMember(dest => dest.Comments, opt => opt.Ignore())
@@ -87,14 +86,17 @@ namespace Main.Application.Mapper
            .ForMember(dest => dest.Version, opt => opt.MapFrom(src => Convert.ToBase64String(src.Version)))
            .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags.Select(t => t.Tag.Name).ToList()));
 
-            CreateMap<InventoryFormViewModel, InventoryFormDto>().ReverseMap();
+            CreateMap<InventoryFormDto, InventoryFormViewModel>()
+    .ForMember(dest => dest.Categories, opt => opt.Ignore())
+    .ReverseMap();
+
             CreateMap<InventoryFormDto, Inventory>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id ?? 0))
                 .ForMember(dest => dest.Version, opt => opt.MapFrom(src =>
                     src.Version != null ? Convert.FromBase64String(src.Version) : new byte[8]))
-                .ForMember(dest => dest.Tags, opt => opt.Ignore()) 
+                .ForMember(dest => dest.Tags, opt => opt.Ignore())
                 .ForMember(dest => dest.Fields, opt => opt.Ignore())
-                .ForMember(dest => dest.AccessList, opt => opt.Ignore()) 
+                .ForMember(dest => dest.AccessList, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
                 .ForMember(dest => dest.Items, opt => opt.Ignore());
 

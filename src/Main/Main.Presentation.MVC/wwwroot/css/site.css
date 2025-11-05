@@ -29,6 +29,20 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+
+.description-cell {
+    max-width: 250px;
+    min-width: 250px;
+    word-wrap: break-word;
+    white-space: normal;
+    line-height: 1.4;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 7; 
+    -webkit-box-orient: vertical;
+}
+
 .search-result-item {
     transition: all 0.2s ease;
     border: 1px solid transparent;
