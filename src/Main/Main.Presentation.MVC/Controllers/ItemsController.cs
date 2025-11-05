@@ -1,11 +1,8 @@
-﻿using Main.Application.Dtos.Inventories.Index;
-using Main.Application.Dtos.Items.Create;
+﻿using Main.Application.Dtos.Items.Create;
 using Main.Application.Dtos.Items.Index;
 using Main.Application.Interfaces;
-using Main.Domain.entities.inventory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Main.Presentation.MVC.Controllers
 {
@@ -25,15 +22,15 @@ namespace Main.Presentation.MVC.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(int? inventoryId, CancellationToken cancellationToken)
         {
-                var items = await _itemService.GetByInventoryAsync(inventoryId.Value, cancellationToken);
-                var inventory = await _inventoryService.GetById(inventoryId.Value, cancellationToken);
+            var items = await _itemService.GetByInventoryAsync(inventoryId.Value, cancellationToken);
+            var inventory = await _inventoryService.GetById(inventoryId.Value, cancellationToken);
 
-                ViewBag.SelectedInventory = inventory;
-                return View(items.ToList());
+            ViewBag.SelectedInventory = inventory;
+            return View(items.ToList());
         }
 
         [HttpGet]
-        public async Task<IActionResult> Details(int id) 
+        public async Task<IActionResult> Details(int id)
         {
             var item = await _itemService.GetByIdAsync(id);
             if (item == null)
@@ -76,8 +73,8 @@ namespace Main.Presentation.MVC.Controllers
         [Authorize]
         public async Task<IActionResult> Create(CreateItemDto createDto, CancellationToken cancellationToken)
         {
-                var item = await _itemService.CreateAsync(createDto, cancellationToken);
-                return RedirectToAction("Index", "Items", new { inventoryId = createDto.InventoryId });
+            var item = await _itemService.CreateAsync(createDto, cancellationToken);
+            return RedirectToAction("Index", "Items", new { inventoryId = createDto.InventoryId });
 
         }
 
@@ -91,10 +88,10 @@ namespace Main.Presentation.MVC.Controllers
             {
                 return NotFound();
             }
-             
+
             var createDto = new CreateItemDto
             {
-                Id= item.Id,
+                Id = item.Id,
                 InventoryId = item.InventoryId,
                 CustomId = item.CustomId,
                 CreatedById = item.CreatedById,
@@ -104,11 +101,11 @@ namespace Main.Presentation.MVC.Controllers
                     InventoryFieldId = f.Id,
                     FieldName = f.Name,
                     FieldType = f.FieldType,
-                    TextValue = item.FieldValues.First(i=>i.InventoryFieldId==f.Id).TextValue,
+                    TextValue = item.FieldValues.First(i => i.InventoryFieldId == f.Id).TextValue,
                     MultilineTextValue = item.FieldValues.First(i => i.InventoryFieldId == f.Id).MultilineTextValue,
                     BooleanValue = item.FieldValues.First(i => i.InventoryFieldId == f.Id).BooleanValue,
-                    FileUrl=item.FieldValues.First(i => i.InventoryFieldId == f.Id).FileUrl,
-                    NumberValue=item.FieldValues.First(i => i.InventoryFieldId == f.Id).NumberValue,
+                    FileUrl = item.FieldValues.First(i => i.InventoryFieldId == f.Id).FileUrl,
+                    NumberValue = item.FieldValues.First(i => i.InventoryFieldId == f.Id).NumberValue,
                     IsRequired = f.IsRequired
                 }).ToList()
             };

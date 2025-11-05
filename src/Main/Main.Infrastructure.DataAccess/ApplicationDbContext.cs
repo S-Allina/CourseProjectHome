@@ -10,7 +10,7 @@ namespace Main.Infrastructure.DataAccess
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-        public DbSet<User> Users { get; set; } 
+        public DbSet<User> Users { get; set; }
         public DbSet<Inventory> Inventories { get; set; }
         public DbSet<InventoryField> InventoryFields { get; set; }
         public DbSet<InventoryAccess> InventoryAccess { get; set; }
@@ -88,7 +88,7 @@ namespace Main.Infrastructure.DataAccess
                 .WithMany(u => u.Likes)
                 .HasForeignKey(l => l.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-           
+
             modelBuilder.Entity<ItemFieldValue>()
                 .HasOne(iv => iv.InventoryField)
                 .WithMany()
@@ -150,7 +150,7 @@ namespace Main.Infrastructure.DataAccess
                 .HasIndex(c => c.InventoryId);
 
             modelBuilder.Entity<Comment>()
-                .HasIndex(c => c.AuthorId); 
+                .HasIndex(c => c.AuthorId);
 
             modelBuilder.Entity<Tag>()
                 .HasIndex(t => t.Name)

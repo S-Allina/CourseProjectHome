@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Main.Application.Dtos.Inventories.Create;
 using Main.Application.Dtos.Inventories.Index;
-using Main.Application.Dtos.Items.Create;
 using Main.Domain.entities.inventory;
 using Main.Presentation.MVC.ViewModel;
 

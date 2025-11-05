@@ -1,10 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Main.Application.Helpers;
+﻿using Main.Application.Helpers;
 
 namespace Main.Application.Dtos.Common
 {

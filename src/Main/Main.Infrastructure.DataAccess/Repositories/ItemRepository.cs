@@ -6,7 +6,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
 {
     public class ItemRepository : BaseRepository<Item>, IItemRepository
     {
-        private readonly new ApplicationDbContext _db;
+        private new readonly ApplicationDbContext _db;
 
         public ItemRepository(ApplicationDbContext db) : base(db)
         {
@@ -15,20 +15,20 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
         public async Task<Item> UpdateItemAsync(Item item, CancellationToken cancellationToken = default)
         {
-                var existingItem = await _db.Set<Item>()
-                    .Include(i => i.FieldValues)
-                    .FirstOrDefaultAsync(i => i.Id == item.Id, cancellationToken);
+            var existingItem = await _db.Set<Item>()
+                .Include(i => i.FieldValues)
+                .FirstOrDefaultAsync(i => i.Id == item.Id, cancellationToken);
 
-                if (existingItem == null)
-                    throw new Exception("Item not found");
+            if (existingItem == null)
+                throw new Exception("Item not found");
 
-                _db.Entry(existingItem).CurrentValues.SetValues(item);
-                existingItem.UpdatedAt = DateTime.UtcNow;
+            _db.Entry(existingItem).CurrentValues.SetValues(item);
+            existingItem.UpdatedAt = DateTime.UtcNow;
 
-                await UpdateItemFieldValuesOptimizedAsync(existingItem, item.FieldValues, cancellationToken);
+            await UpdateItemFieldValuesOptimizedAsync(existingItem, item.FieldValues, cancellationToken);
 
-                await _db.SaveChangesAsync(cancellationToken);
-                return existingItem;
+            await _db.SaveChangesAsync(cancellationToken);
+            return existingItem;
         }
 
         private async Task UpdateItemFieldValuesOptimizedAsync(Item existingItem, ICollection<ItemFieldValue> newFieldValues, CancellationToken cancellationToken)
@@ -42,7 +42,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
             if (fieldValuesToRemove.Any())
             {
-                _db.Set<ItemFieldValue>().RemoveRange(fieldValuesToRemove); 
+                _db.Set<ItemFieldValue>().RemoveRange(fieldValuesToRemove);
                 foreach (var fieldValueToRemove in fieldValuesToRemove)
                 {
                     existingItem.FieldValues.Remove(fieldValueToRemove);
@@ -77,7 +77,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                     fieldValueToAdd.CreatedAt = DateTime.UtcNow;
                     fieldValueToAdd.UpdatedAt = DateTime.UtcNow;
                 }
-                await _db.Set<ItemFieldValue>().AddRangeAsync(fieldValuesToAdd, cancellationToken); 
+                await _db.Set<ItemFieldValue>().AddRangeAsync(fieldValuesToAdd, cancellationToken);
                 foreach (var fieldValueToAdd in fieldValuesToAdd)
                 {
                     existingItem.FieldValues.Add(fieldValueToAdd);

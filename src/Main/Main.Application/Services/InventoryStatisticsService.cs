@@ -1,16 +1,7 @@
 ﻿using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Dtos.Items.Index;
 using Main.Application.Interfaces;
-using Main.Domain.entities.inventory;
-using Main.Domain.entities.item;
 using Main.Domain.enums.inventory;
-using Main.Domain.InterfacesRepository;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Application.Services
 {
@@ -131,7 +122,7 @@ namespace Main.Application.Services
         {
             var stats = await GetInventoryStatsAsync(inventoryId);
 
-            if (stats == null || stats.FieldStatistics==null) return null;
+            if (stats == null || stats.FieldStatistics == null) return null;
 
             return stats.FieldStatistics
                 .Where(f => (f.FieldType == FieldType.Text || f.FieldType == FieldType.MultilineText) &&

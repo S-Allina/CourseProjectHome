@@ -1,8 +1,4 @@
-﻿using Main.Application.Dtos.Inventories.Index;
-using Main.Application.Dtos.Items.Index;
-using Main.Domain.enums.inventory;
-
-namespace Main.Application.Dtos.Items.Create
+﻿namespace Main.Application.Dtos.Items.Create
 {
     public record CreateItemDto
     {

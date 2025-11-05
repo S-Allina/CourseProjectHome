@@ -28,8 +28,8 @@ namespace Main.Presentation.MVC.Controllers
                 return View(new GlobalSearchResult { SearchTerm = q });
             }
 
-                var result = await _searchRepository.GlobalSearchAsync(q, cancellationToken);
-                return View(result);
+            var result = await _searchRepository.GlobalSearchAsync(q, cancellationToken);
+            return View(result);
         }
 
         [HttpGet]
@@ -40,8 +40,8 @@ namespace Main.Presentation.MVC.Controllers
                 return Json(new { success = true, data = new QuickSearchResult() });
             }
 
-                var result = await _searchRepository.QuickSearchAsync(term);
-                return Json(new { success = true, data = result });
+            var result = await _searchRepository.QuickSearchAsync(term);
+            return Json(new { success = true, data = result });
         }
 
         [HttpGet("CheckAvailability")]

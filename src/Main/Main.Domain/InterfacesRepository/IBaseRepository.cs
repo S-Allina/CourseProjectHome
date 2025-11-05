@@ -1,5 +1,4 @@
-﻿using Main.Domain.entities.common;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 namespace Main.Domain.InterfacesRepository
 {

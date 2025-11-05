@@ -1,6 +1,5 @@
 ﻿using FluentValidation;
 using Main.Application.Dtos.Inventories.Create;
-using Main.Domain.enums.inventory;
 
 namespace Main.Application.Validators
 {

@@ -2,7 +2,6 @@
 using Identity.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Identity.Infrastructure.Services
 {
@@ -20,7 +19,7 @@ namespace Identity.Infrastructure.Services
         public string? GetUserId()
         {
             var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? _httpContextAccessor.HttpContext?.User?.FindFirstValue("sub");
-			return userId;
+            return userId;
         }
 
         public async Task<UserDto> GetCurrentUserAsync()

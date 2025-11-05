@@ -1,12 +1,8 @@
 ﻿using Identity.Application.Configuration;
 using Identity.Domain.Entity;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using NuGet.Configuration;
 using System.Web;
 
 namespace Identity.Presentation.Controllers

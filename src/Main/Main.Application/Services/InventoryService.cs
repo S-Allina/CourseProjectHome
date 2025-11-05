@@ -4,15 +4,11 @@ using Main.Application.Dtos;
 using Main.Application.Dtos.Inventories.Create;
 using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Interfaces;
-using Main.Application.Interfaces.ImgBBStorage;
-using Main.Domain.entities.common;
 using Main.Domain.entities.inventory;
 using Main.Domain.enums.Users;
 using Main.Domain.InterfacesRepository;
 using Main.Presentation.MVC.ViewModel;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Security.Claims;
 
 namespace Main.Application.Services
 {
@@ -46,7 +42,7 @@ namespace Main.Application.Services
 
         public async Task<IEnumerable<InventoryTableDto>> GetAll(CancellationToken cancellationToken = default)
         {
-            var inventories = await _inventoryRepository.GetAllAsync(null,cancellationToken, "Owner", "Category");
+            var inventories = await _inventoryRepository.GetAllAsync(null, cancellationToken, "Owner", "Category");
             return _mapper.Map<IEnumerable<InventoryTableDto>>(inventories);
         }
 
@@ -68,7 +64,7 @@ namespace Main.Application.Services
 
         public async Task<InventoryDetailsDto> GetById(int id, CancellationToken cancellationToken = default)
         {
-            var inventories = await _inventoryRepository.GetFirstAsync(i => i.Id == id, cancellationToken, "Fields","AccessList", "Owner", "Category");
+            var inventories = await _inventoryRepository.GetFirstAsync(i => i.Id == id, cancellationToken, "Fields", "AccessList", "Owner", "Category");
 
             return _mapper.Map<InventoryDetailsDto>(inventories);
         }
@@ -123,18 +119,18 @@ namespace Main.Application.Services
 
         public async Task<InventoryDetailsDto> UpdateInventoryAsync(InventoryDetailsDto inventoryDto, CancellationToken cancellationToken = default)
         {
-                if (inventoryDto.Image != null)
-                    inventoryDto.ImageUrl = await _imgBBStorageService.UploadFileAsync(inventoryDto.Image);
+            if (inventoryDto.Image != null)
+                inventoryDto.ImageUrl = await _imgBBStorageService.UploadFileAsync(inventoryDto.Image);
 
-                var inventory = _mapper.Map<Inventory>(inventoryDto);
+            var inventory = _mapper.Map<Inventory>(inventoryDto);
 
-                var result = await _inventoryRepository.UpdateInventoryAsync(inventory, cancellationToken);
+            var result = await _inventoryRepository.UpdateInventoryAsync(inventory, cancellationToken);
 
-                var resultDto = _mapper.Map<InventoryDetailsDto>(result);
+            var resultDto = _mapper.Map<InventoryDetailsDto>(result);
 
-                return resultDto;
+            return resultDto;
         }
-        
+
         public async Task<InventoryFormViewModel> GetCreateViewModelAsync()
         {
             var categories = await _categoryRepository.GetAllAsync();
@@ -168,7 +164,7 @@ namespace Main.Application.Services
             if (inventory == null)
                 throw new ArgumentException($"Inventory with id {id} not found");
 
-            if(inventory.OwnerId!=userId && userRole!= Roles.Admin.ToString())
+            if (inventory.OwnerId != userId && userRole != Roles.Admin.ToString())
                 throw new UnauthorizedAccessException("You do not have permission to modify this inventory");
 
             var categories = await _categoryRepository.GetAllAsync();
@@ -218,7 +214,7 @@ namespace Main.Application.Services
 
         public async Task<IEnumerable<InventoryTableDto>> GetPopularInventoriesAsync(int count, CancellationToken cancellationToken = default)
         {
-            var inventoriesWithItemCount = await _inventoryRepository.GetAllAsync(null,  cancellationToken, "Fields", "Owner", "Category");
+            var inventoriesWithItemCount = await _inventoryRepository.GetAllAsync(null, cancellationToken, "Fields", "Owner", "Category");
 
             var userId = _usersService.GetCurrentUserId();
 

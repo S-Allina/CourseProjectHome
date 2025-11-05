@@ -2,16 +2,9 @@
 using Main.Application.Dtos.Common;
 using Main.Application.Interfaces;
 using Main.Domain.entities.common;
-using Main.Domain.Enums.Users;
 using Main.Domain.InterfacesRepository;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Application.Services
 {
@@ -41,15 +34,15 @@ namespace Main.Application.Services
         public async Task<UserDto> GetCurrentUser()
         {
             var id = GetCurrentUserId();
-            var user=await _userRepository.GetFirstAsync(u => u.Id == id);
+            var user = await _userRepository.GetFirstAsync(u => u.Id == id);
             return _mapper.Map<UserDto>(user);
         }
 
         public async Task<string> CreateUser(CreateUserRequest request)
         {
-            var existingUser = await _userRepository.GetFirstAsync(u=>u.Id==request.Id);
+            var existingUser = await _userRepository.GetFirstAsync(u => u.Id == request.Id);
             if (existingUser != null)
-                return "User already exists" ;
+                return "User already exists";
 
             var user = _mapper.Map<User>(request);
 
@@ -60,7 +53,7 @@ namespace Main.Application.Services
         public async Task<bool> DeleteUsersAsync(string[] ids)
         {
             await _userRepository.DeleteAsync(u => ids.Contains(u.Id));
-            
+
             return true;
         }
 

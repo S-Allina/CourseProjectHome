@@ -2,7 +2,7 @@
 {
     public enum AccessLevel
     {
-        ReadOnly = 1, 
+        ReadOnly = 1,
         ReadWrite = 2,
         Admin = 3
     }

@@ -3,7 +3,6 @@ using Duende.IdentityServer.Models;
 using Duende.IdentityServer.Services;
 using Identity.Domain.Entity;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using System.Security.Claims;
 
 namespace Identity.Presentation.Extention

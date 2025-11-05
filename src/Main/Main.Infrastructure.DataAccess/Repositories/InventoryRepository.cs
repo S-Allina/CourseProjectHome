@@ -1,5 +1,4 @@
 ﻿using Main.Domain.entities.inventory;
-using Main.Domain.enums.Users;
 using Main.Domain.InterfacesRepository;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
@@ -8,7 +7,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
 {
     public class InventoryRepository : BaseRepository<Inventory>, IInventoryRepository
     {
-        private readonly new ApplicationDbContext _db;
+        private new readonly ApplicationDbContext _db;
         public InventoryRepository(ApplicationDbContext db) : base(db)
         {
             _db = db;

@@ -12,15 +12,10 @@ using Identity.Infrastructure.DataAccess.Data;
 using Identity.Infrastructure.DataAccess.Services;
 using Identity.Infrastructure.Services;
 using Identity.Presentation.Constants;
-using Identity.Presentation.Initializer;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Configuration;
-using System.Text;
 using System.Text.Json.Serialization;
 using Secret = Duende.IdentityServer.Models.Secret;
 
@@ -145,13 +140,13 @@ namespace Identity.Presentation.Extention
         "theme", "language"
     },
         AllowAccessTokensViaBrowser = true,
-        AlwaysIncludeUserClaimsInIdToken = true, 
+        AlwaysIncludeUserClaimsInIdToken = true,
         RequireConsent = false,
         RequirePkce = true,
         AllowPlainTextPkce = false,
         RequireClientSecret = true,
         UpdateAccessTokenClaimsOnRefresh = true,
-        
+
         AlwaysSendClientClaims = true,
         ClientClaimsPrefix = "",
         IdentityProviderRestrictions = new List<string>
@@ -176,7 +171,7 @@ namespace Identity.Presentation.Extention
         new ApiScope("api.theme", "User theme preference"),
     new ApiScope("api.language", "User language preference")
             }).AddAspNetIdentity<ApplicationUser>()
-.AddProfileService<CustomProfileService>() 
+.AddProfileService<CustomProfileService>()
 .AddDeveloperSigningCredential();
 
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
@@ -201,7 +196,7 @@ namespace Identity.Presentation.Extention
                 {
                     var origins = new[] { urlSettings?.AuthFront, urlSettings?.Auth, urlSettings?.Main }
             .Where(url => !string.IsNullOrWhiteSpace(url))
-            .Select(url => url!.Trim()) 
+            .Select(url => url!.Trim())
             .ToArray();
 
                     if (origins.Any())
@@ -209,9 +204,9 @@ namespace Identity.Presentation.Extention
                         policy.WithOrigins(origins);
                     }
 
-                        policy.AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowCredentials();
+                    policy.AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
                 });
             });
 
@@ -279,7 +274,7 @@ namespace Identity.Presentation.Extention
             services.AddFluentEmail(
                 configuration[EmailConstants.SenderEmail],
                 configuration[EmailConstants.Sender]);
-          
+
             return services;
         }
     }

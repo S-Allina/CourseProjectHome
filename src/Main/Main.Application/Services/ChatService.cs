@@ -2,13 +2,7 @@
 using Main.Application.Dtos.Common;
 using Main.Application.Interfaces;
 using Main.Domain.entities.common;
-using Main.Domain.entities.inventory;
 using Main.Domain.InterfacesRepository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Main.Application.Services
 {
@@ -24,18 +18,18 @@ namespace Main.Application.Services
             _usersService = usersService;
             _mapper = mapper;
         }
-        
+
         public async Task<ChatMessageDto> SaveMessageAsync(SendMessageDto messageDto)
         {
             var user = await _usersService.GetCurrentUser();
-            if (user == null) 
+            if (user == null)
                 throw new UnauthorizedAccessException("Чтобы отправить сообщение нужно авторизоваться.");
 
             var message = new ChatMessage
             {
                 InventoryId = messageDto.InventoryId,
                 UserId = user.Id,
-                UserName=user.LastName + " " + user.FirstName,
+                UserName = user.LastName + " " + user.FirstName,
                 Message = messageDto.Message,
                 CreatedAt = DateTime.UtcNow
             };
@@ -50,11 +44,11 @@ namespace Main.Application.Services
             var messages = await _chatRepository.GetAllAsync(m => m.InventoryId == inventoryId);
             messages.ToList();
 
-              messages= messages.OrderByDescending(m => m.CreatedAt)
-                .Skip(skip)
-                .Take(take)
-                .OrderBy(m => m.CreatedAt)
-                .ToList();
+            messages = messages.OrderByDescending(m => m.CreatedAt)
+              .Skip(skip)
+              .Take(take)
+              .OrderBy(m => m.CreatedAt)
+              .ToList();
 
             return messages.Select(_mapper.Map<ChatMessageDto>).ToList();
         }

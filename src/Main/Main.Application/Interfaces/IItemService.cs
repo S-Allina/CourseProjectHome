@@ -1,5 +1,4 @@
-﻿using Main.Application.Dtos.Inventories.Index;
-using Main.Application.Dtos.Items.Create;
+﻿using Main.Application.Dtos.Items.Create;
 using Main.Application.Dtos.Items.Index;
 
 namespace Main.Application.Interfaces

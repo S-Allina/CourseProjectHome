@@ -1,7 +1,5 @@
-﻿using Main.Application.Interfaces;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
+﻿using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace Main.Presentation.MVC.Middleware
 {
@@ -62,7 +60,7 @@ namespace Main.Presentation.MVC.Middleware
                 case DbUpdateConcurrencyException dbUpdateConcurrencyException:
                     message = "Конфликт данных: " + dbUpdateConcurrencyException.Message;
                     alertType = "warning";
-                    _logger.LogWarning(exception, "DbUpdateConcurrencyException: {Message}", message); 
+                    _logger.LogWarning(exception, "DbUpdateConcurrencyException: {Message}", message);
                     break;
 
                 case InvalidOperationException invalidOperationException:

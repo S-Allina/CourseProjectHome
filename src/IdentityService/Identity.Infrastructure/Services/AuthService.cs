@@ -4,14 +4,9 @@ using Identity.Application.Dto;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entity;
 using Identity.Domain.Exceptions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Net;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Identity.Infrastructure.Services
 {
@@ -81,7 +76,7 @@ namespace Identity.Infrastructure.Services
 
             var user = await _userManager.FindByEmailAsync(resetPasswordDto.Email);
 
-            if (user==null)
+            if (user == null)
                 throw new UnauthorizedAccessException("User not found.");
 
             await ResetUserPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
@@ -144,7 +139,7 @@ namespace Identity.Infrastructure.Services
                 await HandleAuthenticationFailureAsync(user);
                 throw new Exception("Invalid email or password. Please try again.");
             }
-            
+
             return user;
         }
     }

@@ -1,5 +1,3 @@
-using Main.Application.Dtos.Inventories.Index;
-using Main.Application.Helpers;
 using Main.Application.Interfaces;
 using Main.Presentation.MVC.Models;
 using Main.Presentation.MVC.ViewModel;
@@ -26,20 +24,20 @@ namespace Main.Presentation.MVC.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                var recentInventoriesTask = await _inventoryService.GetRecentInventoriesAsync(10, cancellationToken);
-                var popularInventoriesTask = await _inventoryService.GetPopularInventoriesAsync(5, cancellationToken); 
+            var recentInventoriesTask = await _inventoryService.GetRecentInventoriesAsync(10, cancellationToken);
+            var popularInventoriesTask = await _inventoryService.GetPopularInventoriesAsync(5, cancellationToken);
 
-                var model = new HomeViewModel
-                {
-                    RecentInventories = recentInventoriesTask.ToList(),
-                    PopularInventories = popularInventoriesTask.ToList()
-                };
+            var model = new HomeViewModel
+            {
+                RecentInventories = recentInventoriesTask.ToList(),
+                PopularInventories = popularInventoriesTask.ToList()
+            };
 
-                return View(model);
+            return View(model);
         }
-        
+
         [HttpPost]
         public IActionResult SetLanguage(string culture, string returnUrl)
         {

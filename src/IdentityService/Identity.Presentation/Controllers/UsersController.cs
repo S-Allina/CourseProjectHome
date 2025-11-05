@@ -1,6 +1,5 @@
 ﻿using Identity.Application.DTO;
 using Identity.Application.Interfaces;
-using Identity.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Users.Application.Dto;

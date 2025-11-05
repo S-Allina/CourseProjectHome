@@ -2,8 +2,6 @@
 using Identity.Application.Dto;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entity;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -35,12 +33,12 @@ namespace Identity.Presentation.Controllers
         [HttpGet("check-auth")]
         public async Task<IActionResult> CheckAuthentication()
         {
-            if (User?.Identity?.IsAuthenticated==true)
+            if (User?.Identity?.IsAuthenticated == true)
             {
                 var user = await _userManager.GetUserAsync(User);
                 var identity = (ClaimsIdentity)User.Identity;
                 var theme = User.FindFirst("theme")?.Value ??
-                                   User.FindFirst("Theme")?.Value ?? "dark"; 
+                                   User.FindFirst("Theme")?.Value ?? "dark";
                 return Ok(new
                 {
                     isAuthenticated = true,

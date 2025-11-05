@@ -1,5 +1,4 @@
 ﻿using Main.Application.Helpers;
-using Main.Domain.entities.common;
 using Main.Domain.enums.inventory;
 using Microsoft.AspNetCore.Http;
 
@@ -14,7 +13,7 @@ namespace Main.Application.Dtos.Inventories.Index
         public int? CategoryId { get; init; }
         public string? CategoryName { get; init; }
         public string? OwnerId { get; init; }
-        public string? OwnerName { get; init; } 
+        public string? OwnerName { get; init; }
         public string? ImageUrl { get; set; }
         public bool IsPublic { get; init; }
         public int? ItemsCount { get; init; }

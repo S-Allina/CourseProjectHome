@@ -17,21 +17,21 @@ namespace Main.Application.Services
 
         public async Task<string> GenerateCustomIdAsync(int inventoryId, CancellationToken cancellationToken = default)
         {
-                var inventory = await _inventoryRepository.GetFirstAsync(
-                    i => i.Id == inventoryId, cancellationToken);
+            var inventory = await _inventoryRepository.GetFirstAsync(
+                i => i.Id == inventoryId, cancellationToken);
 
-                if (inventory == null)
-                    throw new ArgumentException("Inventory not found");
+            if (inventory == null)
+                throw new ArgumentException("Inventory not found");
 
-                if (string.IsNullOrEmpty(inventory.CustomIdFormat))
-                    return Guid.NewGuid().ToString("N").Substring(0, 8);
+            if (string.IsNullOrEmpty(inventory.CustomIdFormat))
+                return Guid.NewGuid().ToString("N").Substring(0, 8);
 
-                var customId = await GenerateFromStringTemplateAsync(inventory.CustomIdFormat, inventoryId, cancellationToken);
+            var customId = await GenerateFromStringTemplateAsync(inventory.CustomIdFormat, inventoryId, cancellationToken);
 
-                if (await IsCustomIdExistsAsync(inventoryId, customId, cancellationToken))
-                    return await GenerateCustomIdAsync(inventoryId, cancellationToken);
+            if (await IsCustomIdExistsAsync(inventoryId, customId, cancellationToken))
+                return await GenerateCustomIdAsync(inventoryId, cancellationToken);
 
-                return customId;
+            return customId;
         }
 
         private async Task<string> GenerateFromStringTemplateAsync(string template, int inventoryId, CancellationToken cancellationToken)

@@ -1,7 +1,5 @@
 ﻿using Main.Application.Dtos.Common;
 using Main.Application.Interfaces;
-using Main.Domain.entities.common;
-using Main.Infrastructure.DataAccess;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -21,8 +19,8 @@ namespace Main.Presentation.MVC.Controllers.API
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
         {
-                var message = await _usersService.CreateUser(request);
-                return Ok(new { message });
+            var message = await _usersService.CreateUser(request);
+            return Ok(new { message });
         }
 
         [HttpDelete]
@@ -44,7 +42,7 @@ namespace Main.Presentation.MVC.Controllers.API
         [HttpPost("UpdateTheme")]
         public async Task<IActionResult> UpdateTheme([FromBody] string theme)
         {
-            if (User?.Identity?.IsAuthenticated==true)
+            if (User?.Identity?.IsAuthenticated == true)
             {
                 Response.Cookies.Append("user_theme", theme, new CookieOptions
                 {

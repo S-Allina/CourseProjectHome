@@ -1,10 +1,7 @@
-﻿using Duende.IdentityServer;
-using Duende.IdentityServer.Models;
-using FluentValidation;
+﻿using FluentValidation;
 using Main.Application.Configuration;
 using Main.Application.Dtos.Inventories.Create;
 using Main.Application.Interfaces;
-using Main.Application.Interfaces.ImgBBStorage;
 using Main.Application.Mapper;
 using Main.Application.Services;
 using Main.Application.Validators;
@@ -15,14 +12,9 @@ using Main.Infrastructure.ImgBBStorage;
 using Main.Presentation.MVC.Constants;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Configuration;
-using System.Text;
-using System.Text.Json.Serialization;
-using Secret = Duende.IdentityServer.Models.Secret;
 
 namespace Main.Presentation.MVC.Extention
 {

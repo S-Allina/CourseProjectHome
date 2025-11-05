@@ -3,7 +3,6 @@ using Main.Application.Interfaces;
 using Main.Domain.InterfacesRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Main.Presentation.MVC.Controllers.API
 {

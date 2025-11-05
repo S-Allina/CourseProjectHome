@@ -1,5 +1,4 @@
 ﻿using Main.Domain.entities.inventory;
-using Main.Domain.enums.Users;
 
 namespace Main.Domain.InterfacesRepository
 {

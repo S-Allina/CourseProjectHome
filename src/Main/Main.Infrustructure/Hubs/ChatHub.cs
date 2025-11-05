@@ -1,8 +1,6 @@
 ﻿using Main.Application.Dtos.Common;
 using Main.Application.Interfaces;
 using Microsoft.AspNetCore.SignalR;
-using System;
-using System.Threading.Tasks;
 
 namespace Main.Application.Hubs
 {

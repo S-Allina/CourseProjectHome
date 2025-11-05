@@ -116,17 +116,17 @@ namespace Identity.Infrastructure.Services
 
             _ = Task.Run(async () =>
             {
-                    var success = await _mainApiClient.CreateUserAsync(
-                        newUser.Id,
-                        newUser.FirstName,
-                        newUser.LastName,
-                        newUser.Email ?? string.Empty
-                    );
+                var success = await _mainApiClient.CreateUserAsync(
+                    newUser.Id,
+                    newUser.FirstName,
+                    newUser.LastName,
+                    newUser.Email ?? string.Empty
+                );
 
-                    if (!success)
-                    {
-                        _logger.LogWarning("Failed to sync user with Main API: {UserId}", newUser.Id);
-                    }
+                if (!success)
+                {
+                    _logger.LogWarning("Failed to sync user with Main API: {UserId}", newUser.Id);
+                }
             });
             return newUser;
         }

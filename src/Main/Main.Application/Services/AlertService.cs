@@ -2,12 +2,7 @@
 using Main.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Main.Application.Services
 {
@@ -28,7 +23,7 @@ namespace Main.Application.Services
         {
             var tempData = _httpContextAccessor.HttpContext?.Items["TempData"] as ITempDataDictionary;
             if (tempData != null)
-               tempData["Alert"] = JsonSerializer.Serialize(new AlertModelDto {Type = type, Title = title, Message = message});
+                tempData["Alert"] = JsonSerializer.Serialize(new AlertModelDto { Type = type, Title = title, Message = message });
 
         }
 

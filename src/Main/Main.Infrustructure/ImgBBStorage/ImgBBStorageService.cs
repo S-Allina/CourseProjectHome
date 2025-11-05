@@ -1,4 +1,4 @@
-﻿using Main.Application.Interfaces.ImgBBStorage;
+﻿using Main.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;

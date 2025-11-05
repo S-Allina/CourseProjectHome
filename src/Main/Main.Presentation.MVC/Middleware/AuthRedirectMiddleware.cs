@@ -17,7 +17,7 @@
             }
 
             if (context.Request.Path.StartsWithSegments("/auth") &&
-                context?.User?.Identity?.IsAuthenticated==false)
+                context?.User?.Identity?.IsAuthenticated == false)
             {
                 context.Response.Redirect("/auth/login");
                 return;

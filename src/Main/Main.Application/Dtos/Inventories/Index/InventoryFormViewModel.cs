@@ -1,7 +1,5 @@
-﻿using Main.Application.Dtos.Inventories.Create;
-using Main.Application.Dtos.Inventories.Index;
+﻿using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Helpers;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Main.Presentation.MVC.ViewModel

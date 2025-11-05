@@ -20,7 +20,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
         public async Task<T?> GetFirstAsync(
      Expression<Func<T, bool>>? filter = null,
      CancellationToken cancellationToken = default,
-     params string[] includeProperties) 
+     params string[] includeProperties)
         {
             IQueryable<T> query = dbSet;
 

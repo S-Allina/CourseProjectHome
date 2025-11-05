@@ -1,19 +1,12 @@
 ﻿using AutoMapper;
-using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Dtos.Items.Create;
 using Main.Application.Dtos.Items.Index;
 using Main.Application.Interfaces;
-using Main.Application.Interfaces.ImgBBStorage;
 using Main.Domain.entities.inventory;
 using Main.Domain.entities.item;
 using Main.Domain.enums.inventory;
 using Main.Domain.enums.Users;
 using Main.Domain.InterfacesRepository;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Main.Application.Services
 {

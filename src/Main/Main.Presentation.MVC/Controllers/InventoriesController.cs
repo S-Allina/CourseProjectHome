@@ -3,8 +3,6 @@ using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 
 namespace Main.Presentation.MVC.Controllers
 {
@@ -54,7 +52,7 @@ namespace Main.Presentation.MVC.Controllers
         {
             var model = await _inventoryService.GetEditViewModelAsync(id);
             if (model == null) return NotFound();
-            
+
             TempData["IsEditMode"] = "true";
 
             return View("Settings", model);
@@ -65,26 +63,26 @@ namespace Main.Presentation.MVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(InventoryDetailsDto inventory, CancellationToken cancellationToken, [FromHeader] string X_AutoSave = null)
         {
-                var result = await _inventoryService.UpdateInventoryAsync(inventory, cancellationToken);
+            var result = await _inventoryService.UpdateInventoryAsync(inventory, cancellationToken);
 
-                if (!string.IsNullOrEmpty(X_AutoSave) && X_AutoSave == "true")
+            if (!string.IsNullOrEmpty(X_AutoSave) && X_AutoSave == "true")
+            {
+                return Json(new
                 {
-                    return Json(new
-                    {
-                        success = true,
-                        version = result.Version,
-                        message = "Auto-save completed successfully"
-                    });
-                }
+                    success = true,
+                    version = result.Version,
+                    message = "Auto-save completed successfully"
+                });
+            }
 
-                if (TempData["IsEditMode"]?.ToString() == "true")
-                {
-                    return RedirectToAction("Index", "Inventories");
-                }
-                else
-                {
-                    return RedirectToAction("Index", "Items", new { inventoryId = inventory.Id });
-                }
+            if (TempData["IsEditMode"]?.ToString() == "true")
+            {
+                return RedirectToAction("Index", "Inventories");
+            }
+            else
+            {
+                return RedirectToAction("Index", "Items", new { inventoryId = inventory.Id });
+            }
         }
 
         [HttpPost]

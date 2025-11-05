@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace Main.Application.Interfaces.ImgBBStorage
+namespace Main.Application.Interfaces
 {
     public interface IImgBBStorageService
     {

@@ -1,26 +1,7 @@
-﻿using FluentValidation;
-using Main.Application.Configuration;
-using Main.Application.Dtos.Inventories.Create;
+﻿using Main.Application.Configuration;
 using Main.Application.Hubs;
-using Main.Application.Interfaces;
-using Main.Application.Interfaces.ImgBBStorage;
-using Main.Application.Mapper;
-using Main.Application.Services;
-using Main.Application.Validators;
-using Main.Domain.InterfacesRepository;
-using Main.Infrastructure.DataAccess;
-using Main.Infrastructure.DataAccess.Repositories;
-using Main.Infrastructure.ImgBBStorage;
 using Main.Presentation.MVC.Extention;
 using Main.Presentation.MVC.Middleware;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Localization;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using System.Globalization;
 
 namespace Main.Presentation.MVC
 {

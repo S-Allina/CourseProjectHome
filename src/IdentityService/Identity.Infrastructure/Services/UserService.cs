@@ -3,11 +3,8 @@ using Identity.Application.Dto;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entity;
 using Identity.Domain.Enums;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System.Security.Claims;
 using Users.Application.Dto;
 
 namespace Identity.Infrastructure.Services
@@ -50,7 +47,7 @@ namespace Identity.Infrastructure.Services
         {
             var result = await UpdateUsersStatusAsync(userIds, user => Statuses.Blocked, cancellationToken);
             await _mainApiClient.NotifyBlockedUsers(userIds.ToArray());
-            return result;  
+            return result;
         }
 
         public async Task<ResponseDto> RoleChange(IEnumerable<string> userIds, CancellationToken cancellationToken)

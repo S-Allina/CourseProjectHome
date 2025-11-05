@@ -1,5 +1,4 @@
 ﻿using Identity.Application.Dto;
-using Identity.Domain.Entity;
 
 namespace Identity.Application.Interfaces
 {

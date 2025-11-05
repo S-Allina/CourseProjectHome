@@ -1,10 +1,7 @@
 ﻿using Main.Application.Interfaces;
-using Main.Domain.entities.common;
-using Main.Infrastructure.DataAccess;
 using Main.Presentation.MVC.Controllers.API;
 using Main.Presentation.MVC.ViewModel;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Main.Presentation.MVC.Controllers
 {
