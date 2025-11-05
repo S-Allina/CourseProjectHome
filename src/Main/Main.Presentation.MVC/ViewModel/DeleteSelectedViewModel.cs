@@ -1,7 +1,7 @@
 ﻿namespace Main.Presentation.MVC.ViewModel
 {
-    public class DeleteSelectedViewModel
+    public record DeleteSelectedViewModel
     {
-        public int[] SelectedIds { get; set; }
+        public required int[] SelectedIds { get; init; }
     }
 }

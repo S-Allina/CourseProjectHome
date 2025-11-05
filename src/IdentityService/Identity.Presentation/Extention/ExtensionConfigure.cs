@@ -96,7 +96,7 @@ namespace Identity.Presentation.Extention
         public static IServiceCollection AddIdentityConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             var urlSettings = configuration.GetSection("Urls").Get<UrlSettings>();
-
+            var auth = configuration.GetSection("AuthSettings").Get<AuthSettings>();
             services.AddIdentity<ApplicationUser, IdentityRole>(o =>
             {
                 o.Password.RequireNonAlphanumeric = false;
@@ -118,7 +118,6 @@ namespace Identity.Presentation.Extention
                 options.TokenLifespan = TimeSpan.FromHours(3);
             });
 
-            // IdentityServer configuration
             var identityServerBuilder = services.AddIdentityServer(options =>
             {
                 options.Events.RaiseErrorEvents = true;
@@ -134,12 +133,12 @@ namespace Identity.Presentation.Extention
     {
         ClientId = "MainMVCApp",
         ClientName = "Main MVC Application",
-        ClientSecrets = { new Secret("your-secret".Sha256()) },
+        ClientSecrets = { new Secret(auth.key.Sha256()) },
         AllowedGrantTypes = GrantTypes.Code,
 
-        RedirectUris = { $"{urlSettings.Main}/signin-oidc" },
-        PostLogoutRedirectUris = { $"{urlSettings.Main}/signout-callback-oidc" },
-        FrontChannelLogoutUri = $"{urlSettings.Main}/signout-oidc",
+        RedirectUris = { $"{urlSettings?.Main}/signin-oidc" },
+        PostLogoutRedirectUris = { $"{urlSettings?.Main}/signout-callback-oidc" },
+        FrontChannelLogoutUri = $"{urlSettings?.Main}/signout-oidc",
 
  AllowedScopes = {
         "openid", "profile", "email", "api1", "roles",
@@ -186,7 +185,6 @@ namespace Identity.Presentation.Extention
             }
             else
             {
-                // В продакшене используйте proper certificate
                 // identityServerBuilder.AddSigningCredential(certificate);
             }
 
@@ -201,8 +199,17 @@ namespace Identity.Presentation.Extention
             {
                 options.AddPolicy(CorsConstants.PolicyName, policy =>
                 {
-                    policy.WithOrigins(urlSettings.AuthFront, urlSettings.Auth, urlSettings.Main)
-                        .AllowAnyHeader()
+                    var origins = new[] { urlSettings?.AuthFront, urlSettings?.Auth, urlSettings?.Main }
+            .Where(url => !string.IsNullOrWhiteSpace(url))
+            .Select(url => url!.Trim()) 
+            .ToArray();
+
+                    if (origins.Any())
+                    {
+                        policy.WithOrigins(origins);
+                    }
+
+                        policy.AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
                 });
@@ -235,13 +242,22 @@ namespace Identity.Presentation.Extention
 
         public static IServiceCollection AddAuthenticationConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
+            var clientId = configuration["Auth:Google:ClientID"];
+            var clientSecret = configuration["Auth:Google:ClientSecret"];
+
+            if (string.IsNullOrEmpty(clientId))
+                throw new ArgumentNullException(nameof(clientId), "Google ClientID is not configured");
+
+            if (string.IsNullOrEmpty(clientSecret))
+                throw new ArgumentNullException(nameof(clientSecret), "Google ClientSecret is not configured");
+
             services.AddAuthentication()
                 .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
                 {
-                    options.ClientId = configuration["Auth:Google:ClientID"];
-                    options.ClientSecret = configuration["Auth:Google:ClientSecret"];
+                    options.ClientId = clientId;
+                    options.ClientSecret = clientSecret;
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
-                    options.CallbackPath = "/signin-google"; 
+                    options.CallbackPath = "/signin-google";
                     options.SaveTokens = true;
                     options.Scope.Add("profile");
                     options.Scope.Add("email");

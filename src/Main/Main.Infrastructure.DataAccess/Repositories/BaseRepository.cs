@@ -18,7 +18,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
         }
 
         public async Task<T?> GetFirstAsync(
-     Expression<Func<T, bool>> filter = null,
+     Expression<Func<T, bool>>? filter = null,
      CancellationToken cancellationToken = default,
      params string[] includeProperties) 
         {
@@ -46,7 +46,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
         }
 
 
-        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> filter = null, CancellationToken cancellationToken = default, params string[] includeProperties)
+        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, CancellationToken cancellationToken = default, params string[] includeProperties)
         {
             IQueryable<T> query = dbSet;
 
@@ -105,9 +105,12 @@ namespace Main.Infrastructure.DataAccess.Repositories
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<bool> IsExistsAsync(Expression<Func<T, bool>> filter = null, CancellationToken cancellationToken = default)
+        public async Task<bool> IsExistsAsync(Expression<Func<T, bool>>? filter = null, CancellationToken cancellationToken = default)
         {
             IQueryable<T> query = dbSet;
+
+            if (filter == null)
+                return await query.AnyAsync(cancellationToken);
 
             return await query.AnyAsync(filter, cancellationToken);
         }

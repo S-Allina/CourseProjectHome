@@ -6,11 +6,11 @@ namespace Main.Domain.entities.Comments
     public class Comment : BaseEntity
     {
         public int InventoryId { get; set; }
-        public Inventory Inventory { get; set; }
+        public Inventory? Inventory { get; set; }
 
         public string AuthorId { get; set; } = string.Empty;
-        public User Author { get; set; } = null!;
-        public string Text { get; set; }
+        public User? Author { get; set; }
+        public string Text { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

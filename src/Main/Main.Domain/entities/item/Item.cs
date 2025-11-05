@@ -8,9 +8,9 @@ namespace Main.Domain.entities.item
     public class Item : BaseEntity
     {
         public int InventoryId { get; set; }
-        public Inventory Inventory { get; set; }
+        public Inventory? Inventory { get; set; }
 
-        public string CustomId { get; set; }
+        public required string CustomId { get; set; }
         public string CreatedById { get; set; } = string.Empty;
         public User CreatedBy { get; set; } = null!;
         [Timestamp]

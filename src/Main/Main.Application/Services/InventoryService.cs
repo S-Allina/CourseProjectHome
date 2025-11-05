@@ -61,7 +61,8 @@ namespace Main.Application.Services
         {
             var userId = _usersService.GetCurrentUserId();
 
-            var inventories = await _inventoryRepository.GetAllAsync(i => i.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= 2), cancellationToken, "Owner", "Category", "Fields");
+            var inventories = await _inventoryRepository.GetAllAsync(i => i.AccessList != null && i.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= 2), cancellationToken, "Owner", "Category", "Fields");
+
             return _mapper.Map<IEnumerable<InventoryTableDto>>(inventories);
         }
 
@@ -90,9 +91,13 @@ namespace Main.Application.Services
 
             var inventory = _mapper.Map<Inventory>(createDto);
 
-            inventory.OwnerId = _usersService.GetCurrentUserId();
-            await AddFieldsToInventory(inventory, createDto.Fields);
-            await AddInventoryAccessToInventory(inventory, createDto.AccessList);
+            inventory.OwnerId = _usersService.GetCurrentUserId() ?? string.Empty;
+            if(createDto?.Fields?.Count>0)
+                AddFieldsToInventory(inventory, createDto.Fields);
+
+            if(createDto?.AccessList?.Count>0)
+                AddInventoryAccessToInventory(inventory, createDto.AccessList);
+
             var createdInventory = await _inventoryRepository.CreateAsync(inventory, cancellationToken);
 
             return _mapper.Map<InventoryDetailsDto>(createdInventory);
@@ -123,6 +128,7 @@ namespace Main.Application.Services
 
                 return resultDto;
         }
+        
         public async Task<InventoryFormViewModel> GetCreateViewModelAsync()
         {
             var categories = await _categoryRepository.GetAllAsync();
@@ -135,7 +141,6 @@ namespace Main.Application.Services
                     Text = c.Name
                 }).ToList(),
 
-                // Инициализация пустых коллекций
                 Tags = new List<string>(),
                 AccessList = new List<InventoryAccessDto>(),
                 Fields = new List<CreateInventoryFieldDto>()
@@ -146,6 +151,9 @@ namespace Main.Application.Services
 
         public async Task<InventoryFormViewModel> GetEditViewModelAsync(int id)
         {
+            var userId = _usersService.GetCurrentUserId();
+            var userRole = _usersService.GetCurrentUserRole();
+
             var inventory = await _inventoryRepository.GetFirstAsync(
                 i => i.Id == id,
                 cancellationToken: default,
@@ -154,14 +162,15 @@ namespace Main.Application.Services
             if (inventory == null)
                 throw new ArgumentException($"Inventory with id {id} not found");
 
+            if(inventory.OwnerId!=userId && userRole!= Roles.Admin.ToString())
+                throw new UnauthorizedAccessException("You do not have permission to modify this inventory");
+
             var categories = await _categoryRepository.GetAllAsync();
 
-            // Сначала маппим в InventoryFormDto, затем создаем ViewModel
             var formDto = _mapper.Map<InventoryFormDto>(inventory);
 
             var viewModel = new InventoryFormViewModel
             {
-                // Копируем все свойства из DTO
                 Id = formDto.Id,
                 Name = formDto.Name,
                 Description = formDto.Description,
@@ -178,7 +187,6 @@ namespace Main.Application.Services
                 AccessList = formDto.AccessList,
                 Fields = formDto.Fields,
 
-                // Заполняем специфичные для ViewModel свойства
                 Categories = categories.Select(c => new SelectListItem
                 {
                     Value = c.Id.ToString(),
@@ -189,6 +197,7 @@ namespace Main.Application.Services
 
             return viewModel;
         }
+
         public async Task<bool> HasWriteAccessAsync(int inventoryId, AccessLevel accessLevel, CancellationToken cancellationToken = default)
         {
             var inventory = await _inventoryRepository.GetFirstAsync(i => i.Id == inventoryId, cancellationToken, "AccessList");
@@ -200,57 +209,44 @@ namespace Main.Application.Services
 
             return inventory.OwnerId == userId ||
                    inventory.IsPublic ||
-                   inventory.AccessList.Any(a => a.UserId == userId && (int)a.AccessLevel >= (int)accessLevel);
+                   inventory.AccessList?.Any(a => a.UserId == userId && (int)a.AccessLevel >= (int)accessLevel) == true;
         }
 
         public async Task<List<InventorySearchResult>> GetInventoriesByTagAsync(string tagName)
         {
             return null;
         }
+
         public async Task<IEnumerable<InventoryTableDto>> GetRecentInventoriesAsync(int count, CancellationToken cancellationToken = default)
         {
-            var inventories = await _inventoryRepository.GetAllAsync(
-                i => i.IsPublic || i.AccessList.Any(a => a.UserId == _usersService.GetCurrentUserId()),
-                cancellationToken, "Fields", "Owner"
-            );
+            var userId = _usersService.GetCurrentUserId();
+
+            var inventories = await _inventoryRepository.GetAllAsync(null,
+                cancellationToken, "Fields", "Owner", "Category");
 
             var recentInventories = inventories.OrderByDescending(i => i.CreatedAt).Take(count).ToList();
-
             return _mapper.Map<IEnumerable<InventoryTableDto>>(recentInventories);
         }
 
         public async Task<IEnumerable<InventoryTableDto>> GetPopularInventoriesAsync(int count, CancellationToken cancellationToken = default)
         {
-            var inventoriesWithItemCount = await _inventoryRepository.GetAllAsync(null,  cancellationToken, "Items", "Owner");
-            var inventoriesWithItemCountDto = inventoriesWithItemCount.Select(i => new InventoryTableDto
-            {
-                Id = i.Id,
-                Name = i.Name,
-                Description = i.Description,
-                OwnerId = i.OwnerId,
-                ImageUrl = i.ImageUrl,
-                IsPublic = i.IsPublic,
-                CreatedAt = i.CreatedAt,
-                UpdatedAt = i.UpdatedAt,
-                ItemsCount = i.Items.Count 
-            });
+            var inventoriesWithItemCount = await _inventoryRepository.GetAllAsync(null,  cancellationToken, "Fields", "Owner", "Category");
 
             var userId = _usersService.GetCurrentUserId();
-            
-            var popularInventories = inventoriesWithItemCountDto
-                .OrderByDescending(i => i.ItemsCount)
-                .Take(count)
-                .ToList();
+
+            var inventoriesWithItemCountDto = _mapper.Map<IEnumerable<InventoryTableDto>>(inventoriesWithItemCount);
+
+            var popularInventories = inventoriesWithItemCountDto.OrderByDescending(i => i.ItemsCount).Take(count).ToList();
 
             return (popularInventories);
         }
-        private async Task AddFieldsToInventory(Inventory inventory, List<CreateInventoryFieldDto> fieldDtos)
+        private void AddFieldsToInventory(Inventory inventory, List<CreateInventoryFieldDto> fieldDtos)
         {
             if (!fieldDtos.Any()) return;
 
             foreach (var fieldDto in fieldDtos.OrderBy(f => f.OrderIndex))
             {
-                inventory.Fields.Add(new InventoryField
+                inventory?.Fields?.Add(new InventoryField
                 {
                     Name = fieldDto.Name.Trim(),
                     Description = fieldDto.Description?.Trim(),
@@ -263,19 +259,19 @@ namespace Main.Application.Services
             }
         }
 
-        private async Task AddInventoryAccessToInventory(Inventory inventory, List<CreateInventoryAccessDto> accessDtos)
+        private void AddInventoryAccessToInventory(Inventory inventory, List<CreateInventoryAccessDto> accessDtos)
         {
             if (!accessDtos.Any()) return;
 
             var userId = _usersService.GetCurrentUserId();
             foreach (var dto in accessDtos)
             {
-                inventory.AccessList.Add(new InventoryAccess
+                inventory?.AccessList?.Add(new InventoryAccess
                 {
                     AccessLevel = dto.AccessLevel,
                     InventoryId = inventory.Id,
                     UserId = dto.UserId,
-                    GrantedById = userId,
+                    GrantedById = userId ?? string.Empty,
                     GrantedAt = DateTime.UtcNow
                 });
             }

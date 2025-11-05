@@ -2,8 +2,8 @@
 @using Microsoft.AspNetCore.Localization
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Microsoft.Extensions.Options
-
-@inject IViewLocalizer Localizer
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResource> Localizer
 @inject IOptions<RequestLocalizationOptions> LocOptions
 
 @{
@@ -19,7 +19,7 @@
 
 <form asp-controller="Home" asp-action="SetLanguage"
       asp-route-returnUrl="@Context.Request.Path"
-      method="post" class="form-horizontal d-inline-block">
+      method="post" class="form-horizontal d-inline-block me-2">
     <div class="input-group">
         <span class="input-group-text">
             <i class="fas fa-language me-1"></i>@Localizer["Language"]

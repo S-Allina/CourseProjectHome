@@ -110,15 +110,6 @@ namespace Main.Infrastructure.DataAccess.Repositories
             }
         }
 
-        public async Task<Item> GetByIdWithFieldValuesAsync(int id, CancellationToken cancellationToken = default)
-        {
-            return await _db.Set<Item>()
-                .Include(i => i.FieldValues)
-                .Include(i => i.Inventory)
-                    .ThenInclude(inv => inv.Fields)
-                .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
-        }
-
         public async Task<int> UpdateItemsAsync(IEnumerable<Item> items, CancellationToken cancellationToken = default)
         {
             var updatedCount = 0;

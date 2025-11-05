@@ -5,6 +5,6 @@ namespace Identity.Application.Interfaces
     public interface ICurrentUserService
     {
         string? GetUserId();
-        Task<CurrentUserDto> GetCurrentUserAsync();
+        Task<UserDto> GetCurrentUserAsync();
     }
 }

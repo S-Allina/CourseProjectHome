@@ -29,14 +29,15 @@ namespace Main.Application.Services
         {
             var items = (await _itemService.GetByInventoryAsync(inventoryId)).ToList();
             var inventory = await _inventoryService.GetById(inventoryId);
-            var fields = inventory.Fields;
+            var fields = inventory.Fields ?? new List<InventoryFieldDto>();
 
             var fieldStatistics = new List<FieldStatsDto>();
 
             foreach (var field in fields)
             {
-                var fieldValues = items.SelectMany(item => item.FieldValues
-                    .Where(fv => fv.InventoryFieldId == field.Id))
+                var fieldValues = items.SelectMany(item => item.FieldValues?
+                        .Where(fv => fv?.InventoryFieldId == field.Id) ?? Enumerable.Empty<ItemFieldValueDto>())
+                    .Where(fv => fv != null)
                     .ToList();
 
                 var stats = new FieldStatsDto
@@ -44,18 +45,18 @@ namespace Main.Application.Services
                     FieldId = field.Id,
                     FieldName = field.Name,
                     FieldType = field.FieldType,
-                    EmptyValuesCount = fieldValues.Count(fv => IsEmptyValue(fv, field.FieldType)),
-                    NonEmptyValuesCount = fieldValues.Count(fv => !IsEmptyValue(fv, field.FieldType))
+                    EmptyValuesCount = fieldValues.Count(fv => IsEmptyValue(fv!, field.FieldType)),
+                    NonEmptyValuesCount = fieldValues.Count(fv => !IsEmptyValue(fv!, field.FieldType))
                 };
 
                 if (field.FieldType == FieldType.Number)
                 {
                     var numericValues = fieldValues
-                        .Where(fv => fv.NumberValue.HasValue)
-                        .Select(fv => fv.NumberValue.Value)
+                        .Where(fv => fv?.NumberValue.HasValue == true)
+                        .Select(fv => fv!.NumberValue!.Value)
                         .ToList();
 
-                    if (numericValues.Any())
+                    if (numericValues.Count > 0)
                     {
                         stats.MinValue = numericValues.Min();
                         stats.MaxValue = numericValues.Max();
@@ -66,13 +67,13 @@ namespace Main.Application.Services
                 if (field.FieldType == FieldType.Text || field.FieldType == FieldType.MultilineText)
                 {
                     var textValues = fieldValues
-                        .Select(fv => GetTextValue(fv, field.FieldType))
+                        .Select(fv => GetTextValue(fv!, field.FieldType))
                         .Where(v => !string.IsNullOrEmpty(v))
                         .ToList();
 
                     stats.ValueCounts = textValues
-                        .GroupBy(v => v)
-                        .ToDictionary(g => g.Key, g => g.Count());
+                        .GroupBy(v => v!)
+                        .ToDictionary(g => g.Key!, g => g.Count());
 
                     stats.UniqueValuesCount = stats.ValueCounts.Count;
                 }
@@ -80,12 +81,12 @@ namespace Main.Application.Services
                 if (field.FieldType == FieldType.Boolean)
                 {
                     var boolValues = fieldValues
-                        .Where(fv => fv.BooleanValue.HasValue)
-                        .Select(fv => fv?.BooleanValue.Value.ToString())
+                        .Where(fv => fv?.BooleanValue.HasValue == true)
+                        .Select(fv => fv!.BooleanValue!.Value.ToString())
                         .ToList();
 
                     stats.ValueCounts = boolValues
-                        .GroupBy(v => v)
+                        .GroupBy(v => v!)
                         .ToDictionary(g => g.Key, g => g.Count());
                 }
 
@@ -102,9 +103,11 @@ namespace Main.Application.Services
             };
         }
 
-        public async Task<List<NumericFieldStatsDto>> GetNumericFieldStatsAsync(int inventoryId)
+        public async Task<List<NumericFieldStatsDto>?> GetNumericFieldStatsAsync(int inventoryId)
         {
             var stats = await GetInventoryStatsAsync(inventoryId);
+
+            if (stats == null || stats.FieldStatistics == null) return null;
 
             return stats.FieldStatistics
                 .Where(f => f.FieldType == FieldType.Number && f.NonEmptyValuesCount > 0)
@@ -115,27 +118,30 @@ namespace Main.Application.Services
                     MinValue = f.MinValue ?? 0,
                     MaxValue = f.MaxValue ?? 0,
                     AverageValue = f.AverageValue ?? 0,
-                    ValueDistribution = f.ValueCounts.Select(v => new ValueCountDto
-                    {
-                        Value = v.Key,
-                        Count = v.Value
-                    }).ToList()
+                    ValueDistribution = f.ValueCounts!
+                        .OrderByDescending(v => v.Value)
+                        .Take(10)
+                        .Select(v => new ValueCountDto { Value = v.Key, Count = v.Value })
+                        .ToList()
                 })
                 .ToList();
         }
 
-        public async Task<List<TextFieldStatsDto>> GetTextFieldStatsAsync(int inventoryId)
+        public async Task<List<TextFieldStatsDto>?> GetTextFieldStatsAsync(int inventoryId)
         {
             var stats = await GetInventoryStatsAsync(inventoryId);
 
+            if (stats == null || stats.FieldStatistics==null) return null;
+
             return stats.FieldStatistics
                 .Where(f => (f.FieldType == FieldType.Text || f.FieldType == FieldType.MultilineText) &&
+                           f.ValueCounts != null &&
                            f.ValueCounts.Any())
                 .Select(f => new TextFieldStatsDto
                 {
                     FieldId = f.FieldId,
                     FieldName = f.FieldName,
-                    TopValues = f.ValueCounts
+                    TopValues = f.ValueCounts!
                         .OrderByDescending(v => v.Value)
                         .Take(10)
                         .Select(v => new ValueCountDto { Value = v.Key, Count = v.Value })

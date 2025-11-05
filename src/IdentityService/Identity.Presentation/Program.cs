@@ -29,7 +29,6 @@ namespace Identity.Presentation
             builder.Services.AddControllerConfiguration();
             builder.Services.AddSwaggerConfiguration();
             builder.Services.AddIdentityConfiguration(configuration);
-            //builder.Services.AddConfigureJwt(configuration);
             builder.Services.AddApplicationServices(configuration);
             builder.Services.AddAuthenticationConfiguration(configuration);
             builder.Services.AddEmailConfiguration(configuration);

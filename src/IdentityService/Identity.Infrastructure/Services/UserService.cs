@@ -117,11 +117,11 @@ namespace Identity.Infrastructure.Services
             return await GetAllAsync(cancellationToken);
         }
 
-        public async Task<CurrentUserDto> GetByIdAsync(string id, CancellationToken cancellationToken)
+        public async Task<UserDto> GetByIdAsync(string id, CancellationToken cancellationToken)
         {
             var user = await GetUserByIdAsync(id);
 
-            return _mapper.Map<CurrentUserDto>(user);
+            return _mapper.Map<UserDto>(user);
         }
 
         private async Task<ApplicationUser> GetUserByIdAsync(string id)

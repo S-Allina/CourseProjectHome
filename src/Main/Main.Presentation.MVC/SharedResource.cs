@@ -5,8 +5,8 @@
     }
     public class ErrorAlert
     {
-        public string Message { get; set; }
-        public string AlertType { get; set; }
+        public string? Message { get; set; }
+        public string? AlertType { get; set; }
         public long Timestamp { get; set; }
     }
 }

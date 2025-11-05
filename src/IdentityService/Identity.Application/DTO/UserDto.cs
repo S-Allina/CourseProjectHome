@@ -5,13 +5,15 @@ namespace Identity.Application.Dto
 {
     public class UserDto
     {
-        public string Id { get; set; } = string.Empty;
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public bool EmailConfirmed { get; set; } = false;
+        public required string Id { get; set; }
+        public required string FirstName { get; set; }
+        public required string LastName { get; set; }
+        public bool EmailConfirmed { get; set; }
+        public string Role { get; set; } = "User";
+        public required string Email { get; set; }
+
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public Statuses? Status { get; set; } = Statuses.Unverify;
+        public Statuses Status { get; set; } = Statuses.Unverify;
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public Theme Theme { get; set; } = Theme.Light;
@@ -21,7 +23,6 @@ namespace Identity.Application.Dto
 
         public DateTime CreateAt { get; set; }
         public DateTime? UpdateAt { get; set; }
-        public string Role { get; set; } = "User";
-
+        
     }
 }

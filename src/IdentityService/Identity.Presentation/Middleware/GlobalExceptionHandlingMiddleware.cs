@@ -31,7 +31,7 @@ namespace Identity.Presentation.Middleware
         {
             HttpStatusCode status;
             string message;
-            List<string?> errors = null;
+            List<string>? errors = null;
 
             switch (exception)
             {

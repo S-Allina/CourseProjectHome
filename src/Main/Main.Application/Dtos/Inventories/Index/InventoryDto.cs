@@ -20,7 +20,7 @@ namespace Main.Application.Dtos.Inventories.Index
         public int? ItemsCount { get; init; }
         public DateTime CreatedAt { get; init; }
         public DateTime UpdatedAt { get; init; }
-        public List<string> Tags { get; init; } = new();
+        public List<string>? Tags { get; init; }
         public int? FieldCount { get; init; }
         public string? CustomIdFormat { get; init; }
     }
@@ -28,9 +28,9 @@ namespace Main.Application.Dtos.Inventories.Index
     public record InventoryDetailsDto : InventoryTableDto
     {
         public IFormFile? Image { get; init; }
-        public byte[] Version { get; init; }
-        public List<InventoryFieldDto> Fields { get; init; } = new();
-        public List<InventoryAccessDto> AccessList { get; init; } = new();
+        public byte[]? Version { get; init; }
+        public List<InventoryFieldDto>? Fields { get; init; }
+        public List<InventoryAccessDto>? AccessList { get; init; }
     }
     public record InventoryStatsDto
     {
@@ -38,7 +38,7 @@ namespace Main.Application.Dtos.Inventories.Index
         public int TotalFields { get; init; }
         public DateTime? OldestItemDate { get; init; }
         public DateTime? NewestItemDate { get; init; }
-        public List<FieldStatsDto> FieldStatistics { get; init; } = new();
+        public List<FieldStatsDto>? FieldStatistics { get; init; }
     }
 
     public record FieldStatsDto
@@ -51,7 +51,7 @@ namespace Main.Application.Dtos.Inventories.Index
         public double? MaxValue { get; set; }
         public double? AverageValue { get; set; }
 
-        public Dictionary<string, int> ValueCounts { get; set; } = new();
+        public Dictionary<string, int>? ValueCounts { get; set; }
         public int? UniqueValuesCount { get; set; }
 
         public int? EmptyValuesCount { get; init; }

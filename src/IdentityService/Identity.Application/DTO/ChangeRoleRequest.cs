@@ -9,7 +9,7 @@ namespace Identity.Application.DTO
 {
     public class ChangeRoleRequest
     {
-        public string[] UserIds { get; set; }
+        public required string[] UserIds { get; set; }
         public Roles Role { get; set; }
     }
 }

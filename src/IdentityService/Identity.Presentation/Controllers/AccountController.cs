@@ -1,5 +1,4 @@
-﻿// Controllers/AccountController.cs в Auth проекте
-using Identity.Application.Configuration;
+﻿using Identity.Application.Configuration;
 using Identity.Domain.Entity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;

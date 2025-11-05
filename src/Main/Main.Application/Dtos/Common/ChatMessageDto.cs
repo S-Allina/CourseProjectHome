@@ -12,9 +12,9 @@ namespace Main.Application.Dtos.Common
     {
         public int Id { get; set; }
         public int InventoryId { get; set; }
-        public string UserId { get; set; }
-        public string UserName { get; set; }
-        public string Message { get; set; }
+        public required string UserId { get; set; }
+        public string? UserName { get; set; }
+        public required string Message { get; set; }
         public DateTime CreatedAt { get; set; }
         public string FormattedTime => CreatedAt.ToString("HH:mm");
         public string FormattedDate => CreatedAt.ToString("dd.MM.yyyy");
@@ -25,6 +25,6 @@ namespace Main.Application.Dtos.Common
     public class SendMessageDto
     {
         public int InventoryId { get; set; }
-        public string Message { get; set; }
+        public required string Message { get; set; }
     }
 }

@@ -16,12 +16,15 @@ namespace Main.Infrastructure.ImgBBStorage
 
         public ImgBBStorageService(IConfiguration configuration)
         {
-            _apiKey = configuration[ApiKey];
-            _apiUrl = configuration[ImgBBUrl];
+            _apiKey = configuration[ApiKey]!;
+            _apiUrl = configuration[ImgBBUrl]!;
         }
 
         public async Task<string> UploadFileAsync(IFormFile file)
         {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("File cannot be null or empty", nameof(file));
+
             try
             {
                 byte[] fileBytes;
@@ -55,7 +58,7 @@ namespace Main.Infrastructure.ImgBBStorage
                     }
                     else
                     {
-                        return null;
+                        return string.Empty;
                     }
                 }
             }

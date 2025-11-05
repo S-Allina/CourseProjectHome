@@ -22,11 +22,11 @@
             </a>
         </div>
     </div>
-  
+
     <div class="row">
         <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white py-3">
+                <div class="card-header py-3">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-list-alt me-2 text-primary"></i>@Localizer["Item Properties"]
                     </h5>
@@ -47,7 +47,7 @@
                                                         <h6 class="field-name text-primary mb-0">@field.FieldName</h6>
                                                         <span class="badge bg-light text-dark">@field.FieldType</span>
                                                     </div>
-                                                    <p class="mb-0 text-dark">@(field.TextValue ?? "No value")</p>
+                                                    <p class="mb-0 text-break">@(field.TextValue ?? "No value")</p>
                                                     break;
 
                                                 case FieldType.MultilineText:
@@ -72,7 +72,7 @@
                                                     </div>
                                                     @if (field.NumberValue.HasValue)
                                                     {
-                                                        <p class="mb-0 text-dark fs-5 fw-semibold">@field.NumberValue.Value</p>
+                                                        <p class="mb-0 fs-5 fw-semibold">@field.NumberValue.Value</p>
                                                     }
                                                     else
                                                     {
@@ -115,9 +115,37 @@
                                                     @if (!string.IsNullOrEmpty(field.FileUrl))
                                                     {
                                                         <div class="file-attachment">
-                                                            <a href="@field.FileUrl" target="_blank" class="btn btn-outline-primary btn-sm">
-                                                                <i class="fas fa-file-download me-1"></i>Download File
-                                                            </a>
+                                                            <div class="file-preview mb-2">
+                                                                @if (IsImageFile(field.FileUrl))
+                                                                {
+                                                                    <div class="image-container">
+                                                                        <img src="@field.FileUrl"
+                                                                             alt="@field.FieldName"
+                                                                             class="file-image img-fluid rounded"
+                                                                             loading="lazy"
+                                                                             onclick="openImageModal('@field.FileUrl')"
+                                                                             style="cursor: zoom-in; max-height: 200px; object-fit: contain;">
+                                                                        <div class="image-overlay" onclick="openImageModal('@field.FileUrl')">
+                                                                            <i class="fas fa-search-plus"></i>
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <div class="file-icon-container text-center py-3">
+                                                                        <i class="fas fa-file fa-3x text-muted mb-2"></i>
+                                                                        <p class="small text-muted mb-0">File Attachment</p>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                            <div class="d-flex gap-2">
+                                                                <a href="@field.FileUrl" target="_blank" class="btn btn-outline-primary btn-sm flex-fill">
+                                                                    <i class="fas fa-external-link-alt me-1"></i>Open
+                                                                </a>
+                                                                <a href="@field.FileUrl" download class="btn btn-outline-success btn-sm flex-fill">
+                                                                    <i class="fas fa-download me-1"></i>Download
+                                                                </a>
+                                                            </div>
                                                         </div>
                                                     }
                                                     else
@@ -153,7 +181,7 @@
 
         <div class="col-lg-4">
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white py-3">
+                <div class="card-header py-3">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-info-circle me-2 text-info"></i>Item Information
                     </h5>
@@ -161,7 +189,7 @@
                 <div class="card-body">
                     <div class="info-item mb-3">
                         <label class="text-muted small mb-1">Custom ID</label>
-                        <p class="mb-0 fw-semibold">@Model.CustomId</p>
+                        <p class="mb-0 fw-semibold text-primary copyable">@Model.CustomId</p>
                     </div>
                     <div class="info-item mb-3">
                         <label class="text-muted small mb-1">Item ID</label>
@@ -171,11 +199,15 @@
                         <label class="text-muted small mb-1">Inventory ID</label>
                         <p class="mb-0">@Model.InventoryId</p>
                     </div>
+                    <div class="info-item">
+                        <label class="text-muted small mb-1">Created By</label>
+                        <p class="mb-0">@(Model.CreatedById ?? "Unknown")</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="card shadow-sm">
-                <div class="card-header bg-white py-3">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header py-3">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-history me-2 text-warning"></i>Activity Timeline
                     </h5>
@@ -214,8 +246,8 @@
                 </div>
             </div>
 
-            <div class="card shadow-sm mt-4">
-                <div class="card-header bg-white py-3">
+            <div class="card shadow-sm">
+                <div class="card-header py-3">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
                     </h5>
@@ -225,9 +257,6 @@
                         <a href="@Url.Action("Edit", "Items", new { itemId = Model.Id })" class="btn btn-outline-primary">
                             <i class="fas fa-edit me-2"></i>Edit Item
                         </a>
-                        <button class="btn btn-outline-danger" onclick="confirmDelete()">
-                            <i class="fas fa-trash me-2"></i>Delete Item
-                        </button>
                         <a href="@Url.Action("Index", "Items", new { inventoryId = Model.InventoryId })" class="btn btn-outline-secondary">
                             <i class="fas fa-list me-2"></i>View All Items
                         </a>
@@ -238,125 +267,208 @@
     </div>
 </div>
 
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title">Image Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this item? This action cannot be undone.</p>
-                <p class="text-muted">Item: <strong>@Model.CustomId</strong></p>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Preview" class="img-fluid" style="max-height: 70vh;">
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form method="post" action="@Url.Action("Delete", "Items", new { id = Model.Id })" style="display: inline;">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-danger">Delete Item</button>
-                </form>
+            <div class="modal-footer justify-content-center">
+                <a href="" id="downloadImage" class="btn btn-primary" download>
+                    <i class="fas fa-download me-2"></i>Download
+                </a>
+                <a href="" id="openImage" class="btn btn-outline-primary" target="_blank">
+                    <i class="fas fa-external-link-alt me-2"></i>Open Original
+                </a>
             </div>
         </div>
     </div>
 </div>
 
-    <style>
-        .field-card {
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
+@functions {
+    private bool IsImageFile(string url)
+    {
+        if (string.IsNullOrEmpty(url)) return false;
+
+        var imageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg" };
+        var extension = System.IO.Path.GetExtension(url)?.ToLowerInvariant();
+        return imageExtensions.Contains(extension);
+    }
+}
+
+<style>
+    .field-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+
+        .field-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+            transform: translateY(-2px);
         }
 
-            .field-card:hover {
-                background: #ffffff;
-                border-color: #007bff;
-                box-shadow: 0 2px 8px rgba(0,123,255,0.1);
-                transform: translateY(-2px);
-            }
+    .field-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
 
-        .field-name {
-            font-weight: 600;
-            font-size: 0.9rem;
+    .multiline-text {
+        max-height: 120px;
+        overflow-y: auto;
+        line-height: 1.5;
+        font-size: 0.9rem;
+    }
+
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 10px;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -30px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px #e9ecef;
+    }
+
+    .timeline-content {
+        padding-left: 0;
+    }
+
+    .info-item {
+        padding-bottom: 10px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+        .info-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
         }
 
-        .multiline-text {
-            max-height: 120px;
-            overflow-y: auto;
-            line-height: 1.5;
+    .badge {
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+
+    .card {
+        border: none;
+        border-radius: 12px;
+    }
+
+    .card-header {
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .file-attachment {
+        text-align: center;
+    }
+
+    .file-preview {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .image-container {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+    }
+
+    .file-image {
+        max-height: 200px;
+        width: auto;
+        border-radius: 8px;
+        transition: transform 0.3s ease;
+    }
+
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 8px;
+        cursor: zoom-in;
+    }
+
+        .image-overlay i {
+            font-size: 2rem;
         }
 
-        .timeline {
-            position: relative;
-            padding-left: 30px;
+    .image-container:hover .image-overlay {
+        opacity: 1;
+    }
+
+    .image-container:hover .file-image {
+        transform: scale(1.05);
+    }
+
+    .file-icon-container {
+        border-radius: 8px;
+        border: 2px dashed #dee2e6;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .file-image {
+            max-height: 150px;
         }
 
-        .timeline-item {
-            position: relative;
-            padding-bottom: 10px;
+        .col-md-6 {
+            margin-bottom: 1rem;
         }
+    }
+</style>
 
-        .timeline-marker {
-            position: absolute;
-            left: -30px;
-            top: 5px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 0 0 2px #e9ecef;
-        }
+<script>
+    function confirmDelete() {
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
 
-        .timeline-content {
-            padding-left: 0;
-        }
+    function openImageModal(imageUrl) {
+        const modalImage = document.getElementById('modalImage');
+        const downloadImage = document.getElementById('downloadImage');
+        const openImage = document.getElementById('openImage');
 
-        .info-item {
-            padding-bottom: 10px;
-            border-bottom: 1px solid #f0f0f0;
-        }
+        modalImage.src = imageUrl;
+        downloadImage.href = imageUrl;
+        openImage.href = imageUrl;
 
-            .info-item:last-child {
-                border-bottom: none;
-                padding-bottom: 0;
-            }
+        const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+        imageModal.show();
+    }
 
-        .badge {
-            font-size: 0.7rem;
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        
 
-        .card {
-            border: none;
-            border-radius: 12px;
-        }
-
-        .card-header {
-            border-bottom: 1px solid #e9ecef;
-            border-radius: 12px 12px 0 0 !important;
-        }
-    </style>
-
-
-    <script>
-        function confirmDelete() {
-            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            modal.show();
-        }
-        document.addEventListener('DOMContentLoaded', function() {
-            const customIdElement = document.querySelector('.info-item:first-child p');
-            if (customIdElement) {
-                customIdElement.style.cursor = 'pointer';
-                customIdElement.title = 'Click to copy';
-
-                customIdElement.addEventListener('click', function() {
-                    const text = this.textContent;
-                    navigator.clipboard.writeText(text).then(() => {
-                        const originalText = this.textContent;
-                        this.textContent = 'Copied!';
-                        setTimeout(() => {
-                            this.textContent = originalText;
-                        }, 1000);
-                    });
-                });
-            }
+        const images = document.querySelectorAll('.file-image');
+        images.forEach(img => {
+            img.addEventListener('load', function() {
+                this.style.opacity = '1';
+            });
+            img.style.opacity = '0';
+            img.style.transition = 'opacity 0.3s ease';
         });
-    </script>
+    });
+</script>

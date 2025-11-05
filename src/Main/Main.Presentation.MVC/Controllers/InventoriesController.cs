@@ -54,6 +54,8 @@ namespace Main.Presentation.MVC.Controllers
         {
             var model = await _inventoryService.GetEditViewModelAsync(id);
             if (model == null) return NotFound();
+            
+            TempData["IsEditMode"] = "true";
 
             return View("Settings", model);
         }
@@ -61,10 +63,28 @@ namespace Main.Presentation.MVC.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(InventoryDetailsDto inventory, CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(InventoryDetailsDto inventory, CancellationToken cancellationToken, [FromHeader] string X_AutoSave = null)
         {
-            await _inventoryService.UpdateInventoryAsync(inventory, cancellationToken);
-            return RedirectToAction("Index", "Items", new { inventoryId = inventory.Id });
+                var result = await _inventoryService.UpdateInventoryAsync(inventory, cancellationToken);
+
+                if (!string.IsNullOrEmpty(X_AutoSave) && X_AutoSave == "true")
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        version = result.Version,
+                        message = "Auto-save completed successfully"
+                    });
+                }
+
+                if (TempData["IsEditMode"]?.ToString() == "true")
+                {
+                    return RedirectToAction("Index", "Inventories");
+                }
+                else
+                {
+                    return RedirectToAction("Index", "Items", new { inventoryId = inventory.Id });
+                }
         }
 
         [HttpPost]
@@ -82,13 +102,13 @@ namespace Main.Presentation.MVC.Controllers
             return PartialView("~/Views/Inventories/Partials/_StatisticsTab.cshtml", stats);
         }
 
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> AutoSave([FromBody] InventoryFormDto autoSaveDto, CancellationToken cancellationToken = default)
-        //{
-        //    var result = await _inventoryService.AutoSaveAsync(autoSaveDto);
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AutoSave(InventoryDetailsDto autoSaveDto, CancellationToken cancellationToken = default)
+        {
+            //var result = await _inventoryService.AutoSaveAsync(autoSaveDto);
 
-        //    return Json(result);
-        //}
+            return Json(autoSaveDto);
+        }
     }
 }

@@ -6,7 +6,6 @@
         return;
     }
 
-    if (confirm('@Localizer["Are you sure you want to delete the selected?"]')) {
         const form = document.createElement('form');
         form.method = 'post';
         form.action = 'Inventories/Delete';
@@ -21,5 +20,4 @@
 
         document.body.appendChild(form);
         form.submit();
-    }
 });

@@ -11,10 +11,10 @@
 
 @if (inventory != null)
 {
-    <div class="d-flex justify-content-between align-items-center mb-4 mt-1">
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
             
-            <a href="@Url.Action("Create", new { inventoryId = inventory.Id })" class="btn btn-success">
-                <i class="fas fa-plus me-1"></i>@Localizer["Add New Item"]
+            <a href="@Url.Action("Create", new { inventoryId = inventory.Id })" class="btn btn-success" style="color:white">
+            <i class="fas fa-plus me-1"></i>@Localizer["Create New"]
             </a>
         <button type="button" id="deleteSelected" class="btn btn-danger "> <i class=" fas fa-trash me-1"></i>@Localizer["Delete Selected"]</button>
     </div>

@@ -24,11 +24,11 @@ namespace Main.Presentation.MVC.Middleware
             }
             catch (Exception ex)
             {
-                await HandleExceptionAsync(context, ex);
+                HandleExceptionAsync(context, ex);
             }
         }
 
-        private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+        private void HandleExceptionAsync(HttpContext context, Exception exception)
         {
             string message;
             string alertType = "danger";
@@ -78,10 +78,10 @@ namespace Main.Presentation.MVC.Middleware
                     break;
             }
 
-            await HandleException(context, message, alertType);
+            HandleException(context, message, alertType);
         }
 
-        private async Task HandleException(HttpContext context, string message, string alertType)
+        private void HandleException(HttpContext context, string message, string alertType)
         {
             var tempDataFactory = context.RequestServices.GetRequiredService<ITempDataDictionaryFactory>();
             var tempData = tempDataFactory.GetTempData(context);

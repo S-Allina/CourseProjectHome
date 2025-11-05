@@ -11,7 +11,7 @@
 
 <p>
     <a asp-action="Create" asp-controller="Inventories" class="btn btn-success">@Localizer["Create New"] @Localizer["Inventory"]</a>
-    <button type="button" id="deleteSelected" class="btn btn-danger">@Localizer["Delete"]</button>
+    @* <button type="button" id="deleteSelected" class="btn btn-danger">@Localizer["Delete"]</button> *@
 </p>
 
 <div class="tab-pane fade show active" id="my-inventories" role="tabpanel" aria-labelledby="my-inventories-tab">
@@ -47,5 +47,5 @@
     </div>
 </div>
 @section Scripts {
-    <script src="~/js/inventory-selection.js" asp-append-version="true"></script>
+    @* <script src="~/js/inventory-selection.js" asp-append-version="true"></script> *@
 }

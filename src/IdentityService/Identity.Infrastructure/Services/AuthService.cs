@@ -37,7 +37,7 @@ namespace Identity.Infrastructure.Services
             _validator = validator;
         }
 
-        public async Task<CurrentUserDto> LoginAsync(UserLoginRequestDto request)
+        public async Task<UserDto> LoginAsync(UserLoginRequestDto request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
 
@@ -45,76 +45,19 @@ namespace Identity.Infrastructure.Services
 
             await CheckLockoutAsync(user);
 
-            var userResponse = _mapper.Map<CurrentUserDto>(user);
+            var userResponse = _mapper.Map<UserDto>(user);
 
             userResponse.UpdateAt = DateTime.Now;
 
             return userResponse;
         }
 
-        //public async Task<CurrentUserDto> GoogleCallBackAsync(string returnUrl, string remoteError)
-        //{
-        //    var result = await HttpContext.AuthenticateAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
-
-        //    if (!result.Succeeded)
-        //    {
-        //        var error = result.Failure?.Message ?? "External authentication failed";
-        //        return BadRequest($"External authentication error: {error}");
-        //    }
-
-        //    // ✅ Получаем внешнюю информацию
-        //    var externalUser = result.Principal;
-        //    if (externalUser == null)
-        //    {
-        //        return BadRequest("External authentication principal is null");
-        //    }
-
-        //    // ✅ Извлекаем claims
-        //    var claims = externalUser.Claims.ToList();
-        //    var email = claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
-
-        //    if (string.IsNullOrEmpty(email))
-        //    {
-        //        return BadRequest("Email claim not found from Google");
-        //    }
-
-        //    // ✅ Ищем или создаем пользователя
-        //    var user = await _userManager.FindByEmailAsync(email);
-        //    if (user == null)
-        //    {
-        //        var firstName = claims.FirstOrDefault(x => x.Type == ClaimTypes.GivenName)?.Value ?? "";
-        //        var lastName = claims.FirstOrDefault(x => x.Type == ClaimTypes.Surname)?.Value ?? "";
-        //        var name = claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? $"{firstName} {lastName}".Trim();
-
-        //        user = new ApplicationUser
-        //        {
-        //            UserName = email, // Используем email как username
-        //            Email = email,
-        //            EmailConfirmed = true,
-        //            FirstName = firstName,
-        //            LastName = lastName
-        //        };
-
-        //        var createResult = await _userManager.CreateAsync(user);
-        //        if (!createResult.Succeeded)
-        //        {
-        //            throw new Exception($"Failed to create user: {string.Join(", ", createResult.Errors)}");
-        //        }
-        //    }
-
-        //    // ✅ Выходим из внешней схемы
-        //    //await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
-
-        //    // ✅ Логиним пользователя в основной системе
-        //    await _signInManager.SignInAsync(user, isPersistent: false);
-
-        //    var currentUser = await LoginWithoutPasswordAsync(user);
-        //    return currentUser;
-        //}
-
         public async Task ForgotPasswordAsync()
         {
             var userId = _currentUserService.GetUserId();
+
+            if (string.IsNullOrEmpty(userId))
+                throw new UnauthorizedAccessException("User not authenticated");
 
             var userDto = await _userManager.FindByIdAsync(userId);
 
@@ -132,11 +75,14 @@ namespace Identity.Infrastructure.Services
             if (!isValidRequest.IsValid)
             {
                 string errorMessages = string.Empty;
-                ; isValidRequest.Errors.Select(e => errorMessages + separator + e.ErrorMessage);
+                isValidRequest.Errors.Select(e => errorMessages + separator + e.ErrorMessage);
                 throw new IdentityException(errorMessages);
             }
 
             var user = await _userManager.FindByEmailAsync(resetPasswordDto.Email);
+
+            if (user==null)
+                throw new UnauthorizedAccessException("User not found.");
 
             await ResetUserPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
 
@@ -148,6 +94,7 @@ namespace Identity.Infrastructure.Services
             var dectoken = WebUtility.UrlDecode(token);
 
             var isValidToken = await _userManager.VerifyUserTokenAsync(user, _userManager.Options.Tokens.PasswordResetTokenProvider, purpose, dectoken);
+
             if (!isValidToken)
             {
                 _logger.LogError("Invalid token for password reset for user: {Email}", user.Email);
@@ -155,6 +102,7 @@ namespace Identity.Infrastructure.Services
             }
 
             var result = await _userManager.ResetPasswordAsync(user, dectoken, newPassword);
+
             if (!result.Succeeded)
             {
                 _logger.LogError("Failed to reset password for user: {Email}", user.Email);

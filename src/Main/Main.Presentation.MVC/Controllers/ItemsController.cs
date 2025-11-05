@@ -76,21 +76,9 @@ namespace Main.Presentation.MVC.Controllers
         [Authorize]
         public async Task<IActionResult> Create(CreateItemDto createDto, CancellationToken cancellationToken)
         {
-            try
-            {
                 var item = await _itemService.CreateAsync(createDto, cancellationToken);
                 return RedirectToAction("Index", "Items", new { inventoryId = createDto.InventoryId });
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", "Error creating item: " + ex.Message);
-            }
-            var inventory = await _inventoryService.GetById(createDto.InventoryId, cancellationToken);
 
-            ViewBag.Inventory = inventory;
-            ViewData["CustomId"] = await _customIdService.GenerateCustomIdAsync(createDto.InventoryId, cancellationToken);
-
-            return View(createDto);
         }
 
         [HttpGet]

@@ -6,10 +6,10 @@ namespace Main.Domain.entities.item
     public class ItemFieldValue : BaseEntity
     {
         public int ItemId { get; set; }
-        public Item Item { get; set; }
+        public Item? Item { get; set; }
 
         public int InventoryFieldId { get; set; }
-        public InventoryField InventoryField { get; set; }
+        public InventoryField? InventoryField { get; set; }
 
         public string? TextValue { get; set; }
         public string? MultilineTextValue { get; set; }

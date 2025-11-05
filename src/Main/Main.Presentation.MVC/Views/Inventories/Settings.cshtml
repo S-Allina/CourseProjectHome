@@ -15,23 +15,25 @@
     <div class="col-md-12">
         <div id="autoSaveIndicator" class="alert alert-info d-none">
         </div>
-        
-        <form asp-action="@Model.FormAction" id="inventoryForm" 
-              data-is-edit="@Model.IsEditMode.ToString().ToLower()" 
+
+        <form asp-action="@Model.FormAction" id="inventoryForm"
+              data-is-edit="@Model.IsEditMode.ToString().ToLower()"
               enctype="multipart/form-data">
-              
+
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" id="version" name="Version" value="@Model.Version" />
 
             @if (Model.IsEditMode)
             {
-                <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="OwnerId" />
+                <input type="hidden" asp-for="Id" value="@Model.Id" />
+                <input type="hidden" asp-for="OwnerId" value="@Model.OwnerId" />
+                <input type="hidden" asp-for="CreatedAt" value="@Model.CreatedAt" />
+                <input type="hidden" asp-for="ImageUrl" value="@Model.ImageUrl" />
+                <input type="hidden" asp-for="Version" value="@Model.Version" />
             }
 
-            <!-- Табы -->
             <partial name="~/Views/Inventories/Partials/_InventoryTabs.cshtml" />
-            
+
             <div class="tab-content" id="inventoryTabsContent">
                 <partial name="~/Views/Inventories/Partials/_BasicInfoTab.cshtml" model="Model" />
                 <partial name="~/Views/Inventories/Partials/_CustomIdTab.cshtml" model="Model" />
@@ -40,9 +42,7 @@
                 <partial name="~/Views/Inventories/Partials/_AccessTab.cshtml" model="Model" />
             </div>
 
-            <!-- Кнопки действий -->
             <div class="mt-4">
-                <button type="submit" class="btn btn-primary">@Model.SubmitButtonText</button>
                 <a asp-action="Index" class="btn btn-outline-secondary">@Localizer["Back"]</a>
             </div>
         </form>
@@ -72,7 +72,6 @@
                 }
                 this.setupChangeTracking();
                 this.setupPeriodicCheck();
-                this.setupBeforeUnload();
             },
 
             setupChangeTracking: function() {
@@ -111,71 +110,75 @@
                 }, this.saveDelay);
             },
 
-            async performAutoSave() {
-                if (!this.isDirty || this.isSaving || !this.isEditMode) {
-                    console.log('Auto-save skipped:', {
-                        isDirty: this.isDirty,
-                        isSaving: this.isSaving,
-                        isEditMode: this.isEditMode
-                    });
-                    return;
+                 async performAutoSave() {
+            if (!this.isDirty || this.isSaving || !this.isEditMode) {
+                console.log('Auto-save skipped:', {
+                    isDirty: this.isDirty,
+                    isSaving: this.isSaving,
+                    isEditMode: this.isEditMode
+                });
+                return;
+            }
+
+            this.isSaving = true;
+            this.updateSaveIndicator(`@Localizer["Auto-saving"]`, true);
+            try {
+                const form = document.getElementById('inventoryForm');
+                if (!form) {
+                    throw new Error('Form not found');
                 }
 
-                this.isSaving = true;
-                this.updateSaveIndicator(`@Localizer["Auto-saving"]`, true);
-                try {
-                    const formData = this.prepareFormData();
+                this.prepareFormForSubmit();
 
-                    const response = await fetch('/Inventories/AutoSave', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': this.getAntiForgeryToken()
-                        },
-                        body: JSON.stringify(formData)
-                    });
+                const formDataToSend = new FormData(form);
 
-                    if (response.ok) {
-                        const result = await response.json();
+                const response = await fetch(form.getAttribute('action') || '/Inventories/Edit', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': this.getAntiForgeryToken(),
+                        'X-AutoSave': 'true' 
+                    },
+                    body: formDataToSend
+                });
 
-                        if (result.success) {
-                            this.handleSaveSuccess(result);
-                        } else {
-                            this.handleSaveError(result);
-                        }
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result) {
+                        this.handleSaveSuccess("Save success!");
                     } else {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        this.handleSaveError(result);
                     }
-                } catch (error) {
-                    this.handleSaveError({ message: '@Localizer["Auto-save"] @Localizer["failed"] @Localizer["Please save manually"].' });
-                } finally {
-                    this.isSaving = false;
+                } else if (response.status === 400) {
+                    const errorText = await response.text();
+                    this.handleSaveError({
+                        message: '@Localizer["Validation error"]',
+                        errors: errorText
+                    });
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            },
+            } catch (error) {
+                console.error('Auto-save error:', error);
+                this.handleSaveError({
+                    message: '@Localizer["Auto-save"] @Localizer["failed"] @Localizer["Please save manually"].',
+                    error: error.message
+                });
+            } finally {
+                this.isSaving = false;
+            }
+        },
 
-            prepareFormData: function() {
-                if (typeof generatePreview === 'function') {
-                    generatePreview();
-                }
-                if (typeof updateTagsDisplay === 'function') {
-                    updateTagsDisplay();
-                }
-
-                const data = {
-                    Id: document.querySelector('input[name="Id"]')?.value,
-                    Name: document.querySelector('input[name="Name"]')?.value,
-                    Description: document.querySelector('textarea[name="Description"]')?.value,
-                    CategoryId: document.querySelector('input[name="CategoryId"]')?.value,
-                    ImageUrl: document.querySelector('input[name="ImageUrl"]')?.value,
-                    IsPublic: document.querySelector('input[name="IsPublic"]')?.checked || false,
-                    Version: document.getElementById('Version')?.value,
-                    CustomIdFormat: document.getElementById('hiddenCustomIdFormat')?.value,
-                    Tags: this.getTagsArray(),
-                    Fields: this.collectFieldsData()
-                };
-
-                return data;
-            },
+        prepareFormForSubmit: function() {
+            if (typeof generatePreview === 'function') {
+                generatePreview();
+            }
+            if (typeof updateTagsDisplay === 'function') {
+                updateTagsDisplay();
+            }
+            if (accessManager && typeof accessManager.updateHiddenAccessFields === 'function') {
+                accessManager.updateHiddenAccessFields();
+            }
+        },
 
             getTagsArray: function() {
                 const hiddenTags = document.getElementById('hiddenTags');
@@ -201,7 +204,7 @@
                     const visibleCheckbox = fieldElement.querySelector('input[name$=".IsVisibleInTable"]');
                     const requiredCheckbox = fieldElement.querySelector('input[name$=".IsRequired"]');
                     const idInput = fieldElement.querySelector('input[name$=".Id"]');
-
+                    const inventoryIdInput = fieldElement.querySelector('input[name$=".InventoryId"]');
                     const field = {
                         Id: idInput ? parseInt(idInput.value) : 0,
                         Name: nameInput ? nameInput.value : '',
@@ -209,7 +212,8 @@
                         OrderIndex: orderInput ? parseInt(orderInput.value) : index,
                         Description: descTextarea ? descTextarea.value : '',
                         IsVisibleInTable: visibleCheckbox ? visibleCheckbox.checked : false,
-                        IsRequired: requiredCheckbox ? requiredCheckbox.checked : false
+                        IsRequired: requiredCheckbox ? requiredCheckbox.checked : false,
+                        InventoryId: inventoryIdInput ? parseInt(inventoryIdInput.value) : (@Html.Raw(Json.Serialize(Model.Id)) || 0)
                     };
 
                     fields.push(field);
@@ -274,7 +278,7 @@
                     return;
                 }
 
-                indicator.className = `alert alert-${type} ${showSpinner ? '' : 'd-none'}`;
+                // indicator.className = `alert alert-${type} ${showSpinner ? '' : 'd-none'}`;
                 if (messageElement) {
                     messageElement.textContent = message;
                 }
@@ -298,16 +302,6 @@
                     }
                 }, 30000);
             },
-
-            setupBeforeUnload: function() {
-                window.addEventListener('beforeunload', (event) => {
-                    if (this.isDirty) {
-                        event.preventDefault();
-                        event.returnValue = "You have unsaved changes. Are you sure you want to leave?";
-                        return event.returnValue;
-                    }
-                });
-            }
         };
 
         let componentCount = 0;
@@ -401,25 +395,21 @@
                     ]
                 });
 
-                // Загружаем начальные данные
                 this.loadInitialData();
             },
 
             loadInitialData: function() {
-                // Преобразуем currentAccessList в формат для DataTables
                 const tableData = this.currentAccessList.map(access => ({
                     userId: access.userId,
                     userName: access.userName || '',
                     userEmail: access.userEmail || '',
                     accessLevel: access.accessLevel,
                     grantedAt: access.grantedAt,
-                    userInfo: '' // Будет заполнено через render
+                    userInfo: ''
                 }));
 
-                // Добавляем данные в таблицу
                 this.dataTable.clear().rows.add(tableData).draw();
 
-                // Загружаем детали пользователей
                 this.loadUserDetails();
             },
 
@@ -565,10 +555,8 @@
             },
 
             removeUserFromAccessList(userId) {
-                // Удаляем из текущего списка
                 this.currentAccessList = this.currentAccessList.filter(access => access.userId !== userId);
 
-                // Удаляем строку из DataTable
                 this.dataTable.rows().every(function() {
                     const rowData = this.data();
                     if (rowData.userId === userId) {
@@ -587,7 +575,7 @@
             },
 
             setupRemoveAccess() {
-                // Используем делегирование событий для динамически добавляемых кнопок
+
                 $('#accessListTable').on('click', '.remove-access', (e) => {
                     const userId = $(e.target).closest('button').data('user-id');
                     if (confirm('@Localizer["Are you sure you want to remove access for this user?"]')) {
@@ -673,7 +661,7 @@
 
             showToast(message, type = 'info') {
                 const toast = document.createElement('div');
-                toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                // toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
                 toast.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
                 toast.innerHTML = `
                     ${message}
@@ -700,67 +688,67 @@
             }
         };
 
-        document.addEventListener('DOMContentLoaded', function() {
-            accessManager.init();
+            // ===== CUSTOM ID FORMAT PARSING =====
+        function parseExistingFormat(formatString) {
+            if (!formatString) return;
+
+            components = [];
             const formatComponents = document.getElementById('formatComponents');
-
             if (formatComponents) {
-                Sortable.create(formatComponents, {
-                    animation: 150,
-                    ghostClass: 'bg-warning',
-                    onEnd: function(evt) {
-                        updateComponentsOrder();
-                        generatePreview();
+                formatComponents.innerHTML = '';
+            }
 
-                        if (autoSaveManager.isEditMode) {
-                            autoSaveManager.handleChange();
+            const patterns = [
+                { regex: /^([^{}]+)(?=\{|\}|$)/, type: 'fixed-text' }, 
+                { regex: /^\{R20\}/, type: 'random-20bit' },
+                { regex: /^\{R32\}/, type: 'random-32bit' },
+                { regex: /^\{R6D\}/, type: 'random-6digit' },
+                { regex: /^\{R9D\}/, type: 'random-9digit' },
+                { regex: /^\{GUID\}/, type: 'guid' },
+                { regex: /^\{(SEQ:\d+)\}/, type: 'sequence' },
+                { regex: /^\{(YYYYMMDD|YYMMDD|YYYY-MM-DD|DDMMYYYY|UNIX)\}/, type: 'datetime' }
+            ];
+
+            let remainingString = formatString;
+
+            while (remainingString.length > 0) {
+                let matched = false;
+
+                for (const pattern of patterns) {
+                    const match = remainingString.match(pattern.regex);
+                    if (match) {
+                        let value = match[0];
+                        let componentType = pattern.type;
+
+                        switch (componentType) {
+                            case 'fixed-text':
+                                value = match[1];
+                                break;
+                            case 'sequence':
+                                const digits = match[1].match(/\d+/)[0];
+                                value = `{SEQ:${digits}}`;
+                                break;
+                            case 'datetime':
+                                value = `{${match[1]}}`;
+                                break;
                         }
+
+                        addComponentFromExisting(componentType, value);
+                        remainingString = remainingString.substring(match[0].length);
+                        matched = true;
+                        break;
                     }
-                });
+                }
 
-                initializeDragToRemove();
+                if (!matched) {
+                    addComponentFromExisting('fixed-text', remainingString[0]);
+                    remainingString = remainingString.substring(1);
+                }
             }
 
-            autoSaveManager.init();
-
-            addComponent('fixed-text');
-            addComponent('sequence');
             generatePreview();
-
-            initializeFieldsFromModel();
-
-            @if (Model.Tags != null && Model.Tags.Any())
-            {
-                            foreach (var tag in Model.Tags)
-                            {
-                                            <text>addTag('@tag');</text>
-                            }
-            }
-        });
-
-        function initializeDragToRemove() {
-            const formatBuilder = document.getElementById('formatBuilder');
-            if (!formatBuilder) return;
-
-            formatBuilder.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                this.classList.add('border-danger');
-            });
-
-            formatBuilder.addEventListener('dragleave', function(e) {
-                this.classList.remove('border-danger');
-            });
-
-            formatBuilder.addEventListener('drop', function(e) {
-                e.preventDefault();
-                this.classList.remove('border-danger');
-
-                const componentId = e.dataTransfer.getData('text/plain');
-                removeComponent(componentId);
-            });
         }
-
-        function addComponent(type) {
+         function addComponent(type) {
             componentCount++;
             const componentId = `component-${componentCount}`;
 
@@ -899,6 +887,208 @@
                 autoSaveManager.handleChange();
             }
         }
+        function addComponentFromExisting(type, value) {
+            componentCount++;
+            const componentId = `component-${componentCount}`;
+
+            let componentHtml = '';
+
+            switch (type) {
+                case 'fixed-text':
+                    componentHtml = `
+                        <div class="component-item badge bg-primary p-2" draggable="true" data-type="fixed-text" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>@Localizer["Text"]</span>
+                            <input type="text" class="form-control form-control-sm d-inline-block w-auto ms-1"
+                                   placeholder="Enter text" value="${value.replace(/"/g, '&quot;')}"
+                                   onchange="updateComponent('${componentId}', this.value)" />
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    break;
+
+                case 'random-20bit':
+                    componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-20bit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>20-bit @Localizer["Random"]</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    break;
+
+                case 'random-32bit':
+                    componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-32bit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>32-bit @Localizer["Random"]</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    break;
+
+                case 'random-6digit':
+                    componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-6digit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>6-digit @Localizer["Random"]</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    break;
+
+                case 'random-9digit':
+                    componentHtml = `
+                        <div class="component-item badge bg-success p-2" draggable="true" data-type="random-9digit" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>9-digit @Localizer["Random"]</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    break;
+
+                case 'guid':
+                    componentHtml = `
+                        <div class="component-item badge bg-info p-2" draggable="true" data-type="guid" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>@Localizer["GUID"]</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    break;
+
+                case 'datetime':
+                    componentHtml = `
+                        <div class="component-item badge bg-warning text-dark p-2" draggable="true" data-type="datetime" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>@Localizer["Date/Time"]</span>
+                            <select class="form-select form-select-sm d-inline-block w-auto ms-1" onchange="updateComponent('${componentId}', this.value)">
+                                <option value="{YYYYMMDD}" ${value === '{YYYYMMDD}' ? 'selected' : ''}>YYYYMMDD</option>
+                                <option value="{YYMMDD}" ${value === '{YYMMDD}' ? 'selected' : ''}>YYMMDD</option>
+                                <option value="{YYYY-MM-DD}" ${value === '{YYYY-MM-DD}' ? 'selected' : ''}>YYYY-MM-DD</option>
+                                <option value="{DDMMYYYY}" ${value === '{DDMMYYYY}' ? 'selected' : ''}>DDMMYYYY</option>
+                                <option value="{UNIX}" ${value === '{UNIX}' ? 'selected' : ''}>UNIX</option>
+                            </select>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    break;
+
+                case 'sequence':
+                    const digits = value.replace('{SEQ:', '').replace('}', '');
+                    componentHtml = `
+                        <div class="component-item badge bg-danger p-2" draggable="true" data-type="sequence" id="${componentId}">
+                            <i class="fas fa-grip-vertical me-1"></i>
+                            <span>@Localizer["sequence"]</span>
+                            <input type="number" class="form-control form-control-sm d-inline-block w-auto ms-1"
+                                   value="${digits}" min="1" max="10"
+                                   onchange="updateComponent('${componentId}', '{SEQ:' + this.value + '}')" />
+                            <span class="ms-1">digits</span>
+                            <button type="button" class="btn-close btn-close-white ms-1" onclick="removeComponent('${componentId}')"></button>
+                        </div>
+                    `;
+                    break;
+            }
+
+            const noComponentsMessage = document.getElementById('noComponentsMessage');
+            const formatComponents = document.getElementById('formatComponents');
+
+            if (noComponentsMessage) {
+                noComponentsMessage.style.display = 'none';
+            }
+            if (formatComponents) {
+                formatComponents.insertAdjacentHTML('beforeend', componentHtml);
+            }
+
+            components.push({
+                id: componentId,
+                type: type,
+                value: value
+            });
+
+            const componentElement = document.getElementById(componentId);
+            if (componentElement) {
+                componentElement.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', componentId);
+                });
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            accessManager.init();
+            const formatComponents = document.getElementById('formatComponents');
+
+            if (formatComponents) {
+                Sortable.create(formatComponents, {
+                    animation: 150,
+                    ghostClass: 'bg-warning',
+                    onEnd: function(evt) {
+                        updateComponentsOrder();
+                        generatePreview();
+
+                        if (autoSaveManager.isEditMode) {
+                            autoSaveManager.handleChange();
+                        }
+                    }
+                });
+
+                initializeDragToRemove();
+            }
+
+            autoSaveManager.init();
+
+                    const isEditMode = document.getElementById('inventoryForm')?.dataset.isEdit === 'true';
+        const existingFormat = '@Html.Raw(Model.CustomIdFormat ?? "")';
+
+        console.log('Initializing custom ID format:', { isEditMode, existingFormat });
+
+        components = [];
+        if (formatComponents) {
+            formatComponents.innerHTML = '';
+        }
+
+        if (isEditMode && existingFormat) {
+            parseExistingFormat(existingFormat);
+        } else {
+            console.log('Adding default components for create mode');
+            addComponent('fixed-text');
+            addComponent('sequence');
+        }
+            generatePreview();
+
+            initializeFieldsFromModel();
+
+            @if (Model.Tags != null && Model.Tags.Any())
+            {
+                                foreach (var tag in Model.Tags)
+                                {
+                                                    <text>addTag('@tag');</text>
+                                }
+            }
+        });
+
+        function initializeDragToRemove() {
+            const formatBuilder = document.getElementById('formatBuilder');
+            if (!formatBuilder) return;
+
+            formatBuilder.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('border-danger');
+            });
+
+            formatBuilder.addEventListener('dragleave', function(e) {
+                this.classList.remove('border-danger');
+            });
+
+            formatBuilder.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('border-danger');
+
+                const componentId = e.dataTransfer.getData('text/plain');
+                removeComponent(componentId);
+            });
+        }
+
+       
 
         function removeComponent(componentId) {
             const componentElement = document.getElementById(componentId);
@@ -1016,7 +1206,6 @@
                 hiddenFormatElement.value = formatString;
             }
         }
-
         // ===== FIELDS AND TAGS MANAGEMENT =====
         let tags = [];
         let fieldCount = 0;
@@ -1032,9 +1221,10 @@
             const description = fieldData?.description || '';
             const isVisibleInTable = fieldData?.isVisibleInTable ?? true;
             const isRequired = fieldData?.isRequired ?? false;
-
+            const inventoryId = fieldData?.inventoryId ? parseInt(fieldData?.inventoryId) : (@Html.Raw(Json.Serialize(Model.Id)) || 0);
             const fieldHtml = `
                 <div class="field-item card mb-3" id="field-${currentIndex}">
+                <input name="Fields[${currentIndex}].inventoryId" value="${inventoryId}" class="form-control" rows="2"/>
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <h6 class="card-title mb-0">Field #${fieldCount}</h6>
@@ -1054,6 +1244,9 @@
                                     <input type="hidden"
                                            name="Fields[${currentIndex}].Id"
                                            value="${fieldId}" />
+                                           <input type="hidden"
+                                   name="Fields[${currentIndex}].InventoryId"
+                                   value="${inventoryId}" />
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -1086,7 +1279,7 @@
                             <small class="text-muted">(@Localizer["Supports"] Markdown)</small>
                             </label>
                             <textarea name="Fields[${currentIndex}].Description" class="form-control" rows="2"
-                                  placeholder="@Localizer["Supports"] **@Localizer["bold"]**, *@Localizer["italic"]*, [links](http://example.com), etc."></textarea>
+                                  placeholder="@Localizer["Supports"] **@Localizer["bold"]**, *@Localizer["italic"]*, [links](http://example.com), etc." >${description}</textarea>
 
                             <div class="mt-2">
                                 <small class="text-muted">
@@ -1132,7 +1325,6 @@
                 fieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
             }
 
-            // Trigger auto-save if in edit mode
             if (autoSaveManager.isEditMode) {
                 autoSaveManager.handleChange();
             }
@@ -1141,29 +1333,31 @@
         function initializeFieldsFromModel() {
             @if (Model.Fields != null && Model.Fields.Any())
             {
-                            foreach (var field in Model.Fields)
-                            {
-                                            <text>
-                                            addField({
-                                                id: @field.Id,
-                                                name: '@Html.Raw((field.Name ?? ""))',
-                                                fieldType: '@((int)field.FieldType)',
-                                                orderIndex: @field.OrderIndex,
-                                                description: '@Html.Raw((field.Description ?? ""))',
-                                                isVisibleInTable: @field.IsVisibleInTable.ToString().ToLower(),
-                                                isRequired: @field.IsRequired.ToString().ToLower()
-                                            });
-                                            </text>
-                            }
+                                foreach (var field in Model.Fields)
+                                {
+                                                    <text>
+                                                    addField({
+                                                        id: @field.Id,
+                                                        name: '@Html.Raw((field.Name ?? ""))',
+                                                        fieldType: '@((int)field.FieldType)',
+                                                        orderIndex: @field.OrderIndex,
+                                                        description: '@Html.Raw((field.Description ?? ""))',
+                                                        isVisibleInTable: @field.IsVisibleInTable.ToString().ToLower(),
+                                                        isRequired: @field.IsRequired.ToString().ToLower(),
+                                                                inventoryId: (@Html.Raw(Json.Serialize(Model.Id)) || 0)
+                                                    });
+                                                    </text>
+                                }
             }
             else
             {
-                            <text>
-                            // Добавляем первое поле автоматически только при создании
-                            if (!@Model.IsEditMode.ToString().ToLower()) {
-                                addField();
-                            }
-                            </text>
+                                <text>
+                                    if (!@Model.IsEditMode.ToString().ToLower()) {
+                addField({
+                        inventoryId: (@Html.Raw(Json.Serialize(Model.Id)) || 0)
+                });
+            }
+                                </text>
             }
         }
 
@@ -1183,7 +1377,6 @@
                 fieldCount = 0;
             }
 
-            // Trigger auto-save if in edit mode
             if (autoSaveManager.isEditMode) {
                 autoSaveManager.handleChange();
             }
@@ -1223,7 +1416,6 @@
             }
         }
 
-        // Управление тегами
         const tagInput = document.getElementById('tagInput');
         if (tagInput) {
             tagInput.addEventListener('keydown', function(e) {

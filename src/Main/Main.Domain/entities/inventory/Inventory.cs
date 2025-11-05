@@ -7,26 +7,26 @@ namespace Main.Domain.entities.inventory
 {
     public class Inventory : BaseEntity
     {
-        public string CustomIdFormat { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public required string CustomIdFormat { get; set; }
+        public required string Name { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         public int? CategoryId { get; set; }
         public Category? Category { get; set; }
 
-        public string OwnerId { get; set; }
-        public User Owner { get; set; }
-        public string ImageUrl { get; set; }
+        public required string OwnerId { get; set; }
+        public User? Owner { get; set; }
+        public string? ImageUrl { get; set; }
         public bool IsPublic { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        public ICollection<InventoryField> Fields { get; set; } = new List<InventoryField>();
-        public ICollection<InventoryAccess> AccessList { get; set; } = new List<InventoryAccess>();
-        public ICollection<InventoryTag> Tags { get; set; } = new List<InventoryTag>();
-        public ICollection<Item> Items { get; set; } = new List<Item>();
-        public ICollection<ChatMessage> ChatMessages { get; set; } = new List<ChatMessage>();
-        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public ICollection<InventoryField>? Fields { get; set; }
+        public ICollection<InventoryAccess>? AccessList { get; set; }
+        public ICollection<InventoryTag>? Tags { get; set; }
+        public ICollection<Item>? Items { get; set; }
+        public ICollection<ChatMessage>? ChatMessages { get; set; }
+        public ICollection<Comment>? Comments { get; set; }
 
         public int CurrentSequence { get; set; } = 1;
         [Timestamp]

@@ -7,7 +7,6 @@
 }
 
 <div class="container mt-4">
-    <!-- Хлебные крошки -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Главная</a></li>
@@ -15,7 +14,6 @@
         </ol>
     </nav>
 
-    <!-- Заголовок -->
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="display-6">
@@ -26,7 +24,6 @@
         </div>
     </div>
 
-    <!-- Облако тегов -->
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -59,36 +56,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Статистика -->
-    @if (Model.Any())
-    {
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Статистика тегов</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-md-4">
-                                <h3 class="text-primary">@Model.Count</h3>
-                                <p class="text-muted">Всего тегов</p>
-                            </div>
-                            <div class="col-md-4">
-                                <h3 class="text-success">@Model.Sum(t => t.InventoryCount)</h3>
-                                <p class="text-muted">Всего использований</p>
-                            </div>
-                            <div class="col-md-4">
-                                <h3 class="text-info">@Model.Max(t => t.InventoryCount)</h3>
-                                <p class="text-muted">Максимальное использование</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
 </div>
 
 <style>
@@ -125,13 +92,11 @@
 @functions {
     private int GetFontSize(int count, int maxCount)
     {
-        // Минимальный и максимальный размер шрифта
         const int minSize = 14;
         const int maxSize = 32;
 
         if (maxCount == 0) return minSize;
 
-        // Логарифмическая шкала для более равномерного распределения
         var ratio = (double)count / maxCount;
         var fontSize = minSize + (maxSize - minSize) * ratio;
 

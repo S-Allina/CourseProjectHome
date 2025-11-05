@@ -5,8 +5,9 @@ namespace Main.Application.Dtos.Items.Index
     public record ItemFieldValueDto
     {
         public int InventoryFieldId { get; init; }
-        public string FieldName { get; init; }
+        public required string FieldName { get; init; }
         public FieldType FieldType { get; init; }
+
         public string? TextValue { get; init; }
         public string? MultilineTextValue { get; init; }
         public double? NumberValue { get; init; }

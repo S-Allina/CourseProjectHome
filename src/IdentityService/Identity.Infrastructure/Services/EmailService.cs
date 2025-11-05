@@ -36,7 +36,7 @@ namespace Identity.Infrastructure.Services
 
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-            var verificationUrl = GenerateVerificationUrl(user.Email ?? "", token, $"{_emailSettings.BackUrl}/api/identity/verify-email");
+            var verificationUrl = GenerateVerificationUrl(user.Email ?? "", token, $"{_emailSettings.BackUrl}/api/auth/verify-email");
 
             var emailBody = $"Please verify your email by clicking here: <a href='{verificationUrl}'>link</a>";
 

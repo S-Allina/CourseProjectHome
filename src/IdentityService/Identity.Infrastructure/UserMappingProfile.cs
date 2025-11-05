@@ -8,7 +8,7 @@ namespace Identity.Infrastructure
     {
         public UserMappingProfile()
         {
-            CreateMap<ApplicationUser, CurrentUserDto>().ReverseMap();
+            CreateMap<ApplicationUser, UserDto>().ReverseMap();
             //CreateMap<UserUpdateRequestDto, ApplicationUser>().ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
             //    .ForMember(dest => dest.RefreshToken, opt => opt.Ignore())
             //    .ForMember(dest => dest.RefreshTokenExpiryTime, opt => opt.Ignore())

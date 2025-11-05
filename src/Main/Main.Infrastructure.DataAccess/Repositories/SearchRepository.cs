@@ -198,7 +198,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
                 Name = u.DisplayName,
                 Type = "User",
                 AdditionalInfo = u.Email,
-                Url = "#" 
+                Url = "#"
             }).ToList();
 
             result.Results.AddRange(inventoryResults);

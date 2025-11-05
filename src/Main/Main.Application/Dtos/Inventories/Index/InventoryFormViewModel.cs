@@ -7,13 +7,13 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace Main.Presentation.MVC.ViewModel
 {
     public class InventoryFormViewModel : InventoryFormDto
-    {            
-            public List<SelectListItem> Categories { get; set; } = new();
-            public bool IsEditMode => Id.HasValue;
+    {
+        public List<SelectListItem> Categories { get; set; } = new();
+        public bool IsEditMode => Id.HasValue;
         public string DescriptionHtml => MarkdownHelper.ConvertToHtml(Description);
 
         public string FormAction => IsEditMode ? "Edit" : "Create";
-            public string PageTitle => IsEditMode ? "Edit Inventory" : "Create New Inventory";
-            public string SubmitButtonText => IsEditMode ? "Update Inventory" : "Create Inventory";
-        }
+        public string PageTitle => IsEditMode ? "Edit Inventory" : "Create New Inventory";
+        public string SubmitButtonText => IsEditMode ? "Update Inventory" : "Create Inventory";
     }
+}

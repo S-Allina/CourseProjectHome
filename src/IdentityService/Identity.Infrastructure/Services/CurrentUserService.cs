@@ -19,11 +19,11 @@ namespace Identity.Infrastructure.Services
 
         public string? GetUserId()
         {
-            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            return userId;
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? _httpContextAccessor.HttpContext?.User?.FindFirstValue("sub");
+			return userId;
         }
 
-        public async Task<CurrentUserDto> GetCurrentUserAsync()
+        public async Task<UserDto> GetCurrentUserAsync()
         {
             var id = GetUserId();
             return await _userService.GetByIdAsync(id);

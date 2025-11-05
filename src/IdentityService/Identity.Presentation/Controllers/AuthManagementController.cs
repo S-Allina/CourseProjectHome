@@ -82,33 +82,6 @@ namespace Identity.Presentation.Controllers
             return response;
         }
 
-        //[HttpGet("google-login")]
-        //public IActionResult GoogleLogin()
-        //{
-        //    //    string redirectUrl = "https://localhost:7052/api/auth/signin-google";
-
-        //    //    var props = new AuthenticationProperties
-        //    //    {
-        //    //        RedirectUri = Url.Action("GoogleCallback"),
-        //    //        Items =
-        //    //{
-        //    //    { "returnUrl", redirectUrl },
-        //    //    { "scheme", GoogleDefaults.AuthenticationScheme }
-        //    //}
-        //    //    };
-
-        //    //    return Challenge(props, GoogleDefaults.AuthenticationScheme);
-
-        //    return Redirect($"/connect/authorize?client_id=MainMVCApp&redirect_uri=https://localhost:7004/signin-oidc&response_type=code&scope=openid profile email api1&provider=Google");
-        //}
-
-        //[HttpGet("signin-google")]
-        //public async Task<IActionResult> GoogleCallback(string returnUrl = "", string remoteError = "")
-        //{
-        //    var user = await _authService.GoogleCallBackAsync(returnUrl, remoteError);
-
-        //    return Ok(user);
-        //}
 
         [HttpGet("verify-email")]
         [AllowAnonymous]

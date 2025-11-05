@@ -44,11 +44,10 @@ namespace Main.Application.Services
         {
             var userId = _usersService.GetCurrentUserId();
             if (!await CheckAccess(createDto.InventoryId, AccessLevel.ReadWrite, cancellationToken))
-                throw new UnauthorizedAccessException("Нет прав на добавление предметов в этот инвентарь");
+                throw new UnauthorizedAccessException("You do not have permission to add items to this inventory.");
 
             var fieldSchema = await _inventoryService.GetInventoryFields(createDto.InventoryId, cancellationToken);
 
-            ValidateAndConvertFieldValues(createDto.FieldValues, fieldSchema.ToList());
             var item = new Item
             {
                 InventoryId = createDto.InventoryId,
@@ -61,7 +60,7 @@ namespace Main.Application.Services
 
             var fieldSchema1 = _mapper.Map<List<InventoryField>>(fieldSchema);
 
-            AddFieldValuesAsync(item, createDto.FieldValues, fieldSchema1, cancellationToken);
+            await AddFieldValuesAsync(item, createDto.FieldValues, fieldSchema1, cancellationToken);
 
             var createdItem = await _itemRepository.CreateAsync(item, cancellationToken);
             return _mapper.Map<ItemDto>(createdItem);
@@ -75,33 +74,7 @@ namespace Main.Application.Services
             return inventory.InventoryId;
         }
 
-        private async Task ValidateAndConvertFieldValues(List<CreateItemFieldValueDto> fieldValues, List<InventoryFieldDto> fieldSchema)
-        {
-            var result = new Dictionary<int, object>();
-            foreach (var fieldValue in fieldValues)
-            {
-                var field = fieldSchema.FirstOrDefault(f => f.Id == fieldValue.InventoryFieldId);
-                if (field == null)
-                    throw new ArgumentException($"Поле с ID {fieldValue.InventoryFieldId} не существует");
-
-                object value = field.FieldType switch
-                {
-                    FieldType.Text => fieldValue.TextValue,
-                    FieldType.MultilineText => fieldValue.MultilineTextValue,
-                    FieldType.Number => fieldValue.NumberValue,
-                    FieldType.File => await _imgBBStorageService.UploadFileAsync(fieldValue.File),
-                    FieldType.Boolean => fieldValue.BooleanValue,
-                    _ => null
-                };
-
-                if (value == null && field.IsRequired)
-                    throw new ArgumentException($"Обязательное поле '{field.Name}' не заполнено");
-
-                result[fieldValue.InventoryFieldId] = value;
-            }
-        }
-
-        private void AddFieldValuesAsync(Item item, List<CreateItemFieldValueDto> fieldValues, List<InventoryField> fieldSchema, CancellationToken cancellationToken)
+        private async Task AddFieldValuesAsync(Item item, List<CreateItemFieldValueDto> fieldValues, List<InventoryField> fieldSchema, CancellationToken cancellationToken)
         {
             foreach (var fieldValue in fieldValues)
             {
@@ -126,7 +99,7 @@ namespace Main.Application.Services
                         itemFieldValue.NumberValue = fieldValue.NumberValue;
                         break;
                     case FieldType.File:
-                        itemFieldValue.FileUrl = fieldValue.FileUrl;
+                        itemFieldValue.FileUrl = await _imgBBStorageService.UploadFileAsync(fieldValue.File);
                         break;
                     case FieldType.Boolean:
                         itemFieldValue.BooleanValue = (bool)fieldValue.BooleanValue;
@@ -139,7 +112,7 @@ namespace Main.Application.Services
         public async Task<ItemDto> UpdateItemAsync(ItemDto itemDto, CancellationToken cancellationToken = default)
         {
             if (!await CheckAccess(itemDto.InventoryId, AccessLevel.ReadWrite, cancellationToken))
-                throw new UnauthorizedAccessException("Нет прав на изменение предметов в этом инвентаре");
+                throw new UnauthorizedAccessException("You do not have permission to modify items in this inventory.");
 
             var item = _mapper.Map<Item>(itemDto);
 
@@ -155,7 +128,7 @@ namespace Main.Application.Services
             var item = await _itemRepository.GetFirstAsync(i => i.Id == id, cancellationToken, "FieldValues.InventoryField");
 
             if (!await CheckAccess(item.InventoryId, AccessLevel.ReadOnly, cancellationToken))
-                throw new UnauthorizedAccessException("Нет прав на просмотр предметов в этом инвентаре");
+                throw new UnauthorizedAccessException("You do not have permission to view items in this inventory.");
 
             return _mapper.Map<ItemDto>(item);
         }
@@ -163,7 +136,7 @@ namespace Main.Application.Services
         public async Task<IEnumerable<ItemDto>> GetByInventoryAsync(int id, CancellationToken cancellationToken = default)
         {
             if (!await CheckAccess(id, AccessLevel.ReadOnly, cancellationToken))
-                throw new UnauthorizedAccessException("Нет прав на чтение предметов в этом инвентаре");
+                throw new UnauthorizedAccessException("You do not have permission to view items in this inventory.");
 
             var item = await _itemRepository.GetAllAsync(i => i.InventoryId == id, cancellationToken, "FieldValues");
 
@@ -180,7 +153,7 @@ namespace Main.Application.Services
         {
             var item = await _itemRepository.GetFirstAsync(i => i.Id == ids[0], cancellationToken);
             if (!await CheckAccess(item.InventoryId, AccessLevel.ReadWrite, cancellationToken))
-                throw new UnauthorizedAccessException("Нет прав на удаление предметов в этом инвентаре");
+                throw new UnauthorizedAccessException("You do not have permission to delete items in this inventory.");
             await _itemRepository.DeleteAsync(i => ids.Contains(i.Id), cancellationToken);
 
             return true;
