@@ -1,6 +1,0 @@
-@Main.Presentation_HostAddress = http://localhost:5192
-
-GET {{Main.Presentation_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
