@@ -15,14 +15,16 @@ namespace Identity.Infrastructure.Services
         private readonly ILogger<UserService> _logger;
         private readonly IEmailService _emailService;
         private readonly IMainApiClient _mainApiClient;
+        private readonly IUserService _userService;
 
-        public UserRegistrationService(UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<UserService> logger, IEmailService emailService, IMainApiClient mainApiClient)
+        public UserRegistrationService(UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<UserService> logger, IEmailService emailService, IMainApiClient mainApiClient, IUserService userService)
         {
             _userManager = userManager;
             _mapper = mapper;
             _logger = logger;
             _emailService = emailService;
             _mainApiClient = mainApiClient;
+            _userService = userService;
         }
 
         public async Task<UserRegistrationResponseDto> RegisterAsync(UserRegistrationRequestDto requestDto)
@@ -71,21 +73,11 @@ namespace Identity.Infrastructure.Services
 
         public async Task ConfirmEmailAsync(string token, string email)
         {
+            await _emailService.ConfirmEmailAsync(token, email);
+
             var user = await _userManager.FindByEmailAsync(email);
 
-            if (user == null) throw new Exception("Invalid email");
-
-            var result = await _userManager.ConfirmEmailAsync(user, token);
-
-            if (result.Succeeded)
-            {
-                _logger.LogInformation($"Email confirmed successfully for user {email}");
-            }
-            else
-            {
-                _logger.LogError($"Error confirming email for user {email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-                throw new Exception($"Error confirming email: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-            }
+            await _userService.UpdateUsersStatusAsync(new string[] { user?.Id ?? string.Empty }, user => user.Status == Statuses.Blocked ? Statuses.Blocked : Statuses.Activity, new CancellationToken());
         }
 
         private async Task ValidateRequestAsync(UserRegistrationRequestDto requestDto)
@@ -116,17 +108,10 @@ namespace Identity.Infrastructure.Services
 
             _ = Task.Run(async () =>
             {
-                var success = await _mainApiClient.CreateUserAsync(
-                    newUser.Id,
-                    newUser.FirstName,
-                    newUser.LastName,
-                    newUser.Email ?? string.Empty
-                );
+                var success = await _mainApiClient.CreateUserAsync(newUser.Id, newUser.FirstName, newUser.LastName,newUser.Email ?? string.Empty);
 
                 if (!success)
-                {
                     _logger.LogWarning("Failed to sync user with Main API: {UserId}", newUser.Id);
-                }
             });
             return newUser;
         }

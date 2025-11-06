@@ -1,5 +1,6 @@
 ﻿using Identity.Application.Configuration;
 using Identity.Application.Dto;
+using Identity.Application.DTO;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entity;
 using Microsoft.AspNetCore.Authorization;
@@ -49,17 +50,10 @@ namespace Identity.Presentation.Controllers
             return Ok(new { isAuthenticated = false });
         }
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<ResponseDto> Register([FromBody] UserRegistrationRequestDto request)
         {
             response.Result = await _userRegistrationService.RegisterAsync(request);
-
-            return response;
-        }
-
-        [HttpPost("manager/register")]
-        public async Task<ResponseDto> RegisterManager([FromBody] UserRegistrationRequestDto request)
-        {
-            response.Result = await _userRegistrationService.RegisterManagerAsync(request);
 
             return response;
         }
@@ -87,19 +81,26 @@ namespace Identity.Presentation.Controllers
         {
             await _userRegistrationService.ConfirmEmailAsync(token, email);
 
-            return Redirect($"{_urlSettings.AuthFront}/theapp/#/theapp/login");
+            return Redirect($"{_urlSettings.AuthFront}/theapp/#/theapp/login?message=Your email is verify. Welcom");
+        }
+        [HttpGet("redirect-to-login")]
+        [AllowAnonymous]
+        public IActionResult RedirectToFrontendLogin()
+        {
+            return Redirect("https://s-allina.github.io/theapp/#/theapp/login");
         }
 
         [HttpPost("forgot-password")]
-        [Authorize]
-        public async Task<IActionResult> ForgotPassword()
+        [AllowAnonymous]
+        public async Task<bool> ForgotPassword([FromBody] ForgotPasswordRequestDto forgotPasswordRequestDto)
         {
-            await _authService.ForgotPasswordAsync();
-            return Ok("Check your email.");
+            await _authService.ForgotPasswordAsync(forgotPasswordRequestDto.Email);
+            return true;
         }
 
-        [HttpGet("reset-password")]
-        public async Task<ResponseDto> ResetPassword(ResetPasswordDto resetPasswordDto)
+
+        [HttpPost("reset-password")]
+        public async Task<ResponseDto> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
         {
             response.Result = await _authService.ResetPasswordAsync(resetPasswordDto);
 

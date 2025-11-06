@@ -3,6 +3,7 @@ using FluentValidation;
 using Identity.Application.Dto;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entity;
+using Identity.Domain.Enums;
 using Identity.Domain.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -47,16 +48,13 @@ namespace Identity.Infrastructure.Services
             return userResponse;
         }
 
-        public async Task ForgotPasswordAsync()
+        public async Task ForgotPasswordAsync(string email)
         {
-            var userId = _currentUserService.GetUserId();
+            var user = await _userManager.FindByEmailAsync(email);
 
-            if (string.IsNullOrEmpty(userId))
-                throw new UnauthorizedAccessException("User not authenticated");
+            if (user == null) throw new Exception($"Account with email {email} not found");
 
-            var userDto = await _userManager.FindByIdAsync(userId);
-
-            var user = _mapper.Map<ApplicationUser>(userDto);
+            if (user.Status == Statuses.Unverify) throw new Exception($"Email {email} not verify");
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
@@ -65,19 +63,9 @@ namespace Identity.Infrastructure.Services
 
         public async Task<bool> ResetPasswordAsync(ResetPasswordDto resetPasswordDto)
         {
-            var isValidRequest = _validator.Validate(resetPasswordDto);
-
-            if (!isValidRequest.IsValid)
-            {
-                string errorMessages = string.Empty;
-                isValidRequest.Errors.Select(e => errorMessages + separator + e.ErrorMessage);
-                throw new IdentityException(errorMessages);
-            }
-
             var user = await _userManager.FindByEmailAsync(resetPasswordDto.Email);
 
-            if (user == null)
-                throw new UnauthorizedAccessException("User not found.");
+            if (user == null) throw new Exception("Account not found.");
 
             await ResetUserPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
 
@@ -86,23 +74,13 @@ namespace Identity.Infrastructure.Services
 
         private async Task ResetUserPasswordAsync(ApplicationUser user, string token, string newPassword)
         {
-            var dectoken = WebUtility.UrlDecode(token);
+            var isValidToken = await _userManager.VerifyUserTokenAsync(user, _userManager.Options.Tokens.PasswordResetTokenProvider, purpose, token);
 
-            var isValidToken = await _userManager.VerifyUserTokenAsync(user, _userManager.Options.Tokens.PasswordResetTokenProvider, purpose, dectoken);
+            if (!isValidToken) throw new Exception("Invalid token");
 
-            if (!isValidToken)
-            {
-                _logger.LogError("Invalid token for password reset for user: {Email}", user.Email);
-                throw new Exception("Invalid token");
-            }
+            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
 
-            var result = await _userManager.ResetPasswordAsync(user, dectoken, newPassword);
-
-            if (!result.Succeeded)
-            {
-                _logger.LogError("Failed to reset password for user: {Email}", user.Email);
-                throw new Exception($"Failed to reset password: {string.Join(separator, result.Errors)}");
-            }
+            if (!result.Succeeded) throw new Exception($"Failed to reset password: {string.Join(separator, result.Errors)}");
         }
 
         private async Task CheckLockoutAsync(ApplicationUser user)

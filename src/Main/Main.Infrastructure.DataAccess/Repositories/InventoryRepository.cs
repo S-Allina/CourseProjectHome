@@ -47,8 +47,7 @@ namespace Main.Infrastructure.DataAccess.Repositories
 
             if (existingInventory == null)
                 throw new Exception("Inventory not found");
-            var t = Convert.ToBase64String(existingInventory.Version);
-            var t2 = Convert.ToBase64String(inventory.Version);
+            
             if (Convert.ToBase64String(existingInventory.Version) != Convert.ToBase64String(inventory.Version))
                 throw new DbUpdateConcurrencyException("Инвентарь изменён другим пользователем обновите страницу.");
 
