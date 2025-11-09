@@ -2,6 +2,7 @@
 @using Main.Domain.enums.Users
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Microsoft.Extensions.Localization
+@using System.Security.Claims
 @inject IStringLocalizer<SharedResource> Localizer
 @inject IUrlService UrlService
 <ul class="navbar-nav">
@@ -21,19 +22,20 @@
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" asp-controller="Users" asp-action="Index">
+        <a class="nav-link" asp-controller="Inventories" asp-action="Profile">
             <i class="fas fa-user-cog me-2"></i>@Localizer["Profile"]
         </a>
-    </li>
-  @*   @if (User?.Identity?.IsAuthenticated == true && User?.IsInRole(Roles.Admin.ToString()) == true)
-    { *@
-    <li class="nav-item">
-        <a class="nav-link focus-ring-light"  href="@UrlService.BuildFrontendUrl("/users")">
-            <i class="fas fa-users-cog me-1"></i>
-            @Localizer["Users"]
-        </a>
-    </li>
-    @* } *@
+ </li>
+    @if (User?.Identity?.IsAuthenticated == true && User?.HasClaim(ClaimTypes.Role, Roles.Admin.ToString()) == true)
+    {
+        <li class="nav-item">
+            <a class="nav-link focus-ring-light" href="@UrlService.BuildFrontendUrl("/user")">
+                <i class="fas fa-users-cog me-1"></i>
+                @Localizer["Users"]
+            </a>
+        </li>
+    }
+   
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="fas fa-palette me-1"></i>@Localizer["Theme"]

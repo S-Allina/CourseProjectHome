@@ -1,5 +1,5 @@
-﻿using Identity.Domain.Entity;
-using Users.Application.Dto;
+﻿using Identity.Application.Dto;
+using Identity.Domain.Entity;
 
 namespace Identity.Application.Interfaces
 {

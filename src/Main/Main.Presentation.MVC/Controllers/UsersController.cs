@@ -17,19 +17,6 @@ namespace Main.Presentation.MVC.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Index(CancellationToken cancellationToken)
-        {
-            var userInventoriesTask = await _inventoryService.GetUserInventoriesAsync(cancellationToken);
-            var sharedInventoriesTask = await _inventoryService.GetSharedInventoriesAsync(cancellationToken);
-
-            var model = new HomeViewModel
-            {
-                UserInventories = userInventoriesTask.ToList(),
-                SharedInventories = sharedInventoriesTask.ToList()
-            };
-
-            return View(model);
-        }
+        
     }
 }

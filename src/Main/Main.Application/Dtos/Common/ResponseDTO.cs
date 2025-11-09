@@ -1,4 +1,4 @@
-﻿namespace Identity.Application.Dto
+﻿namespace Main.Application.Dto
 {
     public class ResponseDto
     {

@@ -1,6 +1,7 @@
 ﻿using Main.Application.Dtos.Inventories.Create;
 using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Interfaces;
+using Main.Presentation.MVC.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,6 +28,21 @@ namespace Main.Presentation.MVC.Controllers
         {
             var inventories = await _inventoryService.GetAll(cancellationToken);
             return View(inventories);
+        }
+
+        [HttpGet("Profile")]
+        public async Task<IActionResult> Profile(CancellationToken cancellationToken)
+        {
+            var userInventoriesTask = await _inventoryService.GetUserInventoriesAsync(cancellationToken);
+            var sharedInventoriesTask = await _inventoryService.GetSharedInventoriesAsync(cancellationToken);
+
+            var model = new HomeViewModel
+            {
+                UserInventories = userInventoriesTask.ToList(),
+                SharedInventories = sharedInventoriesTask.ToList()
+            };
+
+            return View(model);
         }
 
         [HttpGet]
@@ -98,15 +114,6 @@ namespace Main.Presentation.MVC.Controllers
         {
             var stats = await _statsService.GetInventoryStatsAsync(inventoryId);
             return PartialView("~/Views/Inventories/Partials/_StatisticsTab.cshtml", stats);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AutoSave(InventoryDetailsDto autoSaveDto, CancellationToken cancellationToken = default)
-        {
-            //var result = await _inventoryService.AutoSaveAsync(autoSaveDto);
-
-            return Json(autoSaveDto);
         }
     }
 }

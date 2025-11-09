@@ -5,7 +5,6 @@ using Identity.Domain.Entity;
 using Identity.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Users.Application.Dto;
 
 namespace Identity.Infrastructure.Services
 {
@@ -43,22 +42,10 @@ namespace Identity.Infrastructure.Services
             return await _roleService.GetAllAsync(users, cancellationToken); ;
         }
 
-        public async Task<ResponseDto> BlockUser(IEnumerable<string> userIds, CancellationToken cancellationToken)
-        {
-            var result = await UpdateUsersStatusAsync(userIds, user => Statuses.Blocked, cancellationToken);
-            await _mainApiClient.NotifyBlockedUsers(userIds.ToArray());
-            return result;
-        }
-
-        public async Task<ResponseDto> RoleChange(IEnumerable<string> userIds, CancellationToken cancellationToken)
-        {
-            return await UpdateUsersStatusAsync(userIds, user => Statuses.Blocked, cancellationToken);
-        }
-
-        public async Task<ResponseDto> UnlockUser(IEnumerable<string> userIds, CancellationToken cancellationToken)
+        public async Task<ResponseDto> StatusChangeAsync(IEnumerable<string> userIds, Statuses role, CancellationToken cancellationToken)
         {
             return await UpdateUsersStatusAsync(userIds, user =>
-                user.EmailConfirmed ? Statuses.Activity : Statuses.Unverify, cancellationToken);
+                user.EmailConfirmed || role == Statuses.Blocked ? role : Statuses.Unverify, cancellationToken);
         }
 
         public async Task<ResponseDto> UpdateUsersStatusAsync(IEnumerable<string> userIds, Func<ApplicationUser, Statuses> statusSelector, CancellationToken cancellationToken)
@@ -119,6 +106,13 @@ namespace Identity.Infrastructure.Services
             var user = await GetUserByIdAsync(id);
 
             return _mapper.Map<UserDto>(user);
+        }
+
+        public async Task<ResponseDto> CheckBlockAsync(string id, CancellationToken cancellationToken)
+        {
+            var user = await GetUserByIdAsync(id);
+
+            return new ResponseDto { Result = user.Status == Statuses.Blocked };
         }
 
         private async Task<ApplicationUser> GetUserByIdAsync(string id)

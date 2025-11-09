@@ -4,7 +4,6 @@ using Identity.Domain.Entity;
 using Identity.Infrastructure.DataAccess.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Users.Application.Dto;
 
 namespace Identity.Infrastructure.DataAccess.Services
 {

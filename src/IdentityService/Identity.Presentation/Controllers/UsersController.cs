@@ -1,8 +1,8 @@
-﻿using Identity.Application.DTO;
+﻿using Identity.Application.Dto;
+using Identity.Application.DTO;
 using Identity.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Users.Application.Dto;
 
 namespace Identity.Presentation.Controllers
 {
@@ -16,11 +16,11 @@ namespace Identity.Presentation.Controllers
             _userService = userService;
         }
 
-        [HttpPatch("block")]
+        [HttpPatch("status")]
         [Authorize]
-        public async Task<ResponseDto> Block([FromBody] string[] userIds, CancellationToken cancellationToken)
+        public async Task<ResponseDto> StatusChange([FromBody] ChangeStatusRequest request,  CancellationToken cancellationToken)
         {
-            return await _userService.BlockUser(userIds, cancellationToken);
+            return await _userService.StatusChangeAsync(request.UserIds, request.Status, cancellationToken);
         }
 
         [HttpPatch("role")]
@@ -30,13 +30,6 @@ namespace Identity.Presentation.Controllers
             return await _userService.UpdateUsersRoleAsync(request.UserIds, request.Role, cancellationToken);
         }
 
-        [HttpPatch("unblock")]
-        [Authorize]
-        public async Task<ResponseDto> Unblock([FromBody] string[] userIds, CancellationToken cancellationToken)
-        {
-            return await _userService.UnlockUser(userIds, cancellationToken);
-        }
-
         [HttpGet]
         [Authorize]
         public async Task<ResponseDto> Get(CancellationToken cancellationToken)
@@ -44,7 +37,14 @@ namespace Identity.Presentation.Controllers
             return await _userService.GetAllAsync(cancellationToken);
         }
 
-        [HttpDelete("unconfirmedUsers")]
+        [HttpGet("check-block")]
+        [Authorize]
+        public async Task<ResponseDto> CheckBlock(string id, CancellationToken cancellationToken)
+        {
+            return await _userService.CheckBlockAsync(id, cancellationToken);
+        }
+
+        [HttpDelete("unconfirmed")]
         [Authorize]
         public async Task<ResponseDto> DeleteUnconfirmedUsers(CancellationToken cancellationToken)
         {
