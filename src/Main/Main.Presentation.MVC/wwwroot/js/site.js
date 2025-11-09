@@ -57,7 +57,6 @@
         window.location.href = `/Items/Index?inventoryId=${inventoryId}`;
     });
 
-    // Обработка "Select All"
     $('#selectAllMy, #selectAllShared').on('change', function () {
         const tableType = this.id.replace('selectAll', '');
         const tableId = tableType + 'InventoriesTable';
@@ -66,7 +65,6 @@
     });
 }
 
-// Функция для массового удаления
 function deleteSelectedInventories(tableType) {
     const tableId = tableType + 'InventoriesTable';
     const selectedIds = [];
@@ -80,8 +78,6 @@ function deleteSelectedInventories(tableType) {
         return;
     }
 
-    if (confirm(`Are you sure you want to delete ${selectedIds.length} selected inventories?`)) {
-        // Ваш код для удаления
         $.post('@Url.Action("Delete", "Inventories")', { selectedIds: selectedIds })
             .done(function () {
                 location.reload();
@@ -89,10 +85,8 @@ function deleteSelectedInventories(tableType) {
             .fail(function () {
                 alert('Error deleting inventories.');
             });
-    }
 }
 
-// Инициализация при загрузке документа
 $(document).ready(function () {
     initializeDataTables();
 });

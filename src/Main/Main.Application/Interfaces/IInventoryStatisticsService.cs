@@ -1,4 +1,5 @@
 ﻿using Main.Application.Dtos.Inventories.Index;
+using Main.Application.Dtos.Statistic;
 
 namespace Main.Application.Interfaces
 {

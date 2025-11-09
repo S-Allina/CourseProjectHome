@@ -36,7 +36,7 @@
                     @Localizer["Cancel"]
                 </button>
 
-                <form id="deleteSelectedForm" method="post" asp-action="DeleteSelected">
+                <form id="deleteSelectedForm" method="post" asp-action="Delete">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-trash me-2"></i>@Localizer["Delete"]

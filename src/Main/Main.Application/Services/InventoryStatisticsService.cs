@@ -1,5 +1,6 @@
 ﻿using Main.Application.Dtos.Inventories.Index;
 using Main.Application.Dtos.Items.Index;
+using Main.Application.Dtos.Statistic;
 using Main.Application.Interfaces;
 using Main.Domain.enums.inventory;
 

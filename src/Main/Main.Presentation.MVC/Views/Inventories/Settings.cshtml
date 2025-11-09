@@ -308,30 +308,36 @@
         let components = [];
 
                // ===== ACCESS MANAGEMENT =====
-        let accessManager = {
+           let accessManager = {
             users: [],
             currentAccessList: @Html.Raw(Json.Serialize(Model.AccessList ?? new List<InventoryAccessDto>())),
             dataTable: null,
+            selectedUsers: new Set(), 
 
             init: function() {
                 this.setupUserSearch();
                 this.initializeDataTable();
-                this.setupRemoveAccess();
+                this.setupBulkActions();
+                // this.setupRemoveAccess();
             },
 
             initializeDataTable: function() {
                 this.dataTable = $('#accessListTable').DataTable({
                     pageLength: 10,
                     responsive: true,
-                    order: [[2, 'desc']], // Сортировка по дате создания по умолчанию
+                    order: [[2, 'desc']],
                     columnDefs: [
                         {
                             orderable: false,
-                            targets: [3] // Отключаем сортировку для действий
+                            targets: [0, 3] 
+                        },
+                        {
+                            width: "50px",
+                            targets: [0] 
                         },
                         {
                             width: "100px",
-                            targets: [3] // Фиксируем ширину колонки действий
+                            targets: [3] 
                         }
                     ],
                     language: {
@@ -347,8 +353,21 @@
                         emptyTable: "@Localizer["No users have access to this inventory yet"]."
                     },
                     dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>',
-                    data: [], // Изначально пустые данные
+                    data: [],
                     columns: [
+                        {
+                            data: null,
+                            render: function(data, type, row) {
+                                return `
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input user-checkbox"
+                                               data-user-id="${row.userId}"
+                                               id="user-${row.userId}">
+                                        <label class="form-check-label" for="user-${row.userId}"></label>
+                                    </div>
+                                `;
+                            }
+                        },
                         {
                             data: 'userInfo',
                             render: function(data, type, row) {
@@ -378,19 +397,6 @@
                             render: function(data, type, row) {
                                 return new Date(row.grantedAt).toLocaleString();
                             }
-                        },
-                        {
-                            data: 'userId',
-                            render: function(data, type, row) {
-                                return `
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-danger remove-access"
-                                            data-user-id="${row.userId}"
-                                            title="@Localizer["Remove Access"]">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                `;
-                            }
                         }
                     ]
                 });
@@ -411,6 +417,79 @@
                 this.dataTable.clear().rows.add(tableData).draw();
 
                 this.loadUserDetails();
+                this.setupCheckboxHandlers();
+            },
+
+            setupCheckboxHandlers: function() {
+                $('#accessListTable').on('change', '.user-checkbox', (e) => {
+                    const checkbox = e.target;
+                    const userId = checkbox.dataset.userId;
+
+                    if (checkbox.checked) {
+                        this.selectedUsers.add(userId);
+                    } else {
+                        this.selectedUsers.delete(userId);
+                    }
+
+                    this.updateBulkActionsState();
+                });
+
+                $('#selectAllUsers').on('change', (e) => {
+                    const isChecked = e.target.checked;
+                    $('.user-checkbox').prop('checked', isChecked);
+
+                    if (isChecked) {
+                        this.dataTable.rows().every((index) => {
+                            const rowData = this.dataTable.row(index).data();
+                            if (rowData) {
+                                this.selectedUsers.add(rowData.userId);
+                            }
+                        });
+                    } else {
+                        this.selectedUsers.clear();
+                    }
+
+                    this.updateBulkActionsState();
+                });
+            },
+
+            setupBulkActions: function() {
+                $('#bulkRemoveBtn').on('click', () => {
+                    this.bulkRemoveUsers();
+                });
+
+                this.updateBulkActionsState();
+            },
+
+            updateBulkActionsState: function() {
+                const bulkActions = $('#bulkActions');
+                const bulkRemoveBtn = $('#bulkRemoveBtn');
+                const selectedCount = this.selectedUsers.size;
+
+                if (selectedCount > 0) {
+                    bulkActions.show();
+                    bulkRemoveBtn.prop('disabled', false);
+                } else {
+                    bulkActions.hide();
+                    bulkRemoveBtn.prop('disabled', true);
+                }
+            },
+
+            bulkRemoveUsers: function() {
+                if (this.selectedUsers.size === 0) return;
+
+                const userCount = this.selectedUsers.size;
+              
+                this.selectedUsers.forEach(userId => {
+                    this.removeUserFromAccessList(userId);
+                });
+
+                this.selectedUsers.clear();
+                $('.user-checkbox').prop('checked', false);
+                $('#selectAllUsers').prop('checked', false);
+                this.updateBulkActionsState();
+
+                this.showToast(`@Localizer["Remove"] ${userCount} @Localizer["user"]`, 'success');
             },
 
             setupUserSearch: function() {
@@ -459,7 +538,7 @@
                 }
             },
 
-            displaySearchResults(users) {
+            displaySearchResults: function(users) {
                 const resultsContainer = document.getElementById('userSearchResults');
                 if (!resultsContainer) return;
 
@@ -509,14 +588,14 @@
                 });
             },
 
-            hideSearchResults() {
+            hideSearchResults: function() {
                 const resultsContainer = document.getElementById('userSearchResults');
                 if (resultsContainer) {
                     resultsContainer.style.display = 'none';
                 }
             },
 
-            addUserToAccessList(userId, userName, userEmail) {
+            addUserToAccessList: function(userId, userName, userEmail) {
                 if (this.currentAccessList.some(access => access.userId === userId)) {
                     this.showToast('@Localizer["User already has access"]', 'warning');
                     return;
@@ -535,7 +614,6 @@
 
                 this.currentAccessList.push(newAccess);
 
-                // Добавляем новую строку в DataTable
                 this.dataTable.row.add({
                     userId: userId,
                     userName: userName,
@@ -554,12 +632,14 @@
                 }
             },
 
-            removeUserFromAccessList(userId) {
+            removeUserFromAccessList: function(userId) {
                 this.currentAccessList = this.currentAccessList.filter(access => access.userId !== userId);
+
+                this.selectedUsers.delete(userId);
 
                 this.dataTable.rows().every(function() {
                     const rowData = this.data();
-                    if (rowData.userId === userId) {
+                    if (rowData && rowData.userId === userId) {
                         this.remove();
                         return false;
                     }
@@ -572,16 +652,6 @@
                 if (autoSaveManager.isEditMode) {
                     autoSaveManager.handleChange();
                 }
-            },
-
-            setupRemoveAccess() {
-
-                $('#accessListTable').on('click', '.remove-access', (e) => {
-                    const userId = $(e.target).closest('button').data('user-id');
-                    if (confirm('@Localizer["Are you sure you want to remove access for this user?"]')) {
-                        this.removeUserFromAccessList(userId);
-                    }
-                });
             },
 
             async loadUserDetails() {
@@ -608,7 +678,7 @@
                 }
             },
 
-            updateUserDetailsInTable(usersDetails) {
+            updateUserDetailsInTable: function(usersDetails) {
                 this.dataTable.rows().every(function() {
                     const rowData = this.data();
                     const userDetail = usersDetails.find(user => user.id === rowData.userId);
@@ -625,7 +695,7 @@
                 this.dataTable.draw();
             },
 
-            updateHiddenAccessFields() {
+            updateHiddenAccessFields: function() {
                 const container = document.getElementById('accessListData');
                 if (!container) return;
 
@@ -641,7 +711,7 @@
                 container.innerHTML = html;
             },
 
-            getAccessLevelBadgeClass(accessLevel) {
+            getAccessLevelBadgeClass: function(accessLevel) {
                 switch (accessLevel) {
                     case 1: return 'bg-secondary';
                     case 2: return 'bg-primary';
@@ -650,18 +720,16 @@
                 }
             },
 
-            getAccessLevelText(accessLevel) {
+            getAccessLevelText: function(accessLevel) {
                 switch (accessLevel) {
-                    case 1: return '@Localizer["Read Only"]';
-                    case 2: return '@Localizer["Read & Write"]';
-                    case 3: return '@Localizer["Admin"]';
-                    default: return '@Localizer["Unknown"]';
+                    case 1: return '@Localizer["Read & Write"]';
+                    default: return '@Localizer["Read Only"]';
                 }
             },
 
-            showToast(message, type = 'info') {
+            showToast: function(message, type = 'info') {
                 const toast = document.createElement('div');
-                // toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
                 toast.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
                 toast.innerHTML = `
                     ${message}
@@ -675,7 +743,7 @@
                 }, 3000);
             },
 
-            debounce(func, wait) {
+            debounce: function(func, wait) {
                 let timeout;
                 return function executedFunction(...args) {
                     const later = () => {
@@ -687,7 +755,6 @@
                 };
             }
         };
-
             // ===== CUSTOM ID FORMAT PARSING =====
         function parseExistingFormat(formatString) {
             if (!formatString) return;
