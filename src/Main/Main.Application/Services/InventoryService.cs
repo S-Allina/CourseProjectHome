@@ -49,7 +49,9 @@ namespace Main.Application.Services
         public async Task<IEnumerable<InventoryTableDto>> GetUserInventoriesAsync(CancellationToken cancellationToken = default)
         {
             var userId = _usersService.GetCurrentUserId();
-            var inventories = await _inventoryRepository.GetAllAsync(i => i.OwnerId == userId, cancellationToken, "Owner", "Category", "Fields");
+            var userRole = _usersService.GetCurrentUserRole();
+            var inventories = await _inventoryRepository.GetAllAsync(i => (userRole == Roles.Admin.ToString() ? true : i.OwnerId == userId),cancellationToken,
+                   "Owner", "Category", "Fields"); 
             return _mapper.Map<IEnumerable<InventoryTableDto>>(inventories);
         }
 
@@ -224,6 +226,7 @@ namespace Main.Application.Services
 
             return (popularInventories);
         }
+
         private void AddFieldsToInventory(Inventory inventory, List<CreateInventoryFieldDto> fieldDtos)
         {
             if (!fieldDtos.Any()) return;
